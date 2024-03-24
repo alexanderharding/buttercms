@@ -1,6 +1,6 @@
 import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AUTH_TOKEN, BASE_URL, PREVIEW, REQUEST_MARKER } from '../../shared';
+import { AUTH_TOKEN, BASE_URL, PREVIEW, REQUEST_MARKER } from '../../../shared';
 
 export const REQUEST_HYDRATION_INTERCEPTOR: HttpInterceptorFn = (
   request,

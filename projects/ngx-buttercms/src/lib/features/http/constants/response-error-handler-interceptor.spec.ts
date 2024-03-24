@@ -5,7 +5,7 @@ import { fakeAsync } from '@angular/core/testing';
 import { RESPONSE_ERROR_HANDLER_INTERCEPTOR } from './response-error-handler-interceptor';
 import { RESPONSE_ERROR_HANDLER } from './response-error-handler';
 import { ResponseErrorHandlerFn } from '../models';
-import { REQUEST_MARKER } from '../../shared';
+import { REQUEST_MARKER } from '../../../shared';
 
 describe(RESPONSE_ERROR_HANDLER_INTERCEPTOR.name, () => {
   it('should call next once with correct value when REQUEST_MARKER does not exist', fakeAsync(() => {

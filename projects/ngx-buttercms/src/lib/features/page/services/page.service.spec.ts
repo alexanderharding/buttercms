@@ -7,7 +7,7 @@ import {
   REQUEST_MARKER,
   WrappedData,
   WrappedMeta,
-} from '../../shared';
+} from '../../../shared';
 import { NEVER, of } from 'rxjs';
 import { PageParams, PageSearchParams, Pages, PagesParams } from '../models';
 import { Params } from '@angular/router';

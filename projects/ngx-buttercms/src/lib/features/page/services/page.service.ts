@@ -15,7 +15,7 @@ import {
   WrappedMeta,
   PaginationMeta,
   REQUEST_MARKER,
-} from '../../shared';
+} from '../../../shared';
 
 /**
  * A lightweight service for querying CMS page content.

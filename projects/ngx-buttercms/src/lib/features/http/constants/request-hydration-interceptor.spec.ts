@@ -14,7 +14,7 @@ import {
   PREVIEW,
   Preview,
   REQUEST_MARKER,
-} from '../../shared';
+} from '../../../shared';
 
 describe(REQUEST_HYDRATION_INTERCEPTOR.name, () => {
   it('should skip formatting when REQUEST_MARKER does not exist', fakeAsync(() => {
