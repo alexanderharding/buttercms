@@ -55,11 +55,7 @@ export class PageService {
     type: Type,
     params?: PagesParams<Fields>
   ): Observable<WrappedData<Pages<Fields, Type>> & WrappedMeta<PaginationMeta>>;
-  public get(
-    type: string,
-    slugOrParams?: string | Params,
-    params?: Params
-  ): Observable<WrappedData<Page | Pages>> {
+  public get(type: string, slugOrParams?: string | Params, params?: Params) {
     let url = `/pages/${type}/` as const;
     typeof slugOrParams === 'string'
       ? (url += `${slugOrParams}/`)
@@ -84,10 +80,7 @@ export class PageService {
     query: string,
     params?: PageSearchParams<Type>
   ): Observable<WrappedData<Pages<Fields, Type>> & WrappedMeta<PaginationMeta>>;
-  public search(
-    query: string,
-    params?: Params
-  ): Observable<WrappedData<Pages>> {
+  public search(query: string, params?: Params) {
     return this.http.get<WrappedData<Pages>>('/pages/search/', {
       params: new HttpParams({ fromObject: { ...params, query }, encoder }),
       context: new HttpContext().set(REQUEST_MARKER, void 0),
