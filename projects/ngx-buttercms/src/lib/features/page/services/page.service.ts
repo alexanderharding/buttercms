@@ -19,6 +19,7 @@ import {
 
 /**
  * A lightweight service for querying CMS page content.
+ * @public
  */
 @Injectable({ providedIn: 'root' })
 export class PageService {
@@ -29,6 +30,7 @@ export class PageService {
    * @param type `Required` {@link Page.page_type|page type} to query.
    * @param slug `Required` {@link Page.slug|page slug}.
    * @param params `Optional` {@link PageParams|parameters} to manipulate the query.
+   * @public
    */
   public get<
     Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
@@ -45,6 +47,7 @@ export class PageService {
    * Get multiple {@link Page|pages} of the same type.
    * @param type `Required` {@link Page.page_type|page type} to query.
    * @param params `Optional` {@link PagesParams|parameters} to manipulate the query.
+   * @public
    */
   public get<
     Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
@@ -70,6 +73,7 @@ export class PageService {
    * Search {@link Page|pages} based on a query.
    * @param query `Required` {@link Page|page} query.
    * @param params `Optional` {@link PageSearchParams|parameters} to manipulate the query.
+   * @public
    */
   public search<
     Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<

@@ -4,6 +4,9 @@ import { inject } from '@angular/core';
 import { REQUEST_MARKER } from '../../../shared';
 import { RESPONSE_ERROR_HANDLER } from './response-error-handler';
 
+/**
+ * @public
+ */
 export const RESPONSE_ERROR_HANDLER_INTERCEPTOR: HttpInterceptorFn = (
   request,
   next

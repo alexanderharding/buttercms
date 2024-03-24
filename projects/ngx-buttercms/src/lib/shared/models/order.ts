@@ -1,3 +1,6 @@
+/**
+ * @internal
+ */
 export type Order<
   Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
     Record<keyof unknown & string, unknown>

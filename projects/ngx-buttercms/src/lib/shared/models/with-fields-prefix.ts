@@ -22,6 +22,9 @@ type FlatValue<Type, Key> = Key extends `${infer I}.${infer J}`
   ? Type[Key]
   : never;
 
+/**
+ * @internal
+ */
 export type WithFieldsPrefix<
   Type extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
     Record<keyof unknown & string, unknown>

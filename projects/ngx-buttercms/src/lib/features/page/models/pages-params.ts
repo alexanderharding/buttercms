@@ -1,5 +1,8 @@
 import { Order, WithFieldsPrefix } from '../../../shared';
 
+/**
+ * @public
+ */
 export type PagesParams<
   Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
     Record<keyof unknown & string, unknown>

@@ -1,3 +1,6 @@
+/**
+ * @public
+ */
 export type Page<
   Fields extends Readonly<Record<keyof unknown & string, unknown>> = Readonly<
     Record<keyof unknown & string, unknown>
