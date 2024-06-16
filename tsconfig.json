@@ -9,7 +9,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "paths": { "ngx-buttercms": ["./dist/ngx-buttercms"] },
     "esModuleInterop": true,
     "sourceMap": true,
     "declaration": false,
