@@ -2,33 +2,35 @@ import { AuthorService } from './author.service';
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { requestMarker } from '../constants';
-import { Author, PaginatedResponse, RecentPosts } from '../types';
-import { fakeAsync } from '@angular/core/testing';
-import { httpParameterCodec as encoder } from '@shared/http-client-interop';
-import { provide } from '@shared/dependency-injection-interop';
-import { autoMocker, observableReader } from '@shared/testing';
 import {
-	AuthorBuilder,
-	ResponseBuilder,
-	AuthorsBuilder,
-} from '../test-builders';
+	Author,
+	Authors,
+	AuthorsWithRecentPosts,
+	RecentPosts,
+	Response,
+} from '../types';
+import { fakeAsync } from '@angular/core/testing';
+import { httpParameterCodec as encoder } from '../constants';
+import { of } from 'rxjs';
 
 describe(AuthorService.name, () => {
 	describe(AuthorService.prototype.get.name, () => {
-		it(`should call get method on ${HttpClient.name} once with correct value when no arguments are provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when no arguments are provided`, fakeAsync(() => {
 			// Arrange
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(service.get());
+			service.get();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith('/authors/', {
@@ -39,40 +41,48 @@ describe(AuthorService.name, () => {
 
 		it(`should emit correct value when no arguments are provided`, fakeAsync(() => {
 			// Arrange
-			const expected = new ResponseBuilder(AuthorsBuilder).build();
-			const httpMock = autoMocker.mock(HttpClient);
+			const responseMock: Response<Authors> = {
+				data: Array.from({ length: 20 }, createAuthorMock),
+			};
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(service.get());
+			let response: Response<Authors> | undefined;
+			service
+				.get()
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 
-		it(`should call get method on ${HttpClient.name} once with correct value when options are provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when options are provided`, fakeAsync(() => {
 			// Arrange
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(
-				service.get({ include: 'recent_posts' }),
-			);
+			service.get({ include: 'recent_posts' });
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith('/authors/', {
@@ -86,48 +96,47 @@ describe(AuthorService.name, () => {
 
 		it(`should emit correct value when options are provided`, fakeAsync(() => {
 			// Arrange
-			const expected: PaginatedResponse<ReadonlyArray<Author & RecentPosts>> = {
-				data: [],
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
-			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const responseMock: Response<AuthorsWithRecentPosts> = { data: [] };
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.get({ include: 'recent_posts' }),
-			);
+			let response: Response<AuthorsWithRecentPosts> | undefined;
+			service
+				.get({ include: 'recent_posts' })
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 
-		it(`should call get method on ${HttpClient.name} once with correct value when slug is provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when slug is provided`, fakeAsync(() => {
 			// Arrange
-			const slugMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const slugMock = 'slug';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(service.get(slugMock));
+			service.get(slugMock);
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/authors/${slugMock}/`, {
@@ -138,44 +147,51 @@ describe(AuthorService.name, () => {
 
 		it(`should emit correct value when slug is provided`, fakeAsync(() => {
 			// Arrange
-			const slugMock = chance.string();
-			const expected = new ResponseBuilder(AuthorBuilder).build();
-			const httpMock = autoMocker.mock(HttpClient);
+			const slugMock = 'slug';
+			const responseMock: Response<Author> = { data: createAuthorMock() };
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.get(slugMock),
-			);
+			let response: Response<Author> | undefined;
+			service
+				.get(slugMock)
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 
-		it(`should call get method on ${HttpClient.name} once with correct value when slug and options are provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when slug and options are provided`, fakeAsync(() => {
 			// Arrange
-			const slugMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const slugMock = 'slug';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(
-				service.get(slugMock, { include: 'recent_posts' }),
-			);
+			service
+				.get(slugMock, { include: 'recent_posts' })
+				.subscribe()
+				.unsubscribe();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/authors/${slugMock}/`, {
@@ -189,32 +205,48 @@ describe(AuthorService.name, () => {
 
 		it(`should emit correct value when slug and options are provided`, fakeAsync(() => {
 			// Arrange
-			const slugMock = chance.string();
-			const expected: PaginatedResponse<ReadonlyArray<Author & RecentPosts>> = {
+			const slugMock = 'slug';
+			const responseMock: Response<ReadonlyArray<Author & RecentPosts>> = {
 				data: [],
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
 			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new AuthorService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.get(slugMock, { include: 'recent_posts' }),
-			);
+			let response: Response<AuthorsWithRecentPosts> | undefined;
+			service
+				.get(slugMock, { include: 'recent_posts' })
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 	});
 });
+
+function createAuthorMock(): Author {
+	return {
+		bio: 'bio',
+		email: 'example@example.com',
+		first_name: 'first_name',
+		facebook_url: 'https://www.example.com',
+		instagram_url: 'https://www.example.com',
+		last_name: 'last_name',
+		linkedin_url: 'https://www.example.com',
+		pinterest_url: 'https://www.example.com',
+		profile_image: 'https://www.example.com',
+		slug: 'slug',
+		title: 'title',
+		twitter_handle: 'twitter_handle',
+	};
+}

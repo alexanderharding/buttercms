@@ -3,7 +3,7 @@ import { PageService } from './page.service';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { requestMarker } from '../constants';
-import { httpParameterCodec as encoder } from '@shared/http-client-interop';
+import { httpParameterCodec as encoder } from '../constants';
 import {
 	Page,
 	PageOptions,
@@ -12,23 +12,24 @@ import {
 	PagesOptions,
 	PaginatedResponse,
 } from '../types';
-import { provide } from '@shared/dependency-injection-interop';
-import { autoMocker, observableReader } from '@shared/testing';
+import { of } from 'rxjs';
 
 describe(PageService.name, () => {
 	describe(PageService.prototype.get.name, () => {
 		it('should call get method on HttpClient once with correct value when only the type is supplied', fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const typeMock = 'type';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(service.get(typeMock));
+			service.get(typeMock);
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/pages/${typeMock}/`, {
@@ -39,22 +40,25 @@ describe(PageService.name, () => {
 
 		it('should call get method on HttpClient once with correct value when the type and options are supplied', fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
+			const typeMock = 'type';
 			const optionsMock: PagesOptions<Readonly<{ text: string }>> = {
-				levels: chance.integer(),
-				page: chance.integer(),
+				levels: 10,
+				page: 2,
 			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(
-				service.get<Readonly<{ text: string }>>(typeMock, optionsMock),
-			);
+			service
+				.get<Readonly<{ text: string }>>(typeMock, optionsMock)
+				.subscribe()
+				.unsubscribe();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/pages/${typeMock}/`, {
@@ -65,17 +69,19 @@ describe(PageService.name, () => {
 
 		it('should call get method on HttpClient once with correct value when the type and slug are supplied', fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
-			const slugMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const typeMock = 'type';
+			const slugMock = 'slug';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(service.get(typeMock, slugMock));
+			service.get(typeMock, slugMock);
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(
@@ -89,22 +95,22 @@ describe(PageService.name, () => {
 
 		it('should call get method on HttpClient once with correct value when the type, slug, and options are supplied', fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
-			const slugMock = chance.string();
+			const typeMock = 'type';
+			const slugMock = 'slug';
 			const optionsMock: PageOptions = {
-				levels: chance.integer(),
+				levels: 10,
 			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(
-				service.get(typeMock, slugMock, optionsMock),
-			);
+			service.get(typeMock, slugMock, optionsMock);
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(
@@ -121,62 +127,62 @@ describe(PageService.name, () => {
 		it('should call get method on HttpClient once with correct value when the query arg is supplied and return correct value', fakeAsync(() => {
 			// Arrange
 			const pagesMock: Pages = Array.from({ length: 5 }, createPageMock);
-			const expected: PaginatedResponse<Pages> = {
+			const responseMock: PaginatedResponse<Pages> = {
 				data: pagesMock,
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
+				meta: { count: 20, next_page: 3, previous_page: 1 },
 			};
-			const queryMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const queryMock = 'query';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.search(queryMock),
-			);
+			let response: PaginatedResponse<Pages> | undefined;
+			service
+				.search(queryMock)
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/pages/search/`, {
 				params: new HttpParams({ fromObject: { query: queryMock }, encoder }),
 				context: new HttpContext().set(requestMarker, void 0),
 			});
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 
 		it('should call get method on HttpClient once with correct value when the query and options args are supplied and return correct value', fakeAsync(() => {
 			// Arrange
 			const pagesMock: Pages = Array.from({ length: 5 }, createPageMock);
 			const optionsMock: PageSearchOptions = {
-				levels: chance.integer(),
-				page: chance.integer(),
+				levels: 10,
+				page: 2,
 			};
-			const expected: PaginatedResponse<Pages> = {
+			const responseMock: PaginatedResponse<Pages> = {
 				data: pagesMock,
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
+				meta: { count: 20, next_page: 3, previous_page: 1 },
 			};
-			const queryMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const queryMock = 'query';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.search(queryMock, optionsMock),
-			);
+			let response: PaginatedResponse<Pages> | undefined;
+			service
+				.search(queryMock, optionsMock)
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith(`/pages/search/`, {
@@ -186,7 +192,7 @@ describe(PageService.name, () => {
 				}),
 				context: new HttpContext().set(requestMarker, void 0),
 			});
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 	});
 });
@@ -194,10 +200,10 @@ describe(PageService.name, () => {
 function createPageMock(): Page {
 	return {
 		fields: {},
-		name: chance.string(),
-		slug: chance.string(),
-		page_type: chance.string(),
-		published: chance.date().toISOString(),
-		updated: chance.date().toISOString(),
+		name: 'name',
+		slug: 'slug',
+		page_type: 'page_type',
+		published: new Date().toISOString(),
+		updated: new Date().toISOString(),
 	};
 }

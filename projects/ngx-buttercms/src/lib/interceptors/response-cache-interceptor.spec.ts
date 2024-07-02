@@ -1,5 +1,6 @@
 import {
 	HttpContext,
+	HttpEvent,
 	HttpHandlerFn,
 	HttpRequest,
 	HttpResponse,
@@ -7,32 +8,32 @@ import {
 import { Observable, of } from 'rxjs';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { fakeAsync } from '@angular/core/testing';
-import { autoMocker, chance, observableReader } from '@shared/testing';
-import { requestMarker } from '../constants/request-marker';
 import { responseCacheInterceptor } from './response-cache-interceptor';
 import { responseCache } from '../injection-tokens';
-import { provide } from '@shared/dependency-injection-interop';
-import { createResponseCacheMock } from '../mock-factories';
+import { ResponseCache } from '../types';
 
 describe(responseCacheInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
 		// Arrange
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
 		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			[],
+			{ context: httpContextMock },
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 
 		// Act
-		observableReader.readNextSynchronously(
-			responseCacheInterceptor(requestMock, nextMock),
-		);
+		responseCacheInterceptor(requestMock, nextMock);
 
 		// Assert
 		expect(nextMock).toHaveBeenCalledOnceWith(requestMock);
@@ -40,22 +41,28 @@ describe(responseCacheInterceptor.name, () => {
 
 	it('should not cache response when requestMarker does not exist', fakeAsync(() => {
 		// Arrange
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
 		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			[],
+			{ context: httpContextMock },
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 
 		// Act
-		const response = observableReader.readNextSynchronously(
-			responseCacheInterceptor(requestMock, nextMock),
-		);
+		let response: HttpEvent<unknown> | undefined;
+		responseCacheInterceptor(requestMock, nextMock)
+			.subscribe((value) => (response = value))
+			.unsubscribe();
 
 		// Assert
 		expect(response).toEqual(responseMock);
@@ -63,29 +70,37 @@ describe(responseCacheInterceptor.name, () => {
 
 	it('should call next once with correct value when requestMarker does exist', fakeAsync(() => {
 		// Arrange
-		const cachedResponseMock = createResponseCacheMock();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const injector = Injector.create({
-			providers: [provide(responseCache).useValue(cachedResponseMock)],
-		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(cachedResponseMock.get, of(responseMock));
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
+		const cachedResponseMock = jasmine.createSpyObj<ResponseCache>(
+			'ResponseCache',
+			['get', 'set', 'has'],
 		);
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			[],
+			{ context: httpContextMock },
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
+		const injector = Injector.create({
+			providers: [{ provide: responseCache, useValue: cachedResponseMock }],
+		});
+		cachedResponseMock.get.and.returnValue(of(responseMock));
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				responseCacheInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			responseCacheInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(nextMock).toHaveBeenCalledOnceWith(requestMock);
@@ -93,33 +108,45 @@ describe(responseCacheInterceptor.name, () => {
 
 	it('should set cache when requestMarker does exist and is not currently cached', fakeAsync(() => {
 		// Arrange
-		const cachedResponseMock = autoMocker.mock(HttpResponse);
-		const urlWithParamsMock = chance.url();
-		const cacheMock = createResponseCacheMock();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const injector = Injector.create({
-			providers: [provide(responseCache).useValue(cacheMock)],
-		});
-		(requestMock.context as unknown) = httpContextMock;
-		(requestMock.urlWithParams as unknown) = urlWithParamsMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(cacheMock.has, false);
-		autoMocker.withReturnValue(cacheMock.get, of(cachedResponseMock));
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
+		const cachedResponseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
 		);
+		const urlWithParamsMock = 'https://example.com';
+		const cacheMock = jasmine.createSpyObj<ResponseCache>('ResponseCache', [
+			'get',
+			'set',
+			'has',
+		]);
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			[],
+			{ context: httpContextMock, urlWithParams: urlWithParamsMock },
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
+		const injector = Injector.create({
+			providers: [{ provide: responseCache, useValue: cacheMock }],
+		});
+		cacheMock.has.and.returnValue(false);
+		cacheMock.get.and.returnValue(of(cachedResponseMock));
 
 		// Act
-		const response = observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				responseCacheInterceptor(requestMock, nextMock),
-			),
-		);
+		let response: HttpEvent<unknown> | undefined;
+		runInInjectionContext(injector, () =>
+			responseCacheInterceptor(requestMock, nextMock),
+		)
+			.subscribe((value) => (response = value))
+			.unsubscribe();
 
 		// Assert
 		expect(response).toEqual(cachedResponseMock);
@@ -136,33 +163,45 @@ describe(responseCacheInterceptor.name, () => {
 
 	it('should not set cache response when requestMarker does exist and is currently cached', fakeAsync(() => {
 		// Arrange
-		const cachedResponseMock = autoMocker.mock(HttpResponse);
-		const urlWithParamsMock = chance.url();
-		const cacheMock = createResponseCacheMock();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const injector = Injector.create({
-			providers: [provide(responseCache).useValue(cacheMock)],
-		});
-		(requestMock.context as unknown) = httpContextMock;
-		(requestMock.urlWithParams as unknown) = urlWithParamsMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(cacheMock.has, true);
-		autoMocker.withReturnValue(cacheMock.get, of(cachedResponseMock));
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
+		const cachedResponseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
 		);
+		const urlWithParamsMock = 'https://example.com';
+		const cacheMock = jasmine.createSpyObj<ResponseCache>('ResponseCache', [
+			'get',
+			'set',
+			'has',
+		]);
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			[],
+			{ context: httpContextMock, urlWithParams: urlWithParamsMock },
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
+		const injector = Injector.create({
+			providers: [{ provide: responseCache, useValue: cacheMock }],
+		});
+		cacheMock.get.and.returnValue(of(cachedResponseMock));
+		cacheMock.has.and.returnValue(true);
 
 		// Act
-		const response = observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				responseCacheInterceptor(requestMock, nextMock),
-			),
-		);
+		let response: HttpEvent<unknown> | undefined;
+		runInInjectionContext(injector, () =>
+			responseCacheInterceptor(requestMock, nextMock),
+		)
+			.subscribe((value) => (response = value))
+			.unsubscribe();
 
 		// Assert
 		expect(response).toEqual(cachedResponseMock);

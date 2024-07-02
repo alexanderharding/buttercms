@@ -1,30 +1,30 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { requestMarker } from '../constants';
+import { requestMarker, httpParameterCodec as encoder } from '../constants';
 import { Content, ContentOptions, PaginatedResponse } from '../types';
 import { fakeAsync } from '@angular/core/testing';
-import { httpParameterCodec as encoder } from '@shared/http-client-interop';
 import { ContentService } from './content.service';
-import { provide } from '@shared/dependency-injection-interop';
-import { autoMocker, observableReader } from '@shared/testing';
+import { of } from 'rxjs';
 
 describe(ContentService.name, () => {
 	describe(ContentService.prototype.get.name, () => {
-		it(`should call get method on ${HttpClient.name} once with correct value when type is provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when type is provided`, fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const typeMock = 'type';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new ContentService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(service.get(typeMock));
+			service.get(typeMock);
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith('/content/', {
@@ -35,55 +35,58 @@ describe(ContentService.name, () => {
 
 		it(`should emit correct value when type is provided`, fakeAsync(() => {
 			// Arrange
-			const typeMock = chance.string();
-			const expected: PaginatedResponse<Content> = {
+			const typeMock = 'type';
+			const responseMock: PaginatedResponse<Content> = {
 				data: {},
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
+				meta: { count: 20, next_page: 3, previous_page: 1 },
 			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new ContentService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
 			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.get(typeMock),
-			);
+			let response: PaginatedResponse<Content> | undefined;
+			service
+				.get(typeMock)
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 
-		it(`should call get method on ${HttpClient.name} once with correct value when type and options are provided`, fakeAsync(() => {
+		it(`should call ${HttpClient.prototype.get.name} method on ${HttpClient.name} once with correct value when type and options are provided`, fakeAsync(() => {
 			// Arrange
 			const optionsMock: ContentOptions<Readonly<{ text: string }>> = {
-				levels: chance.integer(),
-				page: chance.integer(),
+				levels: 10,
+				page: 2,
 			};
-			const typeMock = chance.string();
-			const httpMock = autoMocker.mock(HttpClient);
+			const typeMock = 'type';
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new ContentService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, undefined);
+			httpMock.get.and.returnValue(of(undefined));
 
 			// Act
-			observableReader.readNextSynchronously(
-				service.get<Readonly<{ text: string }>>(typeMock, optionsMock),
-			);
+			service
+				.get<Readonly<{ text: string }>>(typeMock, optionsMock)
+				.subscribe()
+				.unsubscribe();
 
 			// Assert
 			expect(httpMock.get).toHaveBeenCalledOnceWith('/content/', {
@@ -98,35 +101,37 @@ describe(ContentService.name, () => {
 		it(`should emit correct value when type and options are provided`, fakeAsync(() => {
 			// Arrange
 			const optionsMock: ContentOptions<Readonly<{ text: string }>> = {
-				levels: chance.integer(),
-				page: chance.integer(),
+				levels: 10,
+				page: 2,
 			};
-			const typeMock = chance.string();
-			const expected: PaginatedResponse<Content<Readonly<{ text: string }>>> = {
+			const typeMock = 'type';
+			const responseMock: PaginatedResponse<
+				Content<Readonly<{ text: string }>>
+			> = {
 				data: {},
-				meta: {
-					count: chance.integer(),
-					next_page: chance.integer(),
-					previous_page: chance.integer(),
-				},
+				meta: { count: 20, next_page: 3, previous_page: 1 },
 			};
-			const httpMock = autoMocker.mock(HttpClient);
+			const httpMock = jasmine.createSpyObj<HttpClient>(HttpClient.name, [
+				'get',
+			]);
 			const injector = Injector.create({
-				providers: [provide(HttpClient).useValue(httpMock)],
+				providers: [{ provide: HttpClient, useValue: httpMock }],
 			});
 			const service = runInInjectionContext(
 				injector,
 				() => new ContentService(),
 			);
-			autoMocker.withReturnObservable(httpMock.get, expected);
+			httpMock.get.and.returnValue(of(responseMock));
 
-			// Act
-			const actual = observableReader.readNextSynchronously(
-				service.get<Readonly<{ text: string }>>(typeMock, optionsMock),
-			);
+			// Ac
+			let response: PaginatedResponse<Content> | undefined;
+			service
+				.get<Readonly<{ text: string }>>(typeMock, optionsMock)
+				.subscribe((value) => (response = value))
+				.unsubscribe();
 
 			// Assert
-			expect(actual).toEqual(expected);
+			expect(response).toEqual(responseMock);
 		}));
 	});
 });

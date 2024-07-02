@@ -7,16 +7,16 @@ import {
 import { NEVER, Observable, TimeoutError } from 'rxjs';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { fakeAsync, tick } from '@angular/core/testing';
-import { provide } from '@shared/dependency-injection-interop';
 import { responseTimeout } from '../injection-tokens';
 import { responseTimeoutInterceptor } from './response-timeout-interceptor';
 
 describe(responseTimeoutInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
 		// Arrange
-		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>([
-			'pipe',
-		]);
+		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>(
+			'HttpEvent',
+			['pipe'],
+		);
 		const httpContextMock = jasmine.createSpyObj<HttpContext>(
 			HttpContext.name,
 			{ has: false },
@@ -27,7 +27,7 @@ describe(responseTimeoutInterceptor.name, () => {
 			{ context: httpContextMock },
 		);
 		const nextMock = jasmine
-			.createSpy<HttpHandlerFn>()
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 
 		// Act
@@ -39,9 +39,10 @@ describe(responseTimeoutInterceptor.name, () => {
 
 	it('should call next once with correct value when requestMarker exists', fakeAsync(() => {
 		// Arrange
-		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>([
-			'pipe',
-		]);
+		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>(
+			'HttpEvent',
+			['pipe'],
+		);
 		const httpContextMock = jasmine.createSpyObj<HttpContext>(
 			HttpContext.name,
 			{ has: true },
@@ -52,10 +53,10 @@ describe(responseTimeoutInterceptor.name, () => {
 			{ context: httpContextMock },
 		);
 		const nextMock = jasmine
-			.createSpy<HttpHandlerFn>()
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 		const injector = Injector.create({
-			providers: [provide(responseTimeout).useValue(chance.integer())],
+			providers: [{ provide: responseTimeout, useValue: 12345 }],
 		});
 
 		// Act
@@ -79,9 +80,11 @@ describe(responseTimeoutInterceptor.name, () => {
 			[],
 			{ context: httpContextMock },
 		);
-		const nextMock = jasmine.createSpy<HttpHandlerFn>().and.returnValue(NEVER);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(NEVER);
 		const injector = Injector.create({
-			providers: [provide(responseTimeout).useValue(timeoutMock)],
+			providers: [{ provide: responseTimeout, useValue: timeoutMock }],
 		});
 
 		// Act
@@ -108,9 +111,11 @@ describe(responseTimeoutInterceptor.name, () => {
 			[],
 			{ context: httpContextMock },
 		);
-		const nextMock = jasmine.createSpy<HttpHandlerFn>().and.returnValue(NEVER);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(NEVER);
 		const injector = Injector.create({
-			providers: [provide(responseTimeout).useValue(timeoutMock)],
+			providers: [{ provide: responseTimeout, useValue: timeoutMock }],
 		});
 
 		// Act

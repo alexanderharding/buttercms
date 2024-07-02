@@ -291,9 +291,7 @@ module.exports = tseslint.config(
 		rules: { '@typescript-eslint/unbound-method': 'error' },
 	},
 	{
-		files: [
-			'**/projects/glasses/src/app/shared/cms/types/with-fields-prefix.ts',
-		],
+		files: ['**/projects/ngx-buttercms/src/lib/types/with-fields-prefix.ts'],
 		rules: { '@typescript-eslint/no-explicit-any': 'off' },
 	},
 	{

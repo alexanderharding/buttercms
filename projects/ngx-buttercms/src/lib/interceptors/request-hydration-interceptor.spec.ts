@@ -10,7 +10,6 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { Preview } from '../enums';
 import { authToken, baseUrl, preview } from '../injection-tokens';
 import { requestHydrationInterceptor } from './request-hydration-interceptor';
-import { provide } from '@shared/dependency-injection-interop';
 
 describe(requestHydrationInterceptor.name, () => {
 	it('should skip formatting when requestMarker does not exist', fakeAsync(() => {
@@ -24,11 +23,12 @@ describe(requestHydrationInterceptor.name, () => {
 			['clone'],
 			{ context: httpContextMock },
 		);
-		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>([
-			'subscribe',
-		]);
+		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>(
+			'HttpEvent',
+			['subscribe'],
+		);
 		const nextMock = jasmine
-			.createSpy<HttpHandlerFn>()
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 
 		// Act
@@ -42,14 +42,14 @@ describe(requestHydrationInterceptor.name, () => {
 
 	it('should format request when requestMarker exists', fakeAsync(() => {
 		// Arrange
-		const authTokenMock = chance.guid();
-		const baseUrlMock = chance.url();
-		const previewMock = chance.pickone([Preview.off, Preview.on]);
+		const authTokenMock = 'lknasvjiehjaska565asckasl;545';
+		const baseUrlMock = 'https://www.example.com';
+		const previewMock = Preview.on;
 		const injector = Injector.create({
 			providers: [
-				provide(authToken).useValue(authTokenMock),
-				provide(baseUrl).useValue(baseUrlMock),
-				provide(preview).useValue(previewMock),
+				{ provide: authToken, useValue: authTokenMock },
+				{ provide: baseUrl, useValue: baseUrlMock },
+				{ provide: preview, useValue: previewMock },
 			],
 		});
 		const httpContextMock = jasmine.createSpyObj<HttpContext>(
@@ -63,13 +63,14 @@ describe(requestHydrationInterceptor.name, () => {
 		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
 			HttpRequest.name,
 			{ clone: clonedRequestMock },
-			{ url: chance.url(), context: httpContextMock },
+			{ url: 'https://www.example.com', context: httpContextMock },
 		);
-		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>([
-			'subscribe',
-		]);
+		const eventMock$ = jasmine.createSpyObj<Observable<HttpEvent<unknown>>>(
+			'HttpEvent',
+			['subscribe'],
+		);
 		const nextMock = jasmine
-			.createSpy<HttpHandlerFn>()
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 
 		// Act
