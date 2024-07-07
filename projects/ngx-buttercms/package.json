@@ -1,6 +1,6 @@
 {
   "name": "ngx-buttercms",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Angular wrapper for ButterCMS API",
   "author": {
     "name": "Alexander Harding",

@@ -48,4 +48,6 @@ export {
 	type ResponseTimeoutConfig,
 	type ResponseTimeoutError,
 	responseTimeoutConfig,
+	type Component,
+	type Components,
 } from './lib';

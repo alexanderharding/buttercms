@@ -31,3 +31,5 @@ export type { ResponseErrorHandlerFn } from './response-error-handler-fn';
 export type { ResponseCache } from './response-cache';
 export type { ResponseTimeoutConfig } from './response-timeout-config';
 export type { ResponseTimeoutError } from './response-timeout-error';
+export type { Component } from './component';
+export type { Components } from './components';
