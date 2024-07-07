@@ -7,7 +7,7 @@ import { responseTimeoutConfig } from '../injection-tokens';
 /**
  * @description Applies a timeout to requests marked with {@link requestMarker} with the provided {@link responseTimeout}.
  * @see {@link requestMarker}
- * @see {@link responseTimeout}
+ * @see {@link responseTimeoutConfig}
  * @see {@link HttpInterceptorFn}
  * @see {@link timeout}
  */
