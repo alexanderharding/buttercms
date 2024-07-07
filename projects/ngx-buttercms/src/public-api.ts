@@ -5,7 +5,6 @@ export {
 	type PageSearchOptions,
 	type PagesOptions,
 	type Pages,
-	type Order,
 	type Response,
 	type PaginatedResponse,
 	type PaginationMeta,
