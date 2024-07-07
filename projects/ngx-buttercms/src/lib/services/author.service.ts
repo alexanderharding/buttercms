@@ -13,7 +13,7 @@ import { requestMarker } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class AuthorService {
-	private readonly http = inject(HttpClient);
+	readonly #http = inject(HttpClient);
 
 	get<Slug extends string = string>(): Observable<Response<Authors<Slug>>>;
 	get<
@@ -48,7 +48,7 @@ export class AuthorService {
 		typeof slugOrOptions === 'string'
 			? (url += `${slugOrOptions}/`)
 			: (options = { ...options, ...slugOrOptions });
-		return this.http.get<Response<Author | Authors>>(url, {
+		return this.#http.get<Response<Author | Authors>>(url, {
 			params: new HttpParams({ fromObject: options, encoder }),
 			context: new HttpContext().set(requestMarker, void 0),
 		});

@@ -7,7 +7,7 @@ import { Content, ContentOptions, PaginatedResponse } from '../types';
 
 @Injectable({ providedIn: 'root' })
 export class ContentService {
-	private readonly http = inject(HttpClient);
+	readonly #http = inject(HttpClient);
 
 	get<
 		Fields extends Readonly<Record<keyof unknown, unknown>> = Readonly<
@@ -18,7 +18,7 @@ export class ContentService {
 		type: Type,
 		options?: ContentOptions<Fields>,
 	): Observable<PaginatedResponse<Content<Fields, Type>>> {
-		return this.http.get<PaginatedResponse<Content<Fields, Type>>>(
+		return this.#http.get<PaginatedResponse<Content<Fields, Type>>>(
 			'/content/',
 			{
 				params: new HttpParams({

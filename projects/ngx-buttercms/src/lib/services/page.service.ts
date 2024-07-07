@@ -16,7 +16,7 @@ import { Params } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class PageService {
-	private readonly http = inject(HttpClient);
+	readonly #http = inject(HttpClient);
 
 	get<
 		Fields extends Readonly<Record<keyof unknown, unknown>> = Readonly<
@@ -47,7 +47,7 @@ export class PageService {
 		typeof slugOrOptions === 'string'
 			? (url += `${slugOrOptions}/`)
 			: (options = { ...options, ...slugOrOptions });
-		return this.http.get<Response<Page> | PaginatedResponse<Pages>>(url, {
+		return this.#http.get<Response<Page> | PaginatedResponse<Pages>>(url, {
 			params: new HttpParams({ fromObject: options, encoder }),
 			context: new HttpContext().set(requestMarker, void 0),
 		});
@@ -62,7 +62,7 @@ export class PageService {
 		query: string,
 		options?: PageSearchOptions<Type>,
 	): Observable<PaginatedResponse<Pages<Fields, Type>>> {
-		return this.http.get<PaginatedResponse<Pages<Fields, Type>>>(
+		return this.#http.get<PaginatedResponse<Pages<Fields, Type>>>(
 			'/pages/search/',
 			{
 				params: new HttpParams({ fromObject: { ...options, query }, encoder }),

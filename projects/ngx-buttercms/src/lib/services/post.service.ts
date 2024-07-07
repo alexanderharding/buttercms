@@ -14,7 +14,7 @@ import { requestMarker } from '../constants';
 
 @Injectable({ providedIn: 'root' })
 export class PostService {
-	private readonly http = inject(HttpClient);
+	readonly #http = inject(HttpClient);
 
 	get<
 		Slug extends string = string,
@@ -42,7 +42,7 @@ export class PostService {
 		typeof slugOrOptions === 'string'
 			? (url += `${slugOrOptions}/`)
 			: (options = slugOrOptions);
-		return this.http.get<Response<Post> | PaginatedResponse<Posts>>(url, {
+		return this.#http.get<Response<Post> | PaginatedResponse<Posts>>(url, {
 			params: new HttpParams({ fromObject: options, encoder }),
 			context: new HttpContext().set(requestMarker, void 0),
 		});
@@ -57,7 +57,7 @@ export class PostService {
 		query: string,
 		options?: PostSearchOptions,
 	): Observable<Response<Posts<Slug, AuthorSlug, TagSlug, CategorySlug>>> {
-		return this.http.get<
+		return this.#http.get<
 			Response<Posts<Slug, AuthorSlug, TagSlug, CategorySlug>>
 		>('/posts/search/', {
 			params: new HttpParams({ fromObject: { ...options, query }, encoder }),
