@@ -29,3 +29,5 @@ export type { Response } from './response';
 export type { PaginatedResponse } from './paginated-response';
 export type { ResponseErrorHandlerFn } from './response-error-handler-fn';
 export type { ResponseCache } from './response-cache';
+export type { ResponseTimeoutConfig } from './response-timeout-config';
+export type { ResponseTimeoutError } from './response-timeout-error';

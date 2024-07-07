@@ -26,7 +26,6 @@ export {
 	responseTimeoutInterceptor,
 	transferStateInterceptor,
 	responseErrorHandler,
-	responseTimeout,
 	type IdentityMeta,
 	ContentService,
 	type Author,
@@ -46,4 +45,7 @@ export {
 	type PostsOptions,
 	PostService,
 	Preview,
+	type ResponseTimeoutConfig,
+	type ResponseTimeoutError,
+	responseTimeoutConfig,
 } from './lib';

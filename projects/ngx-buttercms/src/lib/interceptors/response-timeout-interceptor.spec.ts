@@ -7,8 +7,9 @@ import {
 import { NEVER, Observable, TimeoutError } from 'rxjs';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { fakeAsync, tick } from '@angular/core/testing';
-import { responseTimeout } from '../injection-tokens';
+import { responseTimeoutConfig } from '../injection-tokens';
 import { responseTimeoutInterceptor } from './response-timeout-interceptor';
+import { ResponseTimeoutError } from '../types';
 
 describe(responseTimeoutInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
@@ -56,7 +57,9 @@ describe(responseTimeoutInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 		const injector = Injector.create({
-			providers: [{ provide: responseTimeout, useValue: 12345 }],
+			providers: [
+				{ provide: responseTimeoutConfig, useValue: { each: 123456 } },
+			],
 		});
 
 		// Act
@@ -84,19 +87,22 @@ describe(responseTimeoutInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(NEVER);
 		const injector = Injector.create({
-			providers: [{ provide: responseTimeout, useValue: timeoutMock }],
+			providers: [
+				{ provide: responseTimeoutConfig, useValue: { each: timeoutMock } },
+			],
 		});
 
 		// Act
-		let error: unknown;
+		let error: ResponseTimeoutError | undefined;
 		const subscription = runInInjectionContext(injector, () =>
 			responseTimeoutInterceptor(requestMock, nextMock),
-		).subscribe({ error: (e: unknown) => (error = e) });
+		).subscribe({ error: (value: ResponseTimeoutError) => (error = value) });
 		tick(timeoutMock);
 		subscription.unsubscribe();
 
 		// Assert
 		expect(error).toEqual(jasmine.any(TimeoutError));
+		expect(error?.info?.meta).toEqual(requestMock);
 	}));
 
 	it('should not apply timeout when requestMarker does not exist', fakeAsync(() => {
@@ -115,7 +121,9 @@ describe(responseTimeoutInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(NEVER);
 		const injector = Injector.create({
-			providers: [{ provide: responseTimeout, useValue: timeoutMock }],
+			providers: [
+				{ provide: responseTimeoutConfig, useValue: { each: timeoutMock } },
+			],
 		});
 
 		// Act
