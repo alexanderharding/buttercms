@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { baseUrl, preview, authToken } from '../injection-tokens';
-import { requestMarker } from '../constants/request-marker';
+import { requestMarker } from '../constants';
 
 /**
  * @description Hydrates requests marked with {@link requestMarker} with the provided {@link baseUrl}, {@link preview}, and {@link authToken}.

@@ -3,7 +3,7 @@ import {
 	HttpResponse,
 	HttpStatusCode,
 } from '@angular/common/http';
-import { requestMarker } from '../constants/request-marker';
+import { requestMarker } from '../constants';
 import {
 	PLATFORM_ID,
 	TransferState,

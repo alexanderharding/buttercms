@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { fakeAsync } from '@angular/core/testing';
 import { responseErrorHandlerInterceptor } from './response-error-handler-interceptor';
-import { responseErrorHandler } from '../constants/response-error-handler';
+import { responseErrorHandler } from '../constants';
 import { ResponseErrorHandlerFn } from '../types';
 
 describe(responseErrorHandlerInterceptor.name, () => {

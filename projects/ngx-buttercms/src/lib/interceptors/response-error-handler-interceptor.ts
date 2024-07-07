@@ -1,8 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { requestMarker } from '../constants/request-marker';
+import { requestMarker, responseErrorHandler } from '../constants';
 import { catchError, identity } from 'rxjs';
 import { Injector, inject, runInInjectionContext } from '@angular/core';
-import { responseErrorHandler } from '../constants/response-error-handler';
 
 /**
  * @description Catches and handles errors for requests marked with {@link requestMarker} with the provided {@link responseErrorHandler} from within an injection context.

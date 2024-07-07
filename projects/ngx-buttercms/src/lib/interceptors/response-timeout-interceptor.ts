@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { identity, timeout } from 'rxjs';
 import { inject } from '@angular/core';
-import { requestMarker } from '../constants/request-marker';
+import { requestMarker } from '../constants';
 import { responseTimeoutConfig } from '../injection-tokens';
 
 /**
