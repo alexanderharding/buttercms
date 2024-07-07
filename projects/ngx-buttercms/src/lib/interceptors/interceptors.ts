@@ -12,7 +12,6 @@ import { responseCacheInterceptor } from './response-cache-interceptor';
  * @see {@link responseTimeoutInterceptor}
  * @see {@link HttpInterceptorFn}
  */
-// The order of these matters
 export const interceptors = [
 	responseErrorHandlerInterceptor,
 	requestHydrationInterceptor,

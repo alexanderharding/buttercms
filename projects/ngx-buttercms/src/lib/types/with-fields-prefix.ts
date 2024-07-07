@@ -1,6 +1,3 @@
-/**
- * @description This is a complex utility type that is meant to support a niche feature. Do NOT use directly.
- */
 type FlatKeys<
 	T,
 	Prefix extends string = '',
@@ -17,9 +14,6 @@ type FlatKeys<
 			}[keyof T]
 		: Prefix;
 
-/**
- * @description This is a complex utility type that is meant to support a niche feature. Do NOT use directly.
- */
 type FlatValue<Type, Key> = Key extends `${infer I}.${infer J}`
 	? I extends keyof Type
 		? FlatValue<NonNullable<Type[I]>, J>
