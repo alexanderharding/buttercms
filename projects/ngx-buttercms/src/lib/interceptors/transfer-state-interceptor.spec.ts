@@ -1,6 +1,7 @@
 import { transferStateInterceptor } from './transfer-state-interceptor';
 import {
 	HttpContext,
+	HttpEvent,
 	HttpHandlerFn,
 	HttpRequest,
 	HttpResponse,
@@ -14,41 +15,47 @@ import {
 	runInInjectionContext,
 } from '@angular/core';
 import { fakeAsync } from '@angular/core/testing';
-import { provide } from '@shared/dependency-injection-interop';
-import { autoMocker, observableReader } from '@shared/testing';
-import { requestMarker } from '../constants/request-marker';
-import { PaginatedResponse, Response } from '../types';
+import { PaginatedResponse } from '../types';
+import { of } from 'rxjs';
 
 describe(transferStateInterceptor.name, () => {
 	it(`should call next once with correct value when requestMarker does not exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(nextMock).toHaveBeenCalledOnceWith(requestMock);
@@ -57,46 +64,44 @@ describe(transferStateInterceptor.name, () => {
 	it(`should call ${TransferState.prototype.set.name} method on ${TransferState.name} once with correct value when requestMarker does exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false, response is successful, and is on server`, fakeAsync(() => {
 		// Arrange
 		const platformIdMock = 'server';
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(false);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).toHaveBeenCalledOnceWith(
@@ -108,46 +113,43 @@ describe(transferStateInterceptor.name, () => {
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false, response is successful, and is on browser`, fakeAsync(() => {
 		// Arrange
 		const platformIdMock = 'browser';
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
-
+		transferStateMock.hasKey.and.returnValue(false);
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -155,47 +157,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true, response is successful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -203,47 +203,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true, and response is unsuccessful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.NotFound,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -251,47 +249,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does not exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true, and response is successful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -299,47 +295,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does not exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true, and response is unsuccessful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.NotFound,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -347,47 +341,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does not exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false, and response is successful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(false);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -395,47 +387,45 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.set.name} method on ${TransferState.name} when requestMarker does not exist, ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false, and response is unsuccessful`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
 		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.NotFound,
 		});
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(false);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.set).not.toHaveBeenCalled();
@@ -443,67 +433,84 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should emit correct value when requestMarker does not exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const expected = autoMocker.mock(HttpResponse);
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = new HttpResponse({
+			body: {},
+			status: HttpStatusCode.NotFound,
+		});
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, expected);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		const actual = observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		let response: HttpEvent<unknown> | undefined;
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe((value) => (response = value))
+			.unsubscribe();
 
 		// Assert
-		expect(actual).toEqual(expected);
+		expect(response).toEqual(responseMock);
 	}));
 
 	it(`should not call ${TransferState.prototype.hasKey.name} method on ${TransferState.name} when requestMarker does not exist`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.hasKey).not.toHaveBeenCalled();
@@ -511,33 +518,41 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should not call ${TransferState.prototype.get.name} method on ${TransferState.name} when requestMarker does not exist`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: false },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.get, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			false,
-		);
+		transferStateMock.get.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.get).not.toHaveBeenCalled();
@@ -545,32 +560,40 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should call ${TransferState.prototype.hasKey.name} method on ${TransferState.name} once with correct value when requestMarker does exist`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.hasKey).toHaveBeenCalledOnceWith(
@@ -580,33 +603,41 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should call ${TransferState.prototype.get.name} method on ${TransferState.name} once with correct value when requestMarker does exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(transferStateMock.get).toHaveBeenCalledOnceWith(
@@ -617,81 +648,90 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should emit correct value when requestMarker does exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const bodyMock = chance.pickone<Response | PaginatedResponse>([
-			{ data: [] },
-			{
-				data: [],
-				meta: {
-					count: chance.integer({ min: 0 }),
-					next_page: 3,
-					previous_page: 1,
-				},
-			},
-		]);
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const expected = new HttpResponse({
+		const platformIdMock = 'server';
+		const bodyMock: PaginatedResponse = {
+			data: {},
+			meta: { count: 20, next_page: 3, previous_page: 1 },
+		};
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = new HttpResponse({
 			body: bodyMock,
 			status: HttpStatusCode.Ok,
 		});
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
+
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnValue(transferStateMock.get, bodyMock);
+		transferStateMock.hasKey.and.returnValue(true);
+		transferStateMock.get.and.returnValue(bodyMock);
 
 		// Act
-		const actual = observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		let event: HttpEvent<unknown> | undefined;
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe((value) => (event = value))
+			.unsubscribe();
 
 		// Assert
-		expect(actual).toEqual(expected);
+		expect(event).toEqual(responseMock);
 	}));
 
 	it(`should call next once with correct value when requestMarker does exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = jasmine.createSpyObj<HttpResponse<unknown>>(
+			HttpResponse.name,
+			['clone'],
+		);
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		const responseMock = autoMocker.mock(HttpResponse);
-		autoMocker.withReturnObservable(nextMock, responseMock);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(false);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(nextMock).toHaveBeenCalledOnceWith(requestMock);
@@ -699,65 +739,78 @@ describe(transferStateInterceptor.name, () => {
 
 	it(`should emit correct value when requestMarker does exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns false`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
-		const expected = autoMocker.mock(HttpResponse);
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const responseMock = new HttpResponse({
+			body: {},
+			status: HttpStatusCode.NotFound,
+		});
+		const nextMock = jasmine
+			.createSpy<HttpHandlerFn>('HttpHandlerFn')
+			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnObservable(nextMock, expected);
-		autoMocker.withReturnValue(transferStateMock.hasKey, false);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(false);
 
 		// Act
-		const actual = observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		let event: HttpEvent<unknown> | undefined;
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe((value) => (event = value))
+			.unsubscribe();
 
 		// Assert
-		expect(actual).toEqual(expected);
+		expect(event).toEqual(responseMock);
 	}));
 
 	it(`should not call next when requestMarker does exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
 		// Arrange
-		const platformIdMock = chance.string();
-		const httpContextMock = autoMocker.mock(HttpContext);
-		const requestMock = autoMocker.mock(HttpRequest);
-		const transferStateMock = autoMocker.mock(TransferState);
-		const nextMock = autoMocker.createSpy<HttpHandlerFn>();
+		const platformIdMock = 'server';
+		const httpContextMock = jasmine.createSpyObj<HttpContext>(
+			HttpContext.name,
+			{ has: true },
+		);
+		const requestMock = jasmine.createSpyObj<HttpRequest<unknown>>(
+			HttpRequest.name,
+			['clone'],
+			{ context: httpContextMock },
+		);
+		const transferStateMock = jasmine.createSpyObj<TransferState>(
+			TransferState.name,
+			['hasKey', 'get', 'set'],
+		);
+		const nextMock = jasmine.createSpy<HttpHandlerFn>('HttpHandlerFn');
 		const injector = Injector.create({
 			providers: [
-				provide(TransferState).useValue(transferStateMock),
-				provide(PLATFORM_ID).useValue(platformIdMock),
+				{ provide: TransferState, useValue: transferStateMock },
+				{ provide: PLATFORM_ID, useValue: platformIdMock },
 			],
 		});
-		(requestMock.context as unknown) = httpContextMock;
-		autoMocker.withReturnValue(transferStateMock.hasKey, true);
-		autoMocker.withReturnForArguments(
-			httpContextMock.has,
-			[requestMarker],
-			true,
-		);
+		transferStateMock.hasKey.and.returnValue(true);
 
 		// Act
-		observableReader.readNextSynchronously(
-			runInInjectionContext(injector, () =>
-				transferStateInterceptor(requestMock, nextMock),
-			),
-		);
+		runInInjectionContext(injector, () =>
+			transferStateInterceptor(requestMock, nextMock),
+		)
+			.subscribe()
+			.unsubscribe();
 
 		// Assert
 		expect(nextMock).not.toHaveBeenCalled();
