@@ -10,6 +10,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { responseTimeoutConfig } from '../injection-tokens';
 import { responseTimeoutInterceptor } from './response-timeout-interceptor';
 import { ResponseTimeoutError } from '../types';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(responseTimeoutInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
@@ -57,9 +58,7 @@ describe(responseTimeoutInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(eventMock$);
 		const injector = Injector.create({
-			providers: [
-				{ provide: responseTimeoutConfig, useValue: { each: 123456 } },
-			],
+			providers: [provide(responseTimeoutConfig).useValue({ each: 123456 })],
 		});
 
 		// Act
@@ -88,7 +87,7 @@ describe(responseTimeoutInterceptor.name, () => {
 			.and.returnValue(NEVER);
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseTimeoutConfig, useValue: { each: timeoutMock } },
+				provide(responseTimeoutConfig).useValue({ each: timeoutMock }),
 			],
 		});
 
@@ -122,7 +121,7 @@ describe(responseTimeoutInterceptor.name, () => {
 			.and.returnValue(NEVER);
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseTimeoutConfig, useValue: { each: timeoutMock } },
+				provide(responseTimeoutConfig).useValue({ each: timeoutMock }),
 			],
 		});
 

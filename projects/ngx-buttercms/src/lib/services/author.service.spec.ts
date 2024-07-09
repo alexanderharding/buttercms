@@ -12,6 +12,7 @@ import {
 import { fakeAsync } from '@angular/core/testing';
 import { httpParameterCodec as encoder } from '../constants';
 import { of } from 'rxjs';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(AuthorService.name, () => {
 	describe(AuthorService.prototype.get.name, () => {
@@ -21,7 +22,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -48,7 +49,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -73,7 +74,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -101,7 +102,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -127,7 +128,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -153,7 +154,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -179,7 +180,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -213,7 +214,7 @@ describe(AuthorService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,

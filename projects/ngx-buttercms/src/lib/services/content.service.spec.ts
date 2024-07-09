@@ -5,6 +5,7 @@ import { Content, ContentOptions, PaginatedResponse } from '../types';
 import { fakeAsync } from '@angular/core/testing';
 import { ContentService } from './content.service';
 import { of } from 'rxjs';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(ContentService.name, () => {
 	describe(ContentService.prototype.get.name, () => {
@@ -15,7 +16,7 @@ describe(ContentService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -44,7 +45,7 @@ describe(ContentService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -74,7 +75,7 @@ describe(ContentService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,
@@ -115,7 +116,7 @@ describe(ContentService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(
 				injector,

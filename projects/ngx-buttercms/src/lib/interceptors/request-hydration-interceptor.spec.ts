@@ -10,6 +10,7 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { Preview } from '../enums';
 import { authToken, baseUrl, preview } from '../injection-tokens';
 import { requestHydrationInterceptor } from './request-hydration-interceptor';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(requestHydrationInterceptor.name, () => {
 	it('should skip formatting when requestMarker does not exist', fakeAsync(() => {
@@ -47,9 +48,9 @@ describe(requestHydrationInterceptor.name, () => {
 		const previewMock = Preview.on;
 		const injector = Injector.create({
 			providers: [
-				{ provide: authToken, useValue: authTokenMock },
-				{ provide: baseUrl, useValue: baseUrlMock },
-				{ provide: preview, useValue: previewMock },
+				provide(authToken).useValue(authTokenMock),
+				provide(baseUrl).useValue(baseUrlMock),
+				provide(preview).useValue(previewMock),
 			],
 		});
 		const httpContextMock = jasmine.createSpyObj<HttpContext>(

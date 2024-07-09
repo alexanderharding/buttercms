@@ -14,6 +14,7 @@ import { fakeAsync } from '@angular/core/testing';
 import { responseErrorHandlerInterceptor } from './response-error-handler-interceptor';
 import { responseErrorHandler } from '../constants';
 import { ResponseErrorHandlerFn } from '../types';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(responseErrorHandlerInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
@@ -40,8 +41,8 @@ describe(responseErrorHandlerInterceptor.name, () => {
 		const injectorMock = jasmine.createSpyObj<Injector>(Injector.name, ['get']);
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseErrorHandler, useValue: errorHandlerMock },
-				{ provide: Injector, useValue: injectorMock },
+				provide(responseErrorHandler).useValue(errorHandlerMock),
+				provide(Injector).useValue(injectorMock),
 			],
 		});
 
@@ -78,8 +79,8 @@ describe(responseErrorHandlerInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseErrorHandler, useValue: errorHandlerMock },
-				{ provide: Injector, useValue: injectorMock },
+				provide(responseErrorHandler).useValue(errorHandlerMock),
+				provide(Injector).useValue(injectorMock),
 			],
 		});
 
@@ -116,8 +117,8 @@ describe(responseErrorHandlerInterceptor.name, () => {
 			.and.returnValue(throwError(() => errorMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseErrorHandler, useValue: errorHandlerMock },
-				{ provide: Injector, useValue: injectorMock },
+				provide(responseErrorHandler).useValue(errorHandlerMock),
+				provide(Injector).useValue(injectorMock),
 			],
 		});
 
@@ -157,8 +158,8 @@ describe(responseErrorHandlerInterceptor.name, () => {
 		const injectorMock = jasmine.createSpyObj<Injector>(Injector.name, ['get']);
 		const injector = Injector.create({
 			providers: [
-				{ provide: responseErrorHandler, useValue: errorHandlerMock },
-				{ provide: Injector, useValue: injectorMock },
+				provide(responseErrorHandler).useValue(errorHandlerMock),
+				provide(Injector).useValue(injectorMock),
 			],
 		});
 

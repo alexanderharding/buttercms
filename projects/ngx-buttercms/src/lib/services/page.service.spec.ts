@@ -13,6 +13,7 @@ import {
 	PaginatedResponse,
 } from '../types';
 import { of } from 'rxjs';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(PageService.name, () => {
 	describe(PageService.prototype.get.name, () => {
@@ -23,7 +24,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(undefined));
@@ -49,7 +50,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(undefined));
@@ -75,7 +76,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(undefined));
@@ -104,7 +105,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(undefined));
@@ -136,7 +137,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -172,7 +173,7 @@ describe(PageService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PageService());
 			httpMock.get.and.returnValue(of(responseMock));

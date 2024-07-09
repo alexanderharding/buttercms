@@ -13,6 +13,7 @@ import {
 	Response,
 } from '../types';
 import { of } from 'rxjs';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(PostService.name, () => {
 	describe(PostService.prototype.get.name, () => {
@@ -28,7 +29,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -58,7 +59,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -83,7 +84,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -107,7 +108,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -134,7 +135,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));
@@ -166,7 +167,7 @@ describe(PostService.name, () => {
 				'get',
 			]);
 			const injector = Injector.create({
-				providers: [{ provide: HttpClient, useValue: httpMock }],
+				providers: [provide(HttpClient).useValue(httpMock)],
 			});
 			const service = runInInjectionContext(injector, () => new PostService());
 			httpMock.get.and.returnValue(of(responseMock));

@@ -11,6 +11,7 @@ import { fakeAsync } from '@angular/core/testing';
 import { responseCacheInterceptor } from './response-cache-interceptor';
 import { responseCache } from '../injection-tokens';
 import { ResponseCache } from '../types';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(responseCacheInterceptor.name, () => {
 	it('should call next once with correct value when requestMarker does not exist', fakeAsync(() => {
@@ -91,7 +92,7 @@ describe(responseCacheInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
-			providers: [{ provide: responseCache, useValue: cachedResponseMock }],
+			providers: [provide(responseCache).useValue(cachedResponseMock)],
 		});
 		cachedResponseMock.get.and.returnValue(of(responseMock));
 
@@ -135,7 +136,7 @@ describe(responseCacheInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
-			providers: [{ provide: responseCache, useValue: cacheMock }],
+			providers: [provide(responseCache).useValue(cacheMock)],
 		});
 		cacheMock.has.and.returnValue(false);
 		cacheMock.get.and.returnValue(of(cachedResponseMock));
@@ -190,7 +191,7 @@ describe(responseCacheInterceptor.name, () => {
 			.createSpy<HttpHandlerFn>('HttpHandlerFn')
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
-			providers: [{ provide: responseCache, useValue: cacheMock }],
+			providers: [provide(responseCache).useValue(cacheMock)],
 		});
 		cacheMock.get.and.returnValue(of(cachedResponseMock));
 		cacheMock.has.and.returnValue(true);

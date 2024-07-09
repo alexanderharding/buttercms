@@ -9,6 +9,12 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "ngx-dependency-injection-interop": [
+        "./dist/ngx-dependency-injection-interop"
+      ],
+      "ngx-buttercms": ["./dist/ngx-buttercms"]
+    },
     "skipLibCheck": true,
     "esModuleInterop": true,
     "sourceMap": true,

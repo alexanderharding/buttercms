@@ -17,6 +17,7 @@ import {
 import { fakeAsync } from '@angular/core/testing';
 import { PaginatedResponse } from '../types';
 import { of } from 'rxjs';
+import { provide } from 'ngx-dependency-injection-interop';
 
 describe(transferStateInterceptor.name, () => {
 	it(`should call next once with correct value when requestMarker does not exist and ${TransferState.prototype.hasKey.name} method on ${TransferState.name} returns true`, fakeAsync(() => {
@@ -44,8 +45,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -90,8 +91,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -139,8 +140,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -184,8 +185,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -230,8 +231,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -276,8 +277,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -322,8 +323,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -368,8 +369,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -414,8 +415,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -456,8 +457,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -499,8 +500,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -541,8 +542,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.get.and.returnValue(true);
@@ -583,8 +584,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 
@@ -626,8 +627,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -676,8 +677,8 @@ describe(transferStateInterceptor.name, () => {
 
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);
@@ -720,8 +721,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -762,8 +763,8 @@ describe(transferStateInterceptor.name, () => {
 			.and.returnValue(of(responseMock));
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(false);
@@ -799,8 +800,8 @@ describe(transferStateInterceptor.name, () => {
 		const nextMock = jasmine.createSpy<HttpHandlerFn>('HttpHandlerFn');
 		const injector = Injector.create({
 			providers: [
-				{ provide: TransferState, useValue: transferStateMock },
-				{ provide: PLATFORM_ID, useValue: platformIdMock },
+				provide(TransferState).useValue(transferStateMock),
+				provide(PLATFORM_ID).useValue(platformIdMock),
 			],
 		});
 		transferStateMock.hasKey.and.returnValue(true);

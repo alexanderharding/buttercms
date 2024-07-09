@@ -1,7 +1,7 @@
 {
-  "name": "ngx-buttercms",
-  "version": "1.2.0",
-  "description": "Angular wrapper for ButterCMS API",
+  "name": "ngx-dependency-injection-interop",
+  "version": "1.0.0",
+  "description": "Angular dependency injection interop",
   "author": {
     "name": "Alexander Harding",
     "email": "harding1996@gmail.com"
@@ -16,15 +16,13 @@
   },
   "keywords": [
     "angular",
-    "buttercms",
-    "cms",
     "typescript",
     "javascript"
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@angular/common": "^18.0.5",
-    "@angular/core": "^18.0.5"
+    "@angular/common": "^18.0.0",
+    "@angular/core": "^18.0.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
