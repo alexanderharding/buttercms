@@ -3,6 +3,8 @@ const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
+const customPlugin = require('./linter/plugin');
 
 module.exports = tseslint.config(
 	{
@@ -12,6 +14,7 @@ module.exports = tseslint.config(
 			...tseslint.configs.recommended,
 			...tseslint.configs.stylistic,
 			...angular.configs.tsRecommended,
+			eslintPluginPrettierRecommended,
 		],
 		processor: angular.processInlineTemplates,
 		languageOptions: {
@@ -307,5 +310,13 @@ module.exports = tseslint.config(
 			// eslintPluginPrettierRecommended,
 		],
 		rules: {},
+	},
+	{
+		files: ['**/*.ts'],
+		ignores: [
+			'**/projects/ngx-dependency-injection-interop/src/lib/functions/provide.spec.ts',
+		],
+		plugins: { custom: customPlugin },
+		rules: { 'custom/no-untyped-provider': 'error' },
 	},
 );
