@@ -82,6 +82,46 @@
           }
         }
       }
+    },
+    "ngx-campaigns": {
+      "projectType": "library",
+      "root": "projects/ngx-campaigns",
+      "sourceRoot": "projects/ngx-campaigns/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-campaigns/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-campaigns/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-campaigns/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/ngx-campaigns/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-campaigns/**/*.ts",
+              "projects/ngx-campaigns/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-campaigns/eslint.config.js"
+          }
+        }
+      }
     }
   },
   "cli": {
