@@ -56,7 +56,6 @@ export class CampaignService
 		try {
 			// Local storage is not available in some environments or when quotas are exceeded.
 			return JSON.parse(
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				globalThis.localStorage.getItem(this.#storageKey) || '[]',
 			) as ReadonlyArray<[key: string, value: string]>;
 		} catch {
