@@ -1,6 +1,27 @@
 {
   "name": "ngx-campaigns",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "Angular A/B testing",
+  "author": {
+    "name": "Alexander Harding",
+    "email": "harding1996@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexanderharding/buttercms"
+  },
+  "bugs": {
+    "url": "https://github.com/alexanderharding/buttercms/issues",
+    "email": "harding1996@gmail.com"
+  },
+  "keywords": [
+    "angular",
+    "typescript",
+    "javascript",
+    "ab-testing",
+    "campaigns"
+  ],
+  "license": "MIT",
   "peerDependencies": {
     "@angular/common": "^18.0.0",
     "@angular/core": "^18.0.0"
