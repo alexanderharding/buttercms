@@ -3,27 +3,27 @@ import { fakeAsync } from '@angular/core/testing';
 
 describe(pickOne.name, () => {
 	it('distribution - 1:1 w/ weights', () => {
-		testCampaignDistribution([1, 1]);
+		testDistribution([1, 1]);
 	});
 
 	it('distribution - 1:1 w/o weights', () => {
-		testCampaignDistribution();
+		testDistribution();
 	});
 
 	it('distribution - 9:1', () => {
-		testCampaignDistribution([9, 1]);
+		testDistribution([9, 1]);
 	});
 
 	it('distribution - 1:9', () => {
-		testCampaignDistribution([1, 9]);
+		testDistribution([1, 9]);
 	});
 
 	it('distribution - 0:1', () => {
-		testCampaignDistribution([0, 1], true);
+		testDistribution([0, 1], true);
 	});
 
 	it('distribution - 1:0', () => {
-		testCampaignDistribution([1, 0], true);
+		testDistribution([1, 0], true);
 	});
 
 	it("should throw when weights include 'NaN'", fakeAsync(() => {
@@ -89,20 +89,18 @@ describe(pickOne.name, () => {
 	}));
 });
 
-function testCampaignDistribution(
+function testDistribution(
 	weights?: Readonly<[weightA: number, weightB: number]>,
 	exact = false,
 ): void {
 	const [weightA = 1, weightB = 1] = weights ?? [];
 	const options = ['A', 'B'] as const;
-	const results = new Map([
-		['A' as const, 0],
-		['B' as const, 0],
-	]);
+	const results = new Map(options.map((option) => [option, 0]));
 
 	const trials = 100_000;
 	for (let i = 0; i < trials; i++) {
 		const option = pickOne(options, weights);
+		if (!results.has(option)) fail(`Invalid option: ${option}`);
 		results.set(option, results.get(option)! + 1);
 	}
 
