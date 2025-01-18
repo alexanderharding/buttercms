@@ -1,5 +1,5 @@
-import type { BroadcastChannelConfig } from './broadcast-channel-config';
 import { BroadcastChannelSubject } from './broadcast-channel-subject';
+import type { BroadcastChannelSubjectConfig } from './broadcast-channel-subject-config';
 import type { DefaultIn } from './default-in';
 
 /**
@@ -9,13 +9,13 @@ export function broadcastChannel<Value = DefaultIn>(
 	name: string,
 ): BroadcastChannelSubject<Value, Value>;
 export function broadcastChannel<In = DefaultIn, Out = In>(
-	config: BroadcastChannelConfig<In, Out>,
+	config: BroadcastChannelSubjectConfig<In, Out>,
 ): BroadcastChannelSubject<In, Out>;
 export function broadcastChannel<In = DefaultIn, Out = In>(
-	nameOrConfig: string | BroadcastChannelConfig<In, Out>,
+	nameOrConfig: string | BroadcastChannelSubjectConfig<In, Out>,
 ): BroadcastChannelSubject<In, Out>;
 export function broadcastChannel<In = DefaultIn, Out = In>(
-	nameOrConfig: string | BroadcastChannelConfig<In, Out>,
+	nameOrConfig: string | BroadcastChannelSubjectConfig<In, Out>,
 ): BroadcastChannelSubject<In, Out> {
 	return new BroadcastChannelSubject<In, Out>(nameOrConfig);
 }
