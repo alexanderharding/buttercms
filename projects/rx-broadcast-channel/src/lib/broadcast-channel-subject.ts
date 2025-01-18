@@ -5,7 +5,7 @@ import {
 	type SubscriptionLike,
 } from 'rxjs';
 import type { BroadcastChannelSubjectConfig } from './broadcast-channel-subject-config';
-import { DefaultIn } from './default-in';
+import type { DefaultIn } from './default-in';
 
 /**
  * Wrapper around the {@linkcode BroadcastChannel} object provided by the browser.

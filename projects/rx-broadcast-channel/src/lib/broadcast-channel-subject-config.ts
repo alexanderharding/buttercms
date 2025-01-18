@@ -1,4 +1,6 @@
-export interface BroadcastChannelSubjectConfig<In = void, Out = In> {
+import type { DefaultIn } from './default-in';
+
+export interface BroadcastChannelSubjectConfig<In = DefaultIn, Out = In> {
 	/**
 	 * The name of the underlying {@linkcode BroadcastChannel}.
 	 */

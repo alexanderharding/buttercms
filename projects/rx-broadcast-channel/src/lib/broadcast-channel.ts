@@ -1,6 +1,6 @@
-import { BroadcastChannelConfig } from './broadcast-channel-config';
+import type { BroadcastChannelConfig } from './broadcast-channel-config';
 import { BroadcastChannelSubject } from './broadcast-channel-subject';
-import { DefaultIn } from './default-in';
+import type { DefaultIn } from './default-in';
 
 /**
  * @usage Construct a {@linkcode BroadcastChannelSubject} with a name or configuration.
