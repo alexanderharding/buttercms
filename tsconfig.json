@@ -14,7 +14,8 @@
         "./dist/ngx-dependency-injection-interop"
       ],
       "ngx-campaigns": ["./dist/ngx-campaigns"],
-      "ngx-buttercms": ["./dist/ngx-buttercms"]
+      "ngx-buttercms": ["./dist/ngx-buttercms"],
+      "rx-broadcast-channel": ["./dist/rx-broadcast-channel"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,
