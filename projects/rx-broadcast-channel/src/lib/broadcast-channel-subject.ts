@@ -39,6 +39,8 @@ export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 	extends Observable<Out>
 	implements Observer<In>, SubscriptionLike
 {
+	readonly [Symbol.toStringTag] = 'BroadcastChannelSubject';
+
 	readonly #channel: BroadcastChannel;
 	#output = new Subject<Out>();
 	#closed = false;
