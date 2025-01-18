@@ -14,7 +14,7 @@ export interface BroadcastChannelSubjectConfig<In = DefaultIn, Out = In> {
 }
 
 /** @internal */
-const defaultTransform: TransformFn<unknown, unknown> = ({ data }) => data;
+const defaultTransform: TransformFn<unknown> = (event) => event.data;
 
 /** @internal */
 // This is a little hacky, but ultimately it's up to the consumer of the BroadcastChannelSubject
@@ -25,7 +25,7 @@ export function normalize<In = DefaultIn, Out = In>(
 export function normalize(
 	nameOrConfig: string | BroadcastChannelSubjectConfig<unknown, unknown>,
 ): Required<BroadcastChannelSubjectConfig<unknown, unknown>> {
-	const base = { transform: defaultTransform };
+	const base = { transform: defaultTransform } as const;
 	return typeof nameOrConfig === 'string'
 		? { name: nameOrConfig, ...base }
 		: { ...base, ...nameOrConfig };
