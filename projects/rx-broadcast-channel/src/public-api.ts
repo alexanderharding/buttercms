@@ -1,6 +1,6 @@
 export {
 	broadcastChannel,
 	BroadcastChannelSubject,
-	type BroadcastChannelConfig,
 	type BroadcastChannelSubjectConfig,
+	type TransformFn,
 } from './lib';

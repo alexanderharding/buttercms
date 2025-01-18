@@ -3,8 +3,12 @@ import {
 	Observable,
 	type Observer,
 	type SubscriptionLike,
+	Subscribable,
 } from 'rxjs';
-import type { BroadcastChannelSubjectConfig } from './broadcast-channel-subject-config';
+import {
+	normalize as normalizeConfig,
+	type BroadcastChannelSubjectConfig,
+} from './broadcast-channel-subject-config';
 import type { DefaultIn } from './default-in';
 
 /**
@@ -16,12 +20,12 @@ import type { DefaultIn } from './default-in';
  * {@linkcode BroadcastChannel} objects (which may be in other windows, tabs, workers, or iframes) under the
  * same origin. {@linkcode BroadcastChannelSubject} accepts either a string with the channel name, or a
  * {@linkcode BroadcastChannelSubjectConfig} object for providing additional configuration, such as a
- * transformer function to customize how messages are processed.
+ * transform function to customize how messages are processed.
  *
  * When {@linkcode BroadcastChannelSubject} is created, it establishes a new {@linkcode BroadcastChannel} connection
  * with the specified name. Any messages posted to this channel by other {@linkcode BroadcastChannel} objects
  * will be emitted as values in the stream. By default, the raw message data is emitted, but you
- * can provide a custom `transformer` function in the config to transform the {@linkcode MessageEvent}
+ * can provide a custom `transform` function in the config to transform the {@linkcode MessageEvent}
  * before emission.
  *
  * If at any point there is an error in message processing or posting, the stream will error with
@@ -37,7 +41,7 @@ import type { DefaultIn } from './default-in';
  */
 export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 	extends Observable<Out>
-	implements Observer<In>, SubscriptionLike
+	implements Observer<In>, SubscriptionLike, Subscribable<Out>
 {
 	readonly [Symbol.toStringTag] = 'BroadcastChannelSubject';
 
@@ -48,15 +52,13 @@ export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 	constructor(nameOrConfig: string | BroadcastChannelSubjectConfig<In, Out>) {
 		super((subscriber) => this.#output.subscribe(subscriber));
 
-		const transformer = ensureTransformer(nameOrConfig);
-		this.#channel = new BroadcastChannel(
-			typeof nameOrConfig === 'string' ? nameOrConfig : nameOrConfig.name,
-		);
+		const { name, transform } = normalizeConfig(nameOrConfig);
+		this.#channel = new BroadcastChannel(name);
 		this.#channel.onmessage = (event: MessageEvent<In>) => {
 			try {
-				this.#output.next(transformer(event));
-			} catch (error) {
-				this.error(error);
+				this.#output.next(transform.call(this, event));
+			} catch (err) {
+				this.error(err);
 			}
 		};
 		this.#channel.onmessageerror = (error) => this.error(error);
@@ -77,6 +79,10 @@ export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 	 */
 	get closed(): boolean {
 		return this.#closed;
+	}
+
+	[Symbol.dispose](): void {
+		this.complete();
 	}
 
 	/**
@@ -143,17 +149,4 @@ export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 		this.#output = new Subject();
 		return previous;
 	}
-}
-
-// This is a little hacky, but ultimately it's up to the consumer of the BroadcastChannelSubject
-// to type `In` and `Out` correctly.
-function ensureTransformer<In = DefaultIn, Out = In>(
-	nameOrConfig: string | BroadcastChannelSubjectConfig<In, Out>,
-): (event: MessageEvent<In>) => Out;
-function ensureTransformer(
-	nameOrConfig: string | BroadcastChannelSubjectConfig<unknown, unknown>,
-): (event: MessageEvent<unknown>) => unknown {
-	return typeof nameOrConfig === 'string' || !nameOrConfig.transformer
-		? (event) => event.data
-		: nameOrConfig.transformer;
 }
