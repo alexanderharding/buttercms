@@ -112,6 +112,7 @@ export class BroadcastChannelSubject<In = DefaultIn, Out = In>
 	 * @see {@linkcode BroadcastChannel.close}
 	 */
 	complete(): void {
+		// Close the channel to dereference it and allow it to be garbage collected.
 		this.#channel.close();
 		this.#closed = true;
 		this.#output.complete();
