@@ -158,6 +158,126 @@
           }
         }
       }
+    },
+    "subscription": {
+      "projectType": "library",
+      "root": "projects/subscription",
+      "sourceRoot": "projects/subscription/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/subscription/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/subscription/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/subscription/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/subscription/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/subscription/**/*.ts",
+              "projects/subscription/**/*.html"
+            ],
+            "eslintConfig": "projects/subscription/eslint.config.js"
+          }
+        }
+      }
+    },
+    "subscriber": {
+      "projectType": "library",
+      "root": "projects/subscriber",
+      "sourceRoot": "projects/subscriber/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/subscriber/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/subscriber/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/subscriber/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/subscriber/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/subscriber/**/*.ts",
+              "projects/subscriber/**/*.html"
+            ],
+            "eslintConfig": "projects/subscriber/eslint.config.js"
+          }
+        }
+      }
+    },
+    "observable": {
+      "projectType": "library",
+      "root": "projects/observable",
+      "sourceRoot": "projects/observable/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/observable/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/observable/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/observable/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/observable/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/observable/**/*.ts",
+              "projects/observable/**/*.html"
+            ],
+            "eslintConfig": "projects/observable/eslint.config.js"
+          }
+        }
+      }
     }
   },
   "cli": {
