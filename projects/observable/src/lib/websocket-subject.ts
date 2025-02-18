@@ -1,7 +1,6 @@
 import { Subject } from './subject';
-import { subscribe, Observable } from './observable';
-import { Subscription, TeardownLogic } from 'subscription';
-import { Observer, Subscriber } from 'subscriber';
+import { Observable } from './observable';
+import { Observer } from 'subscriber';
 import { UnaryFunction } from './unary-function';
 
 export type WebSocketSubject<Value = unknown> = Subject<Value>;
@@ -31,9 +30,6 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 		this.#socket.onmessage = (event) => this.#delegate.next(event.data);
 		this.#socket.onclose = () => this.complete();
 		this.#socket.onerror = (event) => this.error(event);
-		this.signal.addEventListener('abort', () => this.#socket.close(), {
-			once: true,
-		});
 	}
 
 	get observed(): boolean {
@@ -58,24 +54,28 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void),
-	): AbortController {
-		return this.#delegate.subscribe(observerOrNext);
+	): void {
+		this.#delegate.subscribe(observerOrNext);
 	}
 
 	abort(reason?: unknown): void {
 		this.#delegate.abort(reason);
+		this.#socket.close(1000, typeof reason === 'string' ? reason : undefined);
 	}
 
 	next(value: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+		// TODO: Buffer input values while socket is opening/connecting
 		this.#socket.send(value);
 	}
 
 	error(error: unknown): void {
 		this.#delegate.error(error);
+		this.#socket.close(1002);
 	}
 
 	complete(): void {
 		this.#delegate.complete();
+		this.#socket.close(1000);
 	}
 
 	asObservable(): Observable {
@@ -89,3 +89,14 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 		);
 	}
 };
+
+function isCloseArgs(
+	args: unknown,
+): args is [number | undefined, string | undefined] {
+	return (
+		Array.isArray(args) &&
+		args.length === 2 &&
+		typeof args[0] === 'number' &&
+		typeof args[1] === 'string'
+	);
+}
