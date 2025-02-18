@@ -1,4 +1,4 @@
-import { observable, Observable } from './observable';
+import { subscribe, Observable } from './observable';
 import { Observer, Subscriber } from 'subscriber';
 import { Subscribable } from './subscribable';
 import { TeardownLogic, Unsubscribable } from 'subscription';
@@ -7,7 +7,7 @@ import { TeardownLogic, Unsubscribable } from 'subscription';
  * An object that implements the `Symbol.observable` interface.
  */
 export interface InteropObservable<T = unknown> {
-	[observable](observer: Subscriber<T>): TeardownLogic;
+	[subscribe](observer: Subscriber<T>): TeardownLogic;
 }
 
 export type ObservableInput<T = unknown> =
@@ -54,8 +54,8 @@ export function fromInteropObservable(obj: InteropObservable): Observable {
 	// If an instance of one of our Observables, just return it.
 	if (obj instanceof Observable) return obj;
 	return new Observable((subscriber) => {
-		if (typeof obj[observable] === 'function') {
-			return obj[observable](subscriber);
+		if (typeof obj[subscribe] === 'function') {
+			return obj[subscribe](subscriber);
 		}
 		// Should be caught by observable subscribe function error handling.
 		throw new TypeError(
@@ -230,7 +230,7 @@ export function isInteropObservable<T>(x: unknown): x is InteropObservable<T> {
 	return (
 		!!x &&
 		typeof x === 'object' &&
-		observable in x &&
-		typeof x[observable] === 'function'
+		subscribe in x &&
+		typeof x[subscribe] === 'function'
 	);
 }

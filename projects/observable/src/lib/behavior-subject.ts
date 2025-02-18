@@ -1,9 +1,8 @@
 import { Observer } from 'subscriber';
-import { observable, Observable } from './observable';
+import { Observable } from './observable';
 import { Subject } from './subject';
-import { Subscription } from 'subscription';
 import { UnaryFunction } from './unary-function';
-import { Subscribable } from './subscribable';
+import { from } from './from';
 
 /**
  * A variant of Subject that requires an initial value and emits its current value whenever it is subscribed to.
@@ -29,7 +28,7 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class {
 
 	/** @internal */
 	readonly #output = new Observable((subscriber) => {
-		if (!this.closed) subscriber.next(this.#value);
+		if (!this.signal.aborted) subscriber.next(this.#value);
 		return this.#delegate.subscribe(subscriber);
 	});
 
@@ -45,16 +44,24 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class {
 		return this.#delegate.observed;
 	}
 
-	get closed(): boolean {
-		return this.#delegate.closed;
+	get signal(): AbortSignal {
+		return this.#delegate.signal;
 	}
 
-	[observable](): Subscribable {
-		return this;
+	subscribe(
+		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
+	): void {
+		this.#output.subscribe(observerOrNext);
+	}
+
+	abort(reason?: unknown): void {
+		this.#delegate.abort(reason);
 	}
 
 	next(value: unknown): void {
-		this.#delegate.next(this.closed ? this.#value : (this.#value = value));
+		this.#delegate.next(
+			this.signal.aborted ? this.#value : (this.#value = value),
+		);
 	}
 
 	complete(): void {
@@ -65,18 +72,8 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class {
 		this.#delegate.error(error);
 	}
 
-	subscribe(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
-	): Subscription {
-		return this.#output.subscribe(observerOrNext);
-	}
-
-	unsubscribe(): void {
-		this.#delegate.unsubscribe();
-	}
-
 	asObservable(): Observable {
-		return new Observable((subscriber) => this.subscribe(subscriber));
+		return from(this);
 	}
 
 	pipe(...operations: ReadonlyArray<UnaryFunction<never, never>>): Observable {

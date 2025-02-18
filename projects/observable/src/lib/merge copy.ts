@@ -1,37 +1,21 @@
-import { ObservableInput, from, InteropObservable } from './input';
+import { ObservableInput, from } from './from';
 import { Observable } from './observable';
 import { empty } from './empty';
 import { UnaryFunction } from './unary-function';
-import { fromFetch } from 'rxjs/fetch';
+import { never } from './never';
+import { of } from './of';
+import { abort } from 'abort-signal-interop';
 
-export function take<T>(
+export function take<Value>(
 	count: number,
-): UnaryFunction<InteropObservable<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<ArrayLike<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<PromiseLike<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<AsyncIterable<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<Iterable<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<ObservableInput<T>, Observable<T>>;
-export function take<T>(
-	count: number,
-): UnaryFunction<ObservableInput<T>, Observable<T>> {
+): UnaryFunction<ObservableInput<Value>, Observable<Value>> {
 	return (source) => {
 		// If we are taking no values, that's empty.
 		if (count <= 0) return empty;
 
 		return new Observable((subscriber) => {
 			let seen = 0;
-			return from(source).subscribe({
+			from(source).subscribe({
 				...subscriber,
 				next: (value) => {
 					// Increment the number of values we have seen,
@@ -48,3 +32,24 @@ export function take<T>(
 		});
 	};
 }
+
+export function timer(due: number): Observable<0> {
+	if (due < 0) return empty;
+	if (due === 0) return of(0);
+	if (due === Infinity) return never;
+	return new Observable<0>((subscriber) => {
+		if (subscriber.signal.aborted) return;
+		const timeout = setTimeout(() => subscriber.next(0), due);
+		subscriber.signal.addEventListener('abort', () => clearTimeout(timeout), {
+			signal: subscriber.signal,
+		});
+	}).pipe(take(1));
+}
+
+const c = new AbortController();
+timer(1000).subscribe({
+	next: (value) => console.log(value),
+	signal: abort(null),
+});
+
+c.abort(null);

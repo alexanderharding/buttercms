@@ -1,10 +1,8 @@
-import { noop } from 'rxjs';
 import { Subject } from './subject';
-import { observable, Observable } from './observable';
-import { Subscription, TeardownLogic } from 'subscription';
-import { Observer, Subscriber } from 'subscriber';
+import { Observable } from './observable';
+import { Observer } from 'subscriber';
 import { UnaryFunction } from './unary-function';
-import { Subscribable } from './subscribable';
+import { from } from './from';
 
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -68,10 +66,12 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 
 	constructor(name: string) {
 		this.#channel = new BroadcastChannel(name);
-		this.#channel.onmessage = (event: MessageEvent<void>) =>
-			this.#delegate.next(event.data);
+		this.signal.addEventListener('abort', () => this.#channel.close(), {
+			signal: this.signal,
+		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		this.#channel.onmessage = (event) => this.#delegate.next(event.data);
 		this.#channel.onmessageerror = (event) => this.#delegate.error(event);
-		this.subscribe({ error: noop }).add(() => this.#channel.close());
 	}
 
 	get name(): string {
@@ -82,16 +82,22 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 		return this.#delegate.observed;
 	}
 
-	get closed(): boolean {
-		return this.#delegate.closed;
+	get signal(): AbortSignal {
+		return this.#delegate.signal;
 	}
 
-	[observable](subscriber: Subscriber<void>): TeardownLogic {
-		return this.subscribe(subscriber);
+	subscribe(
+		observerOrNext?: Partial<Observer<void>> | ((value: undefined) => void),
+	): void {
+		this.#delegate.subscribe(observerOrNext);
+	}
+
+	abort(reason?: unknown): void {
+		this.#delegate.abort(reason);
 	}
 
 	next(value: undefined): void {
-		if (!this.closed) this.#channel.postMessage(value);
+		if (!this.signal.aborted) this.#channel.postMessage(value);
 	}
 
 	error(error: unknown): void {
@@ -102,18 +108,8 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 		this.#delegate.complete();
 	}
 
-	subscribe(
-		observerOrNext?: Partial<Observer<void>> | ((value: undefined) => void),
-	): Subscription {
-		return this.#delegate.subscribe(observerOrNext);
-	}
-
-	unsubscribe(): void {
-		this.#delegate.unsubscribe();
-	}
-
 	asObservable(): Observable<void> {
-		return new Observable((subscriber) => this.subscribe(subscriber));
+		return from(this);
 	}
 
 	pipe(

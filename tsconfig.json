@@ -10,6 +10,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
+      "abort-signal-interop": ["./dist/abort-signal-interop"],
       "ngx-dependency-injection-interop": [
         "./dist/ngx-dependency-injection-interop"
       ],

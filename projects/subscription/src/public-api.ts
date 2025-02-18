@@ -1,3 +1,6 @@
+import { any } from 'abort-signal-interop';
+import { noop } from 'rxjs';
+
 /**
  * @internal An error thrown when one or more errors have occurred during the `unsubscribe` of a {@link Subscription}.
  */
@@ -19,8 +22,12 @@ export interface Unsubscribable {
 	unsubscribe(): void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-export type TeardownLogic = Subscription | Unsubscribable | (() => void) | void;
+export type TeardownLogic =
+	| Subscription
+	| AbortController
+	| ((reason?: unknown) => void)
+	// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+	| void;
 
 /**
  * Represents a disposable resource. A Subscription has one important method,
@@ -32,11 +39,7 @@ export type TeardownLogic = Subscription | Unsubscribable | (() => void) | void;
  * When a Subscription is unsubscribed, all its children (and its grandchildren)
  * will be unsubscribed as well.
  */
-export interface Subscription {
-	/**
-	 * A flag to indicate whether this Subscription has already been unsubscribed.
-	 */
-	readonly closed: boolean;
+export interface Subscription extends AbortController {
 	/**
 	 * Adds a finalizer to this subscription, so that finalization will be unsubscribed/called
 	 * when this subscription is unsubscribed. If this subscription is already {@link #closed},
@@ -76,16 +79,11 @@ export interface Subscription {
 	 * @param teardown The finalizer to remove from this subscription
 	 */
 	remove(teardown: Exclude<TeardownLogic, void>): void;
-	/**
-	 * Disposes the resources held by the subscription. May, for instance, cancel some type of work that
-	 * started when the Subscription was created.
-	 */
-	unsubscribe(): void;
 }
 
 export type SubscriptionConstructor = new (
 	/**
-	 * The finalizer to execute upon unsubscription. Useful for guaranteeing a specific action upon unsubscription.
+	 * The finalizer to execute upon abort. Useful for guaranteeing a specific action upon abort.
 	 */
 	teardown?: TeardownLogic,
 ) => Subscription;
@@ -93,12 +91,13 @@ export type SubscriptionConstructor = new (
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subscription: SubscriptionConstructor = class {
 	/** @internal */
-	#closed = false;
+	readonly #controller = new AbortController();
 
-	/**
-	 * @internal The list of registered finalizers to execute upon unsubscription. Adding and removing from this list occurs in the {@link #add} and {@link #remove} methods.
-	 */
-	readonly #finalizers = new Set<Exclude<TeardownLogic, void>>();
+	/** @internal */
+	readonly #cancelers = new Map<
+		Exclude<TeardownLogic, void>,
+		AbortController
+	>();
 
 	/** @internal */
 	#teardown?: TeardownLogic;
@@ -110,58 +109,40 @@ export const Subscription: SubscriptionConstructor = class {
 		}
 	}
 
-	get closed(): boolean {
-		return this.#closed;
+	get signal(): AbortSignal {
+		return this.#controller.signal;
+	}
+
+	abort(reason?: unknown): void {
+		this.#controller.abort(reason);
 	}
 
 	add(teardown: TeardownLogic): void {
-		// Only add the finalizer if it's not falsy
-		// and don't add a subscription to itself.
 		if (!teardown || teardown === this) return;
 
-		// If this subscription is already closed,
-		// execute whatever finalizer is handed to it automatically.
-		if (this.closed) return finalize(teardown);
+		// Immediately abort the child if the parent is already aborted.
+		if (this.signal.aborted) return finalize(teardown, this.signal.reason);
 
-		// If teardown is a subscription, we can make sure that if it
-		// unsubscribes first, it removes itself from this subscription.
-		if ('add' in teardown) teardown.add(() => this.remove(teardown));
-
-		this.#finalizers.add(teardown);
+		const teardownCanceler = new AbortController();
+		this.signal.addEventListener(
+			'abort',
+			() => finalize(teardown, this.signal.reason),
+			{ signal: teardownCanceler.signal },
+		);
+		this.#cancelers.set(teardown, teardownCanceler);
 	}
 
 	remove(teardown: Exclude<TeardownLogic, void>): void {
-		if (this.closed || !teardown) return;
-		if (teardown !== this.#teardown) this.#finalizers.delete(teardown);
-	}
-
-	unsubscribe(): void {
-		if (this.#closed) return;
-
-		this.#closed = true;
-
-		const errors: Array<unknown> = [];
-
-		for (const finalizer of this.#finalizers) {
-			try {
-				finalize(finalizer);
-			} catch (error) {
-				if (error instanceof UnsubscribeError) {
-					errors.push(...error.errors);
-				} else {
-					errors.push(error);
-				}
-			}
-		}
-
-		this.#finalizers.clear();
-
-		if (errors.length > 0) throw new UnsubscribeError(errors);
+		if (this.signal.aborted) return;
+		this.#cancelers.get(teardown)?.abort(null);
+		this.#cancelers.delete(teardown);
 	}
 };
 
-/** @internal */
-function finalize(finalizer: Unsubscribable | (() => void)) {
-	if (typeof finalizer === 'function') finalizer();
-	else finalizer.unsubscribe();
+function finalize(
+	teardown: Exclude<TeardownLogic, void>,
+	reason?: unknown,
+): void {
+	if (typeof teardown === 'function') teardown(reason);
+	else teardown.abort(reason);
 }

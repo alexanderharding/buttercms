@@ -1,5 +1,5 @@
 import { Subscriber } from 'subscriber';
-import { ObservableInput, from, InteropObservable } from './input';
+import { ObservableInput, from, InteropObservable } from './from';
 import { Observable } from './observable';
 import { UnaryFunction } from './unary-function';
 

@@ -1,8 +1,13 @@
 import { Observer, Subscriber } from 'subscriber';
-import { observable, Observable } from './observable';
-import { Subscription } from 'subscription';
+import { Observable } from './observable';
 import { UnaryFunction } from './unary-function';
-import { TeardownLogic } from 'rxjs';
+import { from, ObservableInput } from './from';
+
+/** @internal */
+const completeSymbol = Symbol('complete');
+
+/** @internal */
+const errorSymbol = Symbol('error');
 
 /**
  * A Subject is a special type of Observable that allows values to be
@@ -11,48 +16,51 @@ import { TeardownLogic } from 'rxjs';
  * Every Subject is an Observable and an Observer. You can subscribe to a
  * Subject, and you can call next to feed values as well as error and complete.
  */
-export interface Subject<Value = void> extends Observable<Value> {
+export interface Subject<Value = void>
+	extends Observable<Value>,
+		AbortController {
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Flag indicating if {@linkcode Subject|this subject} has been closed and is no longer accepting new values.
-	 */
-	readonly closed: boolean;
-	/**
-	 * Flag indicating if {@linkcode Subject|this subject} has any subscribers.
+	 * Flag indicating if this {@linkcode Subject|subject} has any subscribers.
 	 */
 	readonly observed: boolean;
 	/**
-	 * Multicast a value to all subscribers of the Subject.
-	 * Has no operation (noop) if the Subject is closed.
+	 * The AbortSignal object associated with this {@linkcode Subject|subject}.
+	 */
+	readonly signal: AbortSignal;
+	/**
+	 * Multicast an abort to all subscribers of this {@linkcode Subject|subject}.
+	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param reason The reason to multicast to all subscribers.
+	 */
+	abort(reason?: unknown): void;
+	/**
+	 * Multicast a value to all subscribers of this {@linkcode Subject|subject}.
+	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param value The value to multicast to all subscribers.
 	 */
 	next(value: Value): void;
 	/**
-	 * Multicast a completion notification to all subscribers of the Subject and close it.
-	 * Any future subscribers will be immediately completed (unless they are already closed).
-	 * Has no operation (noop) if the Subject is closed.
+	 * Multicast a completion notification to all subscribers of this {@linkcode Subject|subject} and abort it.
+	 * Any future subscribers will be immediately completed (unless they are already aborted).
+	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 */
 	complete(): void;
 	/**
-	 * Multicast an error to all subscribers of the Subject and close it.
-	 * Any future subscribers will be immediately notified of the error (unless they are already closed).
-	 * Has no operation (noop) if the Subject is closed.
+	 * Multicast an error to all subscribers of this {@linkcode Subject|subject} and abort it.
+	 * Any future subscribers will be immediately notified of the error (unless they are already aborted).
+	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param error The error to multicast to all subscribers.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Creates a new Observable with this Subject as the source. You can do this
-	 * to create custom Observer-side logic of the Subject and conceal it from
+	 * Creates a new Observable with this {@linkcode Subject|subject} as the source. You can do this
+	 * to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from
 	 * code that uses the Observable.
-	 * @return Observable that this Subject casts to.
+	 * @return Observable that this {@linkcode Subject|subject} casts to.
 	 */
 	asObservable(): Observable<Value>;
-	/**
-	 * Unsubscribes the Subject (closes it) and all subscribers.
-	 * Any future subscriber will be immediately unsubscribed.
-	 */
-	unsubscribe(): void;
 }
 
 export interface SubjectConstructor {
@@ -66,18 +74,8 @@ export const Subject: SubjectConstructor = class {
 	/** @internal */
 	readonly [Symbol.toStringTag] = this.constructor.name;
 
-	[observable](subscriber: Subscriber<void>): TeardownLogic {
-		return this.subscribe(subscriber);
-	}
-
 	/** @internal */
-	#closed = false;
-
-	/** @internal */
-	#hasError = false;
-
-	/** @internal */
-	#hasComplete = false;
+	readonly #controller = new AbortController();
 
 	/** @internal */
 	#thrownError: unknown;
@@ -95,72 +93,64 @@ export const Subject: SubjectConstructor = class {
 
 	/** @internal */
 	readonly #delegate = new Observable((subscriber) => {
-		if (this.#hasError) {
-			subscriber.error(this.#thrownError);
-		} else if (this.#hasComplete) {
-			subscriber.complete();
-		} else if (this.closed) {
-			subscriber.unsubscribe();
-		}
-
-		if (subscriber.closed) return;
-
-		this.#subscribersSnapshot = undefined;
-		this.#subscribers.add(subscriber);
-		subscriber.add(() => this.#subscribers.delete(subscriber));
-		subscriber.add(() => (this.#subscribersSnapshot = undefined));
+		this.#checkFinalizers(subscriber);
+		if (subscriber.signal.aborted) return;
+		this.#addSubscriber(subscriber);
+		subscriber.signal.addEventListener(
+			'abort',
+			() => this.#deleteSubscriber(subscriber),
+			{ signal: subscriber.signal },
+		);
 	});
 
 	get observed(): boolean {
 		return this.#subscribers.size > 0;
 	}
 
-	get closed(): boolean {
-		return this.#closed;
+	get signal(): AbortSignal {
+		return this.#controller.signal;
+	}
+
+	subscribe(
+		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
+	): void {
+		this.#delegate.subscribe(observerOrNext);
+	}
+
+	abort(reason?: unknown): void {
+		if (this.signal.aborted) return;
+		this.#controller.abort(reason);
+		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
+			(subscriber) => subscriber.abort(reason),
+		);
 	}
 
 	next(value: undefined): void {
-		if (this.closed) return;
+		if (this.signal.aborted) return;
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.next(value),
 		);
 	}
 
 	complete(): void {
-		if (this.closed) return;
-		this.#closed = true;
-		this.#hasComplete = true;
+		if (this.signal.aborted) return;
+		this.#controller.abort(completeSymbol);
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.complete(),
 		);
 	}
 
 	error(error: unknown): void {
-		if (this.closed) return;
-		this.#closed = true;
-		this.#hasError = true;
+		if (this.signal.aborted) return;
+		this.#controller.abort(errorSymbol);
 		this.#thrownError = error;
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.error(error),
 		);
 	}
 
-	subscribe(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
-	): Subscription {
-		return this.#delegate.subscribe(observerOrNext);
-	}
-
-	unsubscribe(): void {
-		if (this.closed) return;
-		this.#closed = true;
-		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
-			(subscriber) => subscriber.unsubscribe(),
-		);
-	}
-
 	asObservable(): Observable<void> {
-		return new Observable((subscriber) => this.subscribe(subscriber));
+		return from<ObservableInput<void>>(this);
 	}
 
 	pipe(
@@ -175,5 +165,28 @@ export const Subject: SubjectConstructor = class {
 	/** @internal */
 	#takeSubscriberSnapshot(): ReadonlyArray<Subscriber<void>> {
 		return Array.from(this.#subscribers.values());
+	}
+
+	/** @internal */
+	#checkFinalizers(subscriber: Subscriber): void {
+		if (this.signal.reason === errorSymbol) {
+			subscriber.error(this.#thrownError);
+		} else if (this.signal.reason === completeSymbol) {
+			subscriber.complete();
+		} else if (this.signal.aborted) {
+			subscriber.abort(this.signal.reason);
+		}
+	}
+
+	/** @internal */
+	#addSubscriber(subscriber: Subscriber): void {
+		this.#subscribersSnapshot = undefined;
+		this.#subscribers.add(subscriber);
+	}
+
+	/** @internal */
+	#deleteSubscriber(subscriber: Subscriber): void {
+		this.#subscribers.delete(subscriber);
+		this.#subscribersSnapshot = undefined;
 	}
 };

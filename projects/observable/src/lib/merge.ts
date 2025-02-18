@@ -1,10 +1,10 @@
-import { identity } from 'rxjs';
 import { mergeMap } from './merge-map';
-import { ObservableInput, from } from './input';
+import { ObservableInput, ObservedValuesOf, from } from './from';
 import { Observable } from './observable';
 
-export function merge<T>(
-	...sources: ReadonlyArray<ObservableInput<T>>
-): Observable<T> {
-	return from(sources).pipe(mergeMap(identity));
+export function merge<Inputs extends ReadonlyArray<ObservableInput>>(
+	...inputs: Inputs
+): Observable<ObservedValuesOf<Inputs>[number]>;
+export function merge(...inputs: ReadonlyArray<ObservableInput>): Observable {
+	return from(inputs).pipe(mergeMap((value) => value));
 }
