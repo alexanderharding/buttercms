@@ -89,14 +89,3 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 		);
 	}
 };
-
-function isCloseArgs(
-	args: unknown,
-): args is [number | undefined, string | undefined] {
-	return (
-		Array.isArray(args) &&
-		args.length === 2 &&
-		typeof args[0] === 'number' &&
-		typeof args[1] === 'string'
-	);
-}
