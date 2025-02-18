@@ -1,10 +1,6 @@
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
 import { Observer, Subscriber } from 'subscriber';
 import { UnaryFunction } from './unary-function';
 import { OperatorFunction } from './operator-function';
-
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-export type TeardownLogic = AbortController | void;
 
 export const subscribe = Symbol('subscribe');
 
@@ -249,7 +245,7 @@ export interface ObservableConstructor {
 		subscribe?: (
 			this: Observable<Value>,
 			subscriber: Subscriber<Value>,
-		) => TeardownLogic,
+		) => void,
 	): Observable<Value>;
 	readonly prototype: Observable;
 }
