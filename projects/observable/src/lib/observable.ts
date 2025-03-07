@@ -1,14 +1,15 @@
 import { Observer, Subscriber } from 'subscriber';
-import { UnaryFunction } from './unary-function';
-import { OperatorFunction } from './operator-function';
+import { Pipeline } from './pipeline';
+import { InteropObservable } from './from';
 
 export const subscribe = Symbol('subscribe');
 
 /**
  * A representation of any set of values over any amount of time.
-
  */
-export interface Observable<Value = unknown> {
+export interface Observable<Value = unknown>
+	extends Pipeline<Observable<Value>>,
+		InteropObservable<Value> {
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
 	/**
@@ -143,94 +144,11 @@ export interface Observable<Value = unknown> {
 	 * @return A subscription reference to the registered handlers.
 	 */
 	subscribe(
-		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
+		observerOrNext?:
+			| Partial<Observer<Value>>
+			| ((value: Value) => unknown)
+			| null,
 	): void;
-	pipe(): Observable<Value>;
-	pipe<A>(op1: UnaryFunction<Observable<Value>, A>): A;
-	pipe<A, B>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-	): B;
-	pipe<A, B, C>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-	): C;
-	pipe<A, B, C, D>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-	): D;
-	pipe<A, B, C, D, E>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-	): E;
-	pipe<A, B, C, D, E, F>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-	): F;
-	pipe<A, B, C, D, E, F, G>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-		op7: UnaryFunction<F, G>,
-	): G;
-	pipe<A, B, C, D, E, F, G, H>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-		op7: UnaryFunction<F, G>,
-		op8: UnaryFunction<G, H>,
-	): H;
-	pipe<A, B, C, D, E, F, G, H, I>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-		op7: UnaryFunction<F, G>,
-		op8: UnaryFunction<G, H>,
-		op9: UnaryFunction<H, I>,
-	): I;
-	pipe<A, B, C, D, E, F, G, H, I>(
-		op1: UnaryFunction<Observable<Value>, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-		op7: UnaryFunction<F, G>,
-		op8: UnaryFunction<G, H>,
-		op9: UnaryFunction<H, I>,
-		...operations: ReadonlyArray<OperatorFunction>
-	): Observable<Value>;
-	pipe<A, B, C, D, E, F, G, H, I>(
-		op1: UnaryFunction<Value, A>,
-		op2: UnaryFunction<A, B>,
-		op3: UnaryFunction<B, C>,
-		op4: UnaryFunction<C, D>,
-		op5: UnaryFunction<D, E>,
-		op6: UnaryFunction<E, F>,
-		op7: UnaryFunction<F, G>,
-		op8: UnaryFunction<G, H>,
-		op9: UnaryFunction<H, I>,
-		...operations: ReadonlyArray<UnaryFunction>
-	): unknown;
 }
 
 export interface ObservableConstructor {
@@ -245,12 +163,10 @@ export interface ObservableConstructor {
 		subscribe?: (
 			this: Observable<Value>,
 			subscriber: Subscriber<Value>,
-		) => void,
+		) => unknown,
 	): Observable<Value>;
 	readonly prototype: Observable;
 }
-
-/**
 
 /**
  * @param subscribe The function that is called when the Observable is
@@ -258,26 +174,35 @@ export interface ObservableConstructor {
  * can be `next`ed, or an `error` method can be called to raise an error, or
  * `complete` can be called to notify of a successful completion.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Observable: ObservableConstructor = class {
 	/** @internal */
 	readonly [Symbol.toStringTag] = 'Observable';
 
 	/** @internal */
-	readonly #subscribe?: (this: this, subscriber: Subscriber) => void;
+	readonly #subscribe?: (this: this, subscriber: Subscriber) => unknown;
 
-	constructor(subscribe?: (this: Observable, subscriber: Subscriber) => void) {
+	/** @internal */
+	readonly #pipeline = new Pipeline(this);
+
+	/** @internal */
+	constructor(
+		subscribe?: (this: Observable, subscriber: Subscriber) => unknown,
+	) {
 		this.#subscribe = subscribe;
 	}
 
-	subscribe(
+	/** @internal */
+	[subscribe](
 		observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
 	): void {
-		if (observerOrNext instanceof Subscriber) return;
-		const subscriber =
-			observerOrNext instanceof Subscriber
-				? observerOrNext
-				: new Subscriber(observerOrNext);
+		this.subscribe(observerOrNext);
+	}
+
+	/** @internal */
+	subscribe(
+		observerOrNext?: ((value: unknown) => unknown) | Partial<Observer> | null,
+	): void {
+		const subscriber = ensureSubscriber(observerOrNext);
 		try {
 			this.#subscribe?.call(this, subscriber);
 		} catch (error) {
@@ -285,9 +210,17 @@ export const Observable: ObservableConstructor = class {
 		}
 	}
 
-	pipe(
-		...operations: ReadonlyArray<UnaryFunction<never, never>>
-	): Observable<never> {
-		return operations.reduce((acc: never, operation) => operation(acc), this);
+	/** @internal */
+	pipe(...operations: []): Observable {
+		return this.#pipeline.pipe(...operations);
 	}
 };
+
+/** @internal */
+function ensureSubscriber(
+	observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
+): Subscriber {
+	return observerOrNext instanceof Subscriber
+		? observerOrNext
+		: new Subscriber(observerOrNext);
+}

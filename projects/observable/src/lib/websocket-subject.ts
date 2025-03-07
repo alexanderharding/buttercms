@@ -14,7 +14,6 @@ export interface WebSocketSubjectConstructor {
 	readonly prototype: WebSocketSubject;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const WebSocketSubject: WebSocketSubjectConstructor = class {
 	/** @internal */
 	readonly [Symbol.toStringTag] = 'WebSocketSubject';
@@ -30,10 +29,6 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 		this.#socket.onmessage = (event) => this.#delegate.next(event.data);
 		this.#socket.onclose = () => this.complete();
 		this.#socket.onerror = (event) => this.error(event);
-	}
-
-	get observed(): boolean {
-		return this.#delegate.observed;
 	}
 
 	get signal(): AbortSignal {

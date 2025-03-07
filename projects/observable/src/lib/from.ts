@@ -1,27 +1,17 @@
-import { subscribe, Observable, TeardownLogic } from './observable';
-import { Observer, Subscriber } from 'subscriber';
+import { subscribe, Observable } from './observable';
+import { Observer } from 'subscriber';
 
 /**
  * An object that implements the `InteropObservable` interface.
  */
 export interface InteropObservable<Value = unknown> {
-	[subscribe](subscriber: Subscriber<Value>): TeardownLogic;
-}
-export interface Subscribable<Value = unknown> {
-	subscribe(observer: Observer<Value>): void;
-}
-
-function isSubscribable<Value>(value: unknown): value is Subscribable<Value> {
-	return (
-		typeof value === 'object' &&
-		value !== null &&
-		'subscribe' in value &&
-		typeof value.subscribe === 'function'
-	);
+	[subscribe](
+		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
+	): void;
 }
 
 export type ObservableInput<Value = unknown> =
-	| Subscribable<Value>
+	| InteropObservable<Value>
 	| ArrayLike<Value>
 	| PromiseLike<Value>
 	| AsyncIterable<Value>
@@ -32,7 +22,7 @@ export type ObservedValuesOf<Inputs extends ReadonlyArray<ObservableInput>> =
 	Readonly<{ [K in keyof Inputs]: ObservedValueOf<Inputs[K]> }>;
 
 export type ObservedValueOf<Input extends ObservableInput> =
-	Input extends Subscribable<infer T>
+	Input extends InteropObservable<infer T>
 		? T
 		: Input extends ArrayLike<infer T>
 			? T
@@ -50,7 +40,7 @@ export function from<const Input extends ObservableInput>(
 	input: Input,
 ): Observable<ObservedValueOf<Input>>;
 export function from(value: ObservableInput): Observable {
-	if (isSubscribable(value)) return fromSubscribable(value);
+	if (isInteropObservable(value)) return fromInteropObservable(value);
 
 	if (isArrayLike(value)) return fromArrayLike(value);
 
@@ -63,25 +53,6 @@ export function from(value: ObservableInput): Observable {
 	if (isReadableStreamLike(value)) return fromReadableStreamLike(value);
 
 	throw new Error('Invalid input');
-}
-
-/**
- * Creates an RxJS Observable from an object that implements `observable` Symbol.
- * @param obj An object that properly implements `observable` Symbol.
- */
-export function fromSubscribable<T>(obj: Subscribable<T>): Observable<T>;
-export function fromSubscribable(obj: Subscribable): Observable {
-	// If an instance of one of our Observables, just return it.
-	if (obj instanceof Observable) return obj;
-	return new Observable((subscriber) => {
-		if (typeof obj.subscribe !== 'function') {
-			// Should be caught by observable subscribe function error handling.
-			throw new TypeError(
-				'Provided object does not correctly implement subscribe method',
-			);
-		}
-		obj.subscribe(subscriber);
-	});
 }
 
 export function fromReadableStreamLike<T>(
@@ -133,39 +104,36 @@ export function fromArrayLike<T>(array: ArrayLike<T>): Observable<T> {
 }
 
 export function fromPromise<T>(promise: PromiseLike<T>): Observable<T> {
-	return new Observable((subscriber) => {
-		promise.then(
-			(value) => {
-				// A side-effect may have closed our subscriber,
-				// check before the resolved value is emitted.
-				if (subscriber.signal.aborted) return;
-				subscriber.next(value);
-				subscriber.complete();
-			},
-			(err) => subscriber.error(err),
-		);
+	return new Observable(async (subscriber) => {
+		try {
+			const value = await promise;
+			// A side-effect may have closed our subscriber,
+			// check before the resolved value is emitted.
+			if (subscriber.signal.aborted) return;
+			subscriber.next(value);
+			subscriber.complete();
+		} catch (error) {
+			subscriber.error(error);
+		}
 	});
 }
 
 export function fromAsyncIterable<T>(
 	asyncIterable: AsyncIterable<T>,
 ): Observable<T> {
-	return new Observable(
-		(subscriber) =>
-			void (async () => {
-				try {
-					for await (const value of asyncIterable) {
-						subscriber.next(value);
-						// A side-effect may have closed our subscriber,
-						// check before the next iteration.
-						if (subscriber.signal.aborted) return;
-					}
-					subscriber.complete();
-				} catch (err) {
-					subscriber.error(err);
-				}
-			})(),
-	);
+	return new Observable(async (subscriber) => {
+		try {
+			for await (const value of asyncIterable) {
+				subscriber.next(value);
+				// A side-effect may have closed our subscriber,
+				// check before the next iteration.
+				if (subscriber.signal.aborted) return;
+			}
+			subscriber.complete();
+		} catch (err) {
+			subscriber.error(err);
+		}
+	});
 }
 
 export function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
@@ -177,6 +145,27 @@ export function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
 			if (subscriber.signal.aborted) return;
 		}
 		subscriber.complete();
+	});
+}
+
+/**
+ * Creates an RxJS Observable from an object that implements `observable` Symbol.
+ * @param obj An object that properly implements `observable` Symbol.
+ */
+export function fromInteropObservable<T>(
+	obj: InteropObservable<T>,
+): Observable<T>;
+export function fromInteropObservable(obj: InteropObservable): Observable {
+	// If an instance of one of our Observables, just return it.
+	if (obj instanceof Observable) return obj;
+	return new Observable((subscriber) => {
+		if (typeof obj[subscribe] === 'function') {
+			return obj[subscribe](subscriber);
+		}
+		// Should be caught by observable subscribe function error handling.
+		throw new TypeError(
+			'Provided object does not correctly implement observable Symbol',
+		);
 	});
 }
 

@@ -1,13 +1,6 @@
 import { Observer, Subscriber } from 'subscriber';
-import { Observable } from './observable';
-import { UnaryFunction } from './unary-function';
-import { from, ObservableInput } from './from';
-
-/** @internal */
-const completeSymbol = Symbol('complete');
-
-/** @internal */
-const errorSymbol = Symbol('error');
+import { Observable, subscribe } from './observable';
+import { Pipeline } from './pipeline';
 
 /**
  * A Subject is a special type of Observable that allows values to be
@@ -17,24 +10,11 @@ const errorSymbol = Symbol('error');
  * Subject, and you can call next to feed values as well as error and complete.
  */
 export interface Subject<Value = void>
-	extends Observable<Value>,
-		AbortController {
+	extends Omit<Observable<Value>, 'pipe'>,
+		Pipeline<Subject<Value>> {
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
-	/**
-	 * Flag indicating if this {@linkcode Subject|subject} has any subscribers.
-	 */
-	readonly observed: boolean;
-	/**
-	 * The AbortSignal object associated with this {@linkcode Subject|subject}.
-	 */
 	readonly signal: AbortSignal;
-	/**
-	 * Multicast an abort to all subscribers of this {@linkcode Subject|subject}.
-	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param reason The reason to multicast to all subscribers.
-	 */
-	abort(reason?: unknown): void;
 	/**
 	 * Multicast a value to all subscribers of this {@linkcode Subject|subject}.
 	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
@@ -64,12 +44,10 @@ export interface Subject<Value = void>
 }
 
 export interface SubjectConstructor {
-	new (): Subject;
-	new <Value = void>(): Subject<Value>;
+	new <Value>(signal?: AbortSignal): Subject<Value>;
 	readonly prototype: Subject;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subject: SubjectConstructor = class {
 	/** @internal */
 	readonly [Symbol.toStringTag] = this.constructor.name;
@@ -78,7 +56,16 @@ export const Subject: SubjectConstructor = class {
 	readonly #controller = new AbortController();
 
 	/** @internal */
+	readonly signal = this.#controller.signal;
+
+	/** @internal */
 	#thrownError: unknown;
+
+	/** @internal */
+	#hasError = false;
+
+	/** @internal */
+	#hasComplete = false;
 
 	/**
 	 * This is used to track a known array of subscribers, so we don't have to
@@ -86,10 +73,10 @@ export const Subject: SubjectConstructor = class {
 	 * (for example, what if the subject is subscribed to when nexting to an observer)
 	 * @internal
 	 */
-	#subscribersSnapshot?: ReadonlyArray<Subscriber<void>>;
+	#subscribersSnapshot?: ReadonlyArray<Subscriber>;
 
 	/** @internal */
-	readonly #subscribers = new Set<Subscriber<void>>();
+	readonly #subscribers = new Set<Subscriber>();
 
 	/** @internal */
 	readonly #delegate = new Observable((subscriber) => {
@@ -103,78 +90,89 @@ export const Subject: SubjectConstructor = class {
 		);
 	});
 
-	get observed(): boolean {
-		return this.#subscribers.size > 0;
+	/** @internal */
+	readonly #pipeline = new Pipeline(this);
+
+	/** @internal */
+	constructor() {
+		new Subscriber({
+			signal: this.signal,
+			finalize: () => {
+				this.#subscribers.clear();
+				this.#subscribersSnapshot = undefined;
+			},
+		});
 	}
 
-	get signal(): AbortSignal {
-		return this.#controller.signal;
+	/** @internal */
+	get #closed(): boolean {
+		return this.signal.aborted || this.#hasError || this.#hasComplete;
 	}
 
+	/** @internal */
+	[subscribe](
+		observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
+	): void {
+		this.subscribe(observerOrNext);
+	}
+
+	/** @internal */
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
-	abort(reason?: unknown): void {
-		if (this.signal.aborted) return;
-		this.#controller.abort(reason);
-		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
-			(subscriber) => subscriber.abort(reason),
-		);
-	}
-
-	next(value: undefined): void {
-		if (this.signal.aborted) return;
+	/** @internal */
+	next(value: unknown): void {
+		if (this.#closed) return;
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.next(value),
 		);
 	}
 
+	/** @internal */
 	complete(): void {
-		if (this.signal.aborted) return;
-		this.#controller.abort(completeSymbol);
+		if (this.#closed) return;
+		this.#hasComplete = true;
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.complete(),
 		);
+		this.#controller.abort();
 	}
 
+	/** @internal */
 	error(error: unknown): void {
-		if (this.signal.aborted) return;
-		this.#controller.abort(errorSymbol);
+		if (this.#closed) return;
+		this.#hasError = true;
 		this.#thrownError = error;
 		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
 			(subscriber) => subscriber.error(error),
 		);
-	}
-
-	asObservable(): Observable<void> {
-		return from<ObservableInput<void>>(this);
-	}
-
-	pipe(
-		...operations: ReadonlyArray<UnaryFunction<never, never>>
-	): Observable<void> {
-		return operations.reduce(
-			(acc: never, operator) => operator(acc),
-			this.asObservable(),
-		);
+		this.#controller.abort();
 	}
 
 	/** @internal */
-	#takeSubscriberSnapshot(): ReadonlyArray<Subscriber<void>> {
+	pipe(...operations: []): this {
+		return this.#pipeline.pipe(...operations);
+	}
+
+	/** @internal */
+	asObservable(): Observable {
+		return this.#delegate;
+	}
+
+	/** @internal */
+	#takeSubscriberSnapshot(): ReadonlyArray<Subscriber> {
 		return Array.from(this.#subscribers.values());
 	}
 
 	/** @internal */
 	#checkFinalizers(subscriber: Subscriber): void {
-		if (this.signal.reason === errorSymbol) {
+		if (this.#hasError) {
 			subscriber.error(this.#thrownError);
-		} else if (this.signal.reason === completeSymbol) {
+		} else if (this.#hasComplete) {
 			subscriber.complete();
-		} else if (this.signal.aborted) {
-			subscriber.abort(this.signal.reason);
 		}
 	}
 
@@ -186,7 +184,7 @@ export const Subject: SubjectConstructor = class {
 
 	/** @internal */
 	#deleteSubscriber(subscriber: Subscriber): void {
-		this.#subscribers.delete(subscriber);
 		this.#subscribersSnapshot = undefined;
+		this.#subscribers.delete(subscriber);
 	}
 };

@@ -1,30 +1,38 @@
 import { Observer } from 'subscriber';
-import { Observable } from './observable';
+import { Observable, subscribe } from './observable';
 import { Subject } from './subject';
-import { UnaryFunction } from './unary-function';
-import { from } from './from';
+import { Pipeline } from './pipeline';
 
 /**
  * A variant of Subject that requires an initial value and emits its current value whenever it is subscribed to.
  */
-export type BehaviorSubject<Value = unknown> = Subject<Value> &
-	Readonly<{ value: Value }>;
+export type BehaviorSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
+	Readonly<{ value: Value }> &
+	Pipeline<BehaviorSubject<Value>>;
 
 export interface BehaviorSubjectConstructor {
-	new (initialValue: unknown): BehaviorSubject;
-	new <Value>(initialValue: Value): BehaviorSubject<Value>;
+	new <Value>(
+		initialValue: Value,
+		signal?: AbortSignal,
+	): BehaviorSubject<Value>;
 	readonly prototype: BehaviorSubject;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const BehaviorSubject: BehaviorSubjectConstructor = class {
+export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
+	/** @internal */
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';
 
 	/** @internal */
-	#value: unknown;
+	#value: Value;
 
 	/** @internal */
-	readonly #delegate = new Subject<unknown>();
+	readonly #delegate = new Subject<Value>();
+
+	/** @internal */
+	readonly signal = this.#delegate.signal;
+
+	/** @internal */
+	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
 	readonly #output = new Observable((subscriber) => {
@@ -32,54 +40,54 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class {
 		return this.#delegate.subscribe(subscriber);
 	});
 
-	constructor(initialValue: unknown) {
+	/** @internal */
+	constructor(initialValue: Value) {
 		this.#value = initialValue;
 	}
 
-	get value(): unknown {
+	/** @internal */
+	get value(): Value {
 		return this.#value;
 	}
 
-	get observed(): boolean {
-		return this.#delegate.observed;
+	/** @internal */
+	pipe(...operations: []): this {
+		return this.#pipeline.pipe(...operations);
 	}
 
-	get signal(): AbortSignal {
-		return this.#delegate.signal;
+	/** @internal */
+	[subscribe](
+		observerOrNext?: ((value: Value) => void) | Partial<Observer<Value>> | null,
+	): void {
+		this.subscribe(observerOrNext);
 	}
 
+	/** @internal */
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
 	): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
-	abort(reason?: unknown): void {
-		this.#delegate.abort(reason);
-	}
-
-	next(value: unknown): void {
+	/** @internal */
+	next(value: Value): void {
 		this.#delegate.next(
 			this.signal.aborted ? this.#value : (this.#value = value),
 		);
 	}
 
+	/** @internal */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
+	/** @internal */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
+	/** @internal */
 	asObservable(): Observable {
-		return from(this);
-	}
-
-	pipe(...operations: ReadonlyArray<UnaryFunction<never, never>>): Observable {
-		return operations.reduce(
-			(acc: never, operation) => operation(acc),
-			this.asObservable(),
-		);
+		return this.#output;
 	}
 };

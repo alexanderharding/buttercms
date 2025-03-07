@@ -1,10 +1,11 @@
-import { ObservableInput, from } from './from';
+import { ObservableInput, ObservedValueOf, from } from './from';
 import { Observable } from './observable';
 import { empty } from './empty';
 import { UnaryFunction } from './unary-function';
 import { never } from './never';
 import { of } from './of';
-import { abort } from 'abort-signal-interop';
+import { Subscriber } from 'subscriber';
+import { asyncScheduler } from 'rxjs';
 
 export function take<Value>(
 	count: number,
@@ -33,23 +34,34 @@ export function take<Value>(
 	};
 }
 
-export function timer(due: number): Observable<0> {
-	if (due < 0) return empty;
-	if (due === 0) return of(0);
-	if (due === Infinity) return never;
-	return new Observable<0>((subscriber) => {
-		if (subscriber.signal.aborted) return;
-		const timeout = setTimeout(() => subscriber.next(0), due);
-		subscriber.signal.addEventListener('abort', () => clearTimeout(timeout), {
+export function fromEventListener<T extends Event>(
+	target: Pick<EventTarget, 'addEventListener'>,
+	type: string,
+): Observable<T>;
+export function fromEventListener(
+	target: Pick<EventTarget, 'addEventListener'>,
+	type: string,
+): Observable<Event> {
+	return new Observable((subscriber) =>
+		target.addEventListener(type, (event) => subscriber.next(event), {
 			signal: subscriber.signal,
-		});
-	}).pipe(take(1));
+		}),
+	);
 }
 
-const c = new AbortController();
-timer(1000).subscribe({
-	next: (value) => console.log(value),
-	signal: abort(null),
-});
-
-c.abort(null);
+export function timer(due: number | Date): Observable<0> {
+	const ms = typeof due === 'number' ? due : due.getTime() - Date.now();
+	if (ms < 0) return empty;
+	if (ms === 0) return of(0);
+	if (ms === Infinity) return never;
+	return new Observable<0>((subscriber) => {
+		if (subscriber.signal.aborted) return;
+		const { signal } = subscriber;
+		const timeout = globalThis.setTimeout(() => subscriber.next(0), ms);
+		fromEventListener(signal, 'abort').subscribe({
+			next: () => globalThis.clearTimeout(timeout),
+			error: (error) => subscriber.error(error),
+			signal,
+		});
+	});
+}

@@ -1,12 +1,8 @@
 import { Subject } from './subject';
-import { Observable } from './observable';
-import { Observer } from 'subscriber';
-import { UnaryFunction } from './unary-function';
-import { from } from './from';
-
-/** @internal */
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-type Default = void;
+import { Observable, subscribe } from './observable';
+import { Observer, Subscriber } from 'subscriber';
+import { Pipeline } from './pipeline';
+import { fromEventListener } from './merge copy';
 
 /**
  * Wrapper around the {@linkcode BroadcastChannel} object provided by the browser.
@@ -36,25 +32,24 @@ type Default = void;
  * will receive an error. The `complete` and `error` methods both close the underlying channel so it can no longer
  * send or receive messages.
  */
-export type BroadcastSubject<Value = Default> = Subject<Value> &
-	Readonly<{
-		/**
-		 * The name of the underlying {@linkcode BroadcastChannel}.
-		 */
-		name: string;
-	}>;
+export interface BroadcastSubject<Value = void>
+	extends Omit<Subject<Value>, 'pipe'>,
+		Pipeline<BroadcastSubject<Value>> {
+	/**
+	 * The name of the underlying {@linkcode BroadcastChannel}.
+	 */
+	readonly name: string;
+}
 
 /**
  * @param name The name of the underlying {@linkcode BroadcastChannel}.
  */
 export interface BroadcastSubjectConstructor {
-	new (name: string): BroadcastSubject;
-	new <Value = Default>(name: string): BroadcastSubject<Value>;
+	new <Value>(name: string): BroadcastSubject<Value>;
 	readonly prototype: BroadcastSubject;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const BroadcastSubject: BroadcastSubjectConstructor = class {
+export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	/** @internal */
 	readonly [Symbol.toStringTag] = 'BroadcastSubject';
 
@@ -62,62 +57,81 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	readonly #channel: BroadcastChannel;
 
 	/** @internal */
-	readonly #delegate = new Subject();
+	readonly #delegate = new Subject<Value>();
 
+	/** @internal */
+	readonly #pipeline = new Pipeline(this);
+
+	/** @internal */
 	constructor(name: string) {
+		// Initialization
 		this.#channel = new BroadcastChannel(name);
-		this.signal.addEventListener('abort', () => this.#channel.close(), {
+
+		// Teardown
+		new Subscriber({
+			signal: this.signal,
+			finalize: () => this.#channel.close(),
+		});
+
+		// Message handling
+		fromEventListener<MessageEvent<Value>>(this.#channel, 'message').subscribe({
+			next: (event) => this.#delegate.next(event.data),
+			error: (error) => this.error(error),
 			signal: this.signal,
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		this.#channel.onmessage = (event) => this.#delegate.next(event.data);
-		this.#channel.onmessageerror = (event) => this.#delegate.error(event);
+		fromEventListener(this.#channel, 'messageerror').subscribe({
+			next: (event) => this.error(event),
+			error: (error) => this.error(error),
+			signal: this.signal,
+		});
 	}
 
+	/** @internal */
 	get name(): string {
 		return this.#channel.name;
 	}
 
-	get observed(): boolean {
-		return this.#delegate.observed;
-	}
-
+	/** @internal */
 	get signal(): AbortSignal {
 		return this.#delegate.signal;
 	}
 
+	/** @internal */
+	pipe(...operations: []): this {
+		return this.#pipeline.pipe(...operations);
+	}
+
+	/** @internal */
+	[subscribe](
+		observerOrNext?: ((value: Value) => void) | Partial<Observer<Value>> | null,
+	): void {
+		this.subscribe(observerOrNext);
+	}
+
+	/** @internal */
 	subscribe(
-		observerOrNext?: Partial<Observer<void>> | ((value: undefined) => void),
+		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
-	abort(reason?: unknown): void {
-		this.#delegate.abort(reason);
-	}
-
-	next(value: undefined): void {
+	/** @internal */
+	next(value: Value): void {
 		if (!this.signal.aborted) this.#channel.postMessage(value);
 	}
 
+	/** @internal */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
+	/** @internal */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
-	asObservable(): Observable<void> {
-		return from(this);
-	}
-
-	pipe(
-		...operations: ReadonlyArray<UnaryFunction<never, never>>
-	): Observable<void> {
-		return operations.reduce(
-			(acc: never, operator) => operator(acc),
-			this.asObservable(),
-		);
+	/** @internal */
+	asObservable(): Observable<Value> {
+		return this.#delegate.asObservable();
 	}
 };

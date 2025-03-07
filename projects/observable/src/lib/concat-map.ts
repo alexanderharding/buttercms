@@ -1,6 +1,5 @@
 import { ObservableInput, from, ObservedValueOf } from './from';
 import { Observable } from './observable';
-import { concatMap } from 'rxjs';
 import { UnaryFunction } from './unary-function';
 
 export function concatMap<
@@ -11,9 +10,7 @@ export function concatMap<
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
 		new Observable((subscriber) => {
-			if (subscriber.signal.aborted) return;
 			let queue: Array<ObservedValueOf<In>> = [];
-			subscriber.signal.addEventListener('abort', () => (queue = []));
 			from(source).subscribe({
 				...subscriber,
 				next: (value) => {
@@ -24,6 +21,10 @@ export function concatMap<
 					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 					if (queue.length) from(mapFn(queue.shift()!)).subscribe(subscriber);
 					else subscriber.complete();
+				},
+				abort: (reason) => {
+					queue = [];
+					subscriber.abort(reason);
 				},
 			});
 		});

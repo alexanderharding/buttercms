@@ -92,3 +92,39 @@ export function timeout(ms: number): AbortSignal {
 	});
 	return controller.signal;
 }
+
+/**
+ * Adds an abort handler to an AbortSignal.
+ * @param signal The AbortSignal to listen to
+ * @param handler The handler to call when the signal aborts
+ * @param options The options for the event listener
+ */
+export function on(
+	signal: AbortSignal,
+	handler: (event: Event) => void,
+	options?: boolean | AddEventListenerOptions,
+): void {
+	const controller = new AbortController();
+	// if (options.replay && signal.aborted) handler(signal.reason);
+	signal.addEventListener('abort', handler, options);
+}
+
+/**
+ * Adds teardown logic to be executed when an AbortSignal is aborted.
+ * @param signal The AbortSignal to listen to
+ * @param teardown Either an AbortController to abort or a callback function to execute
+ */
+export function when(
+	signal: AbortSignal,
+	teardown: AbortController | ((reason?: unknown) => void),
+): void {
+	if (signal.aborted) return finalize(teardown);
+	signal.addEventListener('abort', () => finalize(teardown), {
+		signal,
+	});
+
+	function finalize(teardown: AbortController | (() => void)): void {
+		if (typeof teardown === 'function') teardown();
+		else teardown.abort(signal.reason);
+	}
+}
