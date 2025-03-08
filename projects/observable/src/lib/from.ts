@@ -1,5 +1,7 @@
 import { subscribe, Observable } from './observable';
 import { Observer } from 'subscriber';
+import { throwError } from './throw-error';
+import { AnyCatcher } from './any-catcher';
 
 /**
  * An object that implements the `InteropObservable` interface.
@@ -18,8 +20,15 @@ export type ObservableInput<Value = unknown> =
 	| Iterable<Value>
 	| Pick<ReadableStream<Value>, 'getReader'>;
 
-export type ObservedValuesOf<Inputs extends ReadonlyArray<ObservableInput>> =
-	Readonly<{ [K in keyof Inputs]: ObservedValueOf<Inputs[K]> }>;
+export type ObservedValuesOf<
+	Inputs extends
+		| Readonly<Record<PropertyKey, ObservableInput>>
+		| ReadonlyArray<ObservableInput>,
+> = Readonly<{
+	[Key in keyof Inputs]: Inputs[Key] extends ObservableInput
+		? ObservedValueOf<Inputs[Key]>
+		: never;
+}>;
 
 export type ObservedValueOf<Input extends ObservableInput> =
 	Input extends InteropObservable<infer T>
@@ -52,7 +61,7 @@ export function from(value: ObservableInput): Observable {
 
 	if (isReadableStreamLike(value)) return fromReadableStreamLike(value);
 
-	throw new Error('Invalid input');
+	return throwError(() => new Error('Invalid input'));
 }
 
 export function fromReadableStreamLike<T>(
