@@ -73,9 +73,6 @@ export const Subscriber: SubscriberConstructor = class {
 	readonly signal = this.#controller.signal;
 
 	/** @internal */
-	#closed = false;
-
-	/** @internal */
 	constructor(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
 	) {
@@ -94,7 +91,7 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	next(value: unknown): void {
-		if (this.signal.aborted || this.#closed) return;
+		if (this.signal.aborted) return;
 		try {
 			this.#observer?.next?.(value);
 		} catch (error) {
@@ -104,27 +101,27 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	error(error: unknown): void {
-		if (this.signal.aborted || this.#closed) return;
-		this.#closed = true;
+		if (this.signal.aborted) return;
+		this.#controller.abort();
 		try {
 			this.#observer?.error?.(error);
 		} catch {
 			// do nothing (for now)
 		} finally {
-			this.#controller.abort();
+			this.#observer?.finalize?.();
 		}
 	}
 
 	/** @internal */
 	complete(): void {
-		if (this.signal.aborted || this.#closed) return;
-		this.#closed = true;
+		if (this.signal.aborted) return;
+		this.#controller.abort();
 		try {
 			this.#observer?.complete?.();
 		} catch {
 			// do nothing (for now)
 		} finally {
-			this.#controller.abort();
+			this.#observer?.finalize?.();
 		}
 	}
 };
