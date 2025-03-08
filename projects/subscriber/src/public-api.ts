@@ -82,10 +82,14 @@ export const Subscriber: SubscriberConstructor = class {
 
 		if (this.#observer?.signal) {
 			const { signal: observerSignal } = this.#observer;
-			observerSignal.addEventListener('abort', () => this.#controller.abort(), {
+			const abortAndFinalize = () => {
+				this.#controller.abort();
+				this.#observer?.finalize?.();
+			};
+			observerSignal.addEventListener('abort', abortAndFinalize, {
 				signal: this.signal,
 			});
-			if (observerSignal.aborted) this.#controller.abort();
+			if (observerSignal.aborted) abortAndFinalize();
 		}
 	}
 
@@ -102,6 +106,8 @@ export const Subscriber: SubscriberConstructor = class {
 	/** @internal */
 	error(error: unknown): void {
 		if (this.signal.aborted) return;
+		// Abort the subscriber before pushing notifications to the
+		// observer to handle reentrant code.
 		this.#controller.abort();
 		try {
 			this.#observer?.error?.(error);
@@ -115,6 +121,8 @@ export const Subscriber: SubscriberConstructor = class {
 	/** @internal */
 	complete(): void {
 		if (this.signal.aborted) return;
+		// Abort the subscriber before pushing notifications to the
+		// observer to handle reentrant code.
 		this.#controller.abort();
 		try {
 			this.#observer?.complete?.();
