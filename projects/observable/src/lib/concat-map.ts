@@ -22,10 +22,7 @@ export function concatMap<
 					if (queue.length) from(mapFn(queue.shift()!)).subscribe(subscriber);
 					else subscriber.complete();
 				},
-				abort: (reason) => {
-					queue = [];
-					subscriber.abort(reason);
-				},
+				finalize: () => (queue = []),
 			});
 		});
 }
