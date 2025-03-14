@@ -1,7 +1,7 @@
-import { Subject } from './subject';
-import { Observable } from './observable';
+import { Subject } from './subject/subject';
+import { Observable } from './observable/observable';
 import { Observer } from 'subscriber';
-import { UnaryFunction } from './unary-function';
+import { UnaryFunction } from './pipe/unary-function';
 
 export type WebSocketSubject<Value = unknown> = Subject<Value>;
 
@@ -51,11 +51,6 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class {
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void),
 	): void {
 		this.#delegate.subscribe(observerOrNext);
-	}
-
-	abort(reason?: unknown): void {
-		this.#delegate.abort(reason);
-		this.#socket.close(1000, typeof reason === 'string' ? reason : undefined);
 	}
 
 	next(value: string | ArrayBufferLike | Blob | ArrayBufferView): void {

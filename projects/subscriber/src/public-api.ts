@@ -3,7 +3,11 @@
  * notified of any set of {@link Subscriber} events.
  */
 export interface Observer<Value = unknown> {
-	signal: AbortSignal;
+	/**
+	 * A signifier indicating if/when this {@linkcode Observer|observer} has been
+	 * aborted and is no longer receiving new notifications.
+	 */
+	readonly signal: AbortSignal;
 	/**
 	 * The callback to receive notifications of type `next` from
 	 * the Subscriber, with a value. The Subscriber may call this method 0 or more
@@ -31,11 +35,16 @@ export interface Observer<Value = unknown> {
 	finalize(): void;
 }
 
-export const completeSymbol = Symbol('complete');
-export const errorSymbol = Symbol('error');
-
+/**
+ * An object interface that defines a set of functions a user can use to push
+ * notifications to an {@link Observer|observer}.
+ */
 export interface Subscriber<Value = unknown> {
-	signal: AbortSignal;
+	/**
+	 * A signifier indicating if/when this {@linkcode Subscriber|subscriber} has been
+	 * aborted and is no longer pushing notifications.
+	 */
+	readonly signal: AbortSignal;
 	/**
 	 * The callback to receive notifications of type `next` from
 	 * the Subscriber, with a value. The Subscriber may call this method 0 or more
@@ -82,20 +91,22 @@ export const Subscriber: SubscriberConstructor = class {
 
 		if (this.#observer?.signal) {
 			const { signal: observerSignal } = this.#observer;
-			const abortAndFinalize = () => {
+			const finalizer = () => {
 				this.#controller.abort();
 				this.#observer?.finalize?.();
 			};
-			observerSignal.addEventListener('abort', abortAndFinalize, {
+			observerSignal.addEventListener('abort', finalizer, {
 				signal: this.signal,
 			});
-			if (observerSignal.aborted) abortAndFinalize();
+			if (observerSignal.aborted) finalizer();
 		}
 	}
 
 	/** @internal */
 	next(value: unknown): void {
+		// If this subscriber has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
+
 		try {
 			this.#observer?.next?.(value);
 		} catch (error) {
@@ -105,10 +116,13 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	error(error: unknown): void {
+		// If this subscriber has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
+
 		// Abort the subscriber before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
+
 		try {
 			this.#observer?.error?.(error);
 		} catch {
@@ -120,10 +134,13 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	complete(): void {
+		// If this subscriber has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
+
 		// Abort the subscriber before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
+
 		try {
 			this.#observer?.complete?.();
 		} catch {

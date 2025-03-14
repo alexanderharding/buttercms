@@ -105,7 +105,7 @@ export function on(
 	options?: boolean | AddEventListenerOptions,
 ): void {
 	const controller = new AbortController();
-	// if (options.replay && signal.aborted) handler(signal.reason);
+	if (signal.aborted) handler(signal.reason);
 	signal.addEventListener('abort', handler, options);
 }
 

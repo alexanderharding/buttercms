@@ -1,15 +1,18 @@
 export type { MonoTypeOperatorFunction } from './lib/mono-type-operator-function';
 export type { OperatorFunction } from './lib/operator-function';
-export { Observable, type ObservableConstructor } from './lib/observable';
-export { pipe } from './lib/pipe';
-export type { UnaryFunction } from './lib/unary-function';
+export {
+	Observable,
+	type ObservableConstructor,
+} from './lib/observable/observable';
+export { pipe } from './lib/pipe/pipe';
+export type { UnaryFunction } from './lib/pipe/unary-function';
 export type { Subscribable } from './lib/subscribable';
 export {
 	BehaviorSubject,
 	type BehaviorSubjectConstructor,
-} from './lib/behavior-subject';
-export { Subject, type SubjectConstructor } from './lib/subject';
+} from './lib/subject/behavior-subject';
+export { Subject, type SubjectConstructor } from './lib/subject/subject';
 export {
 	BroadcastSubject,
 	type BroadcastSubjectConstructor,
-} from './lib/broadcast-subject';
+} from './lib/subject/broadcast-subject';
