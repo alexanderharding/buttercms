@@ -1,3 +1,4 @@
+import { UnhandledError } from '../errors';
 import { UnaryFunction } from '../pipe';
 
 /**
@@ -126,7 +127,9 @@ export const Subscriber: SubscriberConstructor = class {
 			if (this.#observer?.error) {
 				this.#observer.error(error);
 			} else {
-				throw error;
+				// Report directly instead of throwing to keep the stack trace
+				// as simple as possible.
+				reportUnhandledError(error);
 			}
 		} catch (error) {
 			reportUnhandledError(error);
@@ -168,7 +171,13 @@ function reportUnhandledError(error: unknown): void {
 	// Throw error asynchronously to ensure it does not interfere with
 	// the library's execution.
 	globalThis.setTimeout(() => {
-		// Throw so it is picked up by the runtime's uncaught error mechanism.
-		throw error;
+		throw ensureUnhandledError(error);
 	});
+}
+
+/** @internal */
+function ensureUnhandledError(error: unknown): UnhandledError {
+	return error instanceof UnhandledError
+		? error
+		: new UnhandledError({ cause: error });
 }
