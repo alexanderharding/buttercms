@@ -211,7 +211,7 @@ export const Observable: ObservableConstructor = class {
 	}
 
 	/** @internal */
-	pipe(...operations: []): Observable {
+	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 };

@@ -4,89 +4,156 @@ import { Subject } from './subject';
 import { Pipeline } from '../pipe/pipeline';
 
 /**
- * A variant of {@linkcode Subject} that requires an initial value and emits its current value whenever it is subscribed to.
+ * A variant of {@linkcode Subject} that requires an initial value and
+ * emits its current value whenever it is subscribed to.
+ *
+ * @template Value - The type of values emitted by the subject.
+ * @example
+ * const subject = new BehaviorSubject(0);
+ * subject.subscribe((value) => console.log(value)); // 0
+ * subject.next(1);
+ *
+ * @see {@linkcode Subject}
+ * @public
  */
 export type BehaviorSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
 	Readonly<{ value: Value }> &
 	Pipeline<BehaviorSubject<Value>>;
 
 export interface BehaviorSubjectConstructor {
-	new <Value>(
-		initialValue: Value,
-		signal?: AbortSignal,
-	): BehaviorSubject<Value>;
+	new <Value>(initialValue: Value): BehaviorSubject<Value>;
 	readonly prototype: BehaviorSubject;
 }
 
 export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	#value: Value;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	readonly #delegate = new Subject<Value>();
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	readonly signal = this.#delegate.signal;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	readonly #pipeline = new Pipeline(this);
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	readonly #output = new Observable((subscriber) => {
 		if (!this.signal.aborted) subscriber.next(this.#value);
 		return this.#delegate.subscribe(subscriber);
 	});
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @constructor
+	 * @public
+	 */
 	constructor(initialValue: Value) {
 		this.#value = initialValue;
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	get value(): Value {
 		return this.#value;
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	[subscribe](
 		observerOrNext?: ((value: Value) => void) | Partial<Observer<Value>> | null,
 	): void {
 		this.subscribe(observerOrNext);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
 	): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	next(value: Value): void {
 		this.#delegate.next(
 			this.signal.aborted ? this.#value : (this.#value = value),
 		);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
 	asObservable(): Observable {
 		return this.#output;
 	}

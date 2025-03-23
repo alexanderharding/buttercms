@@ -2,7 +2,7 @@ import { AnyCatcher } from '../any-catcher';
 import { empty } from './empty';
 import { from, ObservableInput, ObservedValuesOf } from './from';
 import { Observable } from './observable';
-import { throwError } from '../throw-error';
+import { throwError } from './throw-error';
 
 /**
  * You have passed `any` here, we can't figure out if it is

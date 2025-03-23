@@ -12,23 +12,32 @@ import { Pipeline } from '../pipe/pipeline';
 export interface Subject<Value = void>
 	extends Omit<Observable<Value>, 'pipe'>,
 		Pipeline<Subject<Value>> {
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 * @readonly
+	 * @public
+	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
 	 * A signifier indicating if/when this {@linkcode Subject|subject} has been aborted
 	 * and is no longer accepting new notifications.
+	 * @readonly
+	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
 	 * Multicast a value to all subscribers of this {@linkcode Subject|subject}.
 	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param value The value to multicast to all subscribers.
+	 * @public
 	 */
 	next(value: Value): void;
 	/**
 	 * Aborts this {@linkcode Subject|subject} and multicasts a completion notification to all subscribers.
 	 * Any future subscribers will be immediately completed (unless they are already aborted).
 	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @public
 	 */
 	complete(): void;
 	/**
@@ -36,6 +45,7 @@ export interface Subject<Value = void>
 	 * Any future subscribers will be immediately notified of the error (unless they are already aborted).
 	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param error The error to multicast to all subscribers.
+	 * @public
 	 */
 	error(error: unknown): void;
 	/**
@@ -43,6 +53,7 @@ export interface Subject<Value = void>
 	 * to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from
 	 * code that uses the Observable.
 	 * @return Observable that this {@linkcode Subject|subject} casts to.
+	 * @public
 	 */
 	asObservable(): Observable<Value>;
 }
@@ -53,33 +64,55 @@ export interface SubjectConstructor {
 }
 
 export const Subject: SubjectConstructor = class {
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly [Symbol.toStringTag] = this.constructor.name;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly #controller = new AbortController();
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly signal = this.#controller.signal;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#thrownError: unknown;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#hasError = false;
 
 	/**
 	 * This is used to track a known array of subscribers, so we don't have to
 	 * clone them while iterating to prevent reentrant behaviors.
-	 * (for example, what if the subject is subscribed to when nexting to an observer)
+	 * (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
 	 * @internal
+	 * @private
 	 */
 	#subscribersSnapshot?: ReadonlyArray<Subscriber>;
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly #subscribers = new Set<Subscriber>();
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly #delegate = new Observable((subscriber) => {
 		// Check if this subject has finalized so we can notify the subscriber immediately.
 		this.#checkFinalizers(subscriber);
@@ -100,24 +133,36 @@ export const Subject: SubjectConstructor = class {
 		);
 	});
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	readonly #pipeline = new Pipeline(this);
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	[subscribe](
 		observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
 	): void {
 		this.subscribe(observerOrNext);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	next(value: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -128,7 +173,10 @@ export const Subject: SubjectConstructor = class {
 		);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	complete(): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -145,7 +193,10 @@ export const Subject: SubjectConstructor = class {
 		this.#finalizer();
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	error(error: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -166,22 +217,34 @@ export const Subject: SubjectConstructor = class {
 		this.#finalizer();
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	asObservable(): Observable {
 		return this.#delegate;
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#takeSubscriberSnapshot(): ReadonlyArray<Subscriber> {
 		return Array.from(this.#subscribers.values());
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#checkFinalizers(subscriber: Subscriber): void {
 		if (this.#hasError) {
 			// This Subject has errored so we need to notify the subscriber.
@@ -192,19 +255,28 @@ export const Subject: SubjectConstructor = class {
 		}
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#addSubscriber(subscriber: Subscriber): void {
 		this.#subscribersSnapshot = undefined;
 		this.#subscribers.add(subscriber);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#deleteSubscriber(subscriber: Subscriber): void {
 		this.#subscribersSnapshot = undefined;
 		this.#subscribers.delete(subscriber);
 	}
 
-	/** @internal */
+	/**
+	 * @internal
+	 * @ignore
+	 */
 	#finalizer(): void {
 		this.#subscribers.clear();
 		this.#subscribersSnapshot = undefined;
