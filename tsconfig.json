@@ -10,16 +10,13 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "abort-signal-interop": ["./dist/abort-signal-interop"],
       "ngx-dependency-injection-interop": [
         "./dist/ngx-dependency-injection-interop"
       ],
       "ngx-campaigns": ["./dist/ngx-campaigns"],
       "ngx-buttercms": ["./dist/ngx-buttercms"],
       "observable": ["./dist/observable"],
-      "rx-broadcast-channel": ["./dist/rx-broadcast-channel"],
-      "subscriber": ["./dist/subscriber"],
-      "subscription": ["./dist/subscription"]
+      "rx-broadcast-channel": ["./dist/rx-broadcast-channel"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,

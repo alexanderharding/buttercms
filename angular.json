@@ -28,10 +28,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "tsConfig": "projects/ngx-buttercms/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
+            "polyfills": ["zone.js", "zone.js/testing"]
           }
         },
         "lint": {
@@ -71,10 +68,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "tsConfig": "projects/ngx-dependency-injection-interop/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
+            "polyfills": ["zone.js", "zone.js/testing"]
           }
         },
         "lint": {
@@ -114,10 +108,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "tsConfig": "projects/ngx-campaigns/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
+            "polyfills": ["zone.js", "zone.js/testing"]
           }
         },
         "lint": {
@@ -162,96 +153,8 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "projects/rx-broadcast-channel/**/*.ts"
-            ],
+            "lintFilePatterns": ["projects/rx-broadcast-channel/**/*.ts"],
             "eslintConfig": "projects/rx-broadcast-channel/eslint.config.js"
-          }
-        }
-      }
-    },
-    "subscription": {
-      "projectType": "library",
-      "root": "projects/subscription",
-      "sourceRoot": "projects/subscription/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/subscription/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/subscription/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/subscription/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/subscription/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/subscription/**/*.ts",
-              "projects/subscription/**/*.html"
-            ],
-            "eslintConfig": "projects/subscription/eslint.config.js"
-          }
-        }
-      }
-    },
-    "subscriber": {
-      "projectType": "library",
-      "root": "projects/subscriber",
-      "sourceRoot": "projects/subscriber/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/subscriber/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/subscriber/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/subscriber/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/subscriber/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/subscriber/**/*.ts",
-              "projects/subscriber/**/*.html"
-            ],
-            "eslintConfig": "projects/subscriber/eslint.config.js"
           }
         }
       }
@@ -281,10 +184,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "tsConfig": "projects/observable/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
+            "polyfills": ["zone.js", "zone.js/testing"]
           }
         },
         "lint": {
@@ -298,54 +198,9 @@
           }
         }
       }
-    },
-    "abort-signal-interop": {
-      "projectType": "library",
-      "root": "projects/abort-signal-interop",
-      "sourceRoot": "projects/abort-signal-interop/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/abort-signal-interop/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/abort-signal-interop/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/abort-signal-interop/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/abort-signal-interop/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/abort-signal-interop/**/*.ts",
-              "projects/abort-signal-interop/**/*.html"
-            ],
-            "eslintConfig": "projects/abort-signal-interop/eslint.config.js"
-          }
-        }
-      }
     }
   },
   "cli": {
-    "schematicCollections": [
-      "@angular-eslint/schematics"
-    ]
+    "schematicCollections": ["@angular-eslint/schematics"]
   }
 }
