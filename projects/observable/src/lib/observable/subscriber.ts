@@ -1,3 +1,5 @@
+import { UnaryFunction } from '../pipe';
+
 /**
  * An object interface that defines a set of callback functions a user can use to get
  * notified of any set of {@link Subscriber} events.
@@ -67,10 +69,9 @@ export interface Subscriber<Value = unknown> {
 }
 
 export type SubscriberConstructor = new <Value = unknown>(
-	observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
+	observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
 ) => Subscriber<Value>;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subscriber: SubscriberConstructor = class {
 	/** @internal */
 	readonly #observer?: Partial<Observer> | null;
@@ -82,9 +83,7 @@ export const Subscriber: SubscriberConstructor = class {
 	readonly signal = this.#controller.signal;
 
 	/** @internal */
-	constructor(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
-	) {
+	constructor(observerOrNext?: Partial<Observer> | UnaryFunction | null) {
 		if (typeof observerOrNext === 'function') {
 			this.#observer = { next: observerOrNext };
 		} else this.#observer = observerOrNext;
@@ -119,7 +118,7 @@ export const Subscriber: SubscriberConstructor = class {
 		// If this subscriber has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort the subscriber before pushing notifications to the
+		// Abort this subscriber before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 
@@ -137,7 +136,7 @@ export const Subscriber: SubscriberConstructor = class {
 		// If this subscriber has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort the subscriber before pushing notifications to the
+		// Abort this subscriber before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 

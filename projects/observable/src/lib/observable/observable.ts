@@ -1,6 +1,6 @@
-import { Observer, Subscriber } from 'subscriber';
-import { Pipeline } from '../pipe';
+import { Pipeline, UnaryFunction } from '../pipe';
 import { InteropObservable } from './from';
+import { Observer, Subscriber } from './subscriber';
 
 export const subscribe = Symbol('subscribe');
 
@@ -144,10 +144,7 @@ export interface Observable<Value = unknown>
 	 * @return A subscription reference to the registered handlers.
 	 */
 	subscribe(
-		observerOrNext?:
-			| Partial<Observer<Value>>
-			| ((value: Value) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
 	): void;
 }
 
@@ -160,12 +157,7 @@ export interface ObservableConstructor {
 	 * can be `next`ed, or an `error` method can be called to raise an error, or
 	 * `complete` can be called to notify of a successful completion.
 	 */
-	new <Value>(
-		subscribe: (
-			this: Observable<Value>,
-			subscriber: Subscriber<Value>,
-		) => unknown,
-	): Observable<Value>;
+	new <Value>(subscribe: UnaryFunction<Subscriber<Value>>): Observable<Value>;
 	readonly prototype: Observable;
 }
 
@@ -180,34 +172,26 @@ export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
 
 	/** @internal */
-	readonly #subscribe?:
-		| ((this: this, subscriber: Subscriber) => unknown)
-		| null;
+	readonly #subscribe?: UnaryFunction<Subscriber> | null;
 
 	/** @internal */
 	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
-	constructor(
-		subscribe?: ((this: Observable, subscriber: Subscriber) => unknown) | null,
-	) {
+	constructor(subscribe?: UnaryFunction<Subscriber> | null) {
 		this.#subscribe = subscribe;
 	}
 
 	/** @internal */
-	[subscribe](
-		observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
-	): void {
+	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		this.subscribe(observerOrNext);
 	}
 
 	/** @internal */
-	subscribe(
-		observerOrNext?: ((value: unknown) => unknown) | Partial<Observer> | null,
-	): void {
+	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		const subscriber = ensureSubscriber(observerOrNext);
 		try {
-			this.#subscribe?.call(this, subscriber);
+			this.#subscribe?.(subscriber);
 		} catch (error) {
 			subscriber.error(error);
 		}
@@ -221,7 +205,7 @@ export const Observable: ObservableConstructor = class {
 
 /** @internal */
 function ensureSubscriber(
-	observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
+	observerOrNext?: Partial<Observer> | UnaryFunction | null,
 ): Subscriber {
 	return observerOrNext instanceof Subscriber
 		? observerOrNext
