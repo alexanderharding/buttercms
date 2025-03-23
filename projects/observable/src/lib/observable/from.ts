@@ -1,9 +1,13 @@
-import { subscribe, Observable } from './observable';
+import { Observable } from './observable';
 import { throwError } from './throw-error';
 import { AnyCatcher } from '../any-catcher';
-import { UnaryFunction } from '../pipe';
 import { Observer } from './subscriber';
+import { UnaryFunction } from '../pipe';
 
+/** @public */
+export const subscribe = Symbol('Interop Observable');
+
+/** @public */
 export interface InteropObservable<Value = unknown> {
 	[subscribe](
 		observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
@@ -16,8 +20,13 @@ export type ObservableInput<Value = unknown> =
 	| PromiseLike<Value>
 	| AsyncIterable<Value>
 	| Iterable<Value>
-	| Pick<ReadableStream<Value>, 'getReader'>;
+	| ReadableStreamLike<Value>;
 
+/**
+ * Similar to {@linkcode ObservedValueOf} except that it can be used with a record
+ * or array of {@linkcode ObservableInput}'s.
+ * @public
+ */
 export type ObservedValuesOf<
 	Inputs extends
 		| Readonly<Record<PropertyKey, ObservableInput>>
@@ -25,26 +34,60 @@ export type ObservedValuesOf<
 > = Readonly<{
 	[Key in keyof Inputs]: Inputs[Key] extends ObservableInput
 		? ObservedValueOf<Inputs[Key]>
-		: never;
+		: unknown;
 }>;
 
+/**
+ * @public
+ */
+export type ReadableStreamLike<Value = unknown> = Pick<
+	ReadableStream<Value>,
+	'getReader'
+>;
+
+/**
+ * Used by the {@linkcode from} function to resolve the type of an {@linkcode ObservableInput} in the order of priority.
+ * @public
+ */
 export type ObservedValueOf<Input extends ObservableInput> =
-	Input extends InteropObservable<infer T>
-		? T
-		: Input extends ArrayLike<infer T>
-			? T
-			: Input extends PromiseLike<infer T>
-				? T
-				: Input extends AsyncIterable<infer T>
-					? T
-					: Input extends Iterable<infer T>
-						? T
-						: Input extends Pick<ReadableStream<infer T>, 'getReader'>
-							? T
+	Input extends InteropObservable<infer Value>
+		? Value
+		: Input extends ArrayLike<infer Value>
+			? Value
+			: Input extends PromiseLike<infer Value>
+				? Value
+				: Input extends AsyncIterable<infer Value>
+					? Value
+					: Input extends Iterable<infer Value>
+						? Value
+						: Input extends ReadableStreamLike<infer Value>
+							? Value
 							: never;
 
+/**
+ * You have passed `any` here, we can't figure out what type of input you're passing,
+ * so you're getting `unknown`. Use better types.
+ * @param input Something typed as `any`
+ * @public
+ */
 export function from<Input extends AnyCatcher>(input: Input): Observable;
+/**
+ * You have passed `null` or `undefined` here, so your going to get an Observable that emits
+ * a `TypeError` through the `error` notification. This is unlikely to be what you want.
+ * @param input Something typed as `null` or `undefined`
+ * @public
+ */
 export function from(input: null | undefined): Observable<never>;
+/**
+ * Creates an Observable from an {@linkcode Input|ObservableInput} in the following order of priority:
+ * 1. {@linkcode InteropObservable}
+ * 2. {@linkcode ArrayLike}
+ * 3. {@linkcode PromiseLike}
+ * 4. {@linkcode AsyncIterable}
+ * 5. {@linkcode Iterable}
+ * 6. {@linkcode ReadableStreamLike}
+ * @public
+ */
 export function from<const Input extends ObservableInput>(
 	input: Input,
 ): Observable<ObservedValueOf<Input>>;
@@ -61,15 +104,19 @@ export function from(value: ObservableInput | null | undefined): Observable {
 
 	if (isReadableStreamLike(value)) return fromReadableStreamLike(value);
 
+	// The user has ticked the TSC. We will still return an Observable, but it will
+	// emit a `TypeError` through the `error` notification.
 	return throwError(() => new TypeError('value must be an ObservableInput'));
 }
 
+/** @internal */
 function fromReadableStreamLike<Value>(
 	readableStream: Pick<ReadableStream<Value>, 'getReader'>,
 ): Observable<Value> {
 	return fromAsyncIterable(readableStreamLikeToAsyncGenerator(readableStream));
 }
 
+/** @internal */
 async function* readableStreamLikeToAsyncGenerator<Value>(
 	readableStream: Pick<ReadableStream<Value>, 'getReader'>,
 ): AsyncGenerator<Value> {
@@ -85,6 +132,7 @@ async function* readableStreamLikeToAsyncGenerator<Value>(
 	}
 }
 
+/** @internal */
 function fromArrayLike<Value>(array: ArrayLike<Value>): Observable<Value> {
 	return new Observable<Value>((subscriber) => {
 		// Loop over the array and emit each value. Note two things here:
@@ -104,6 +152,7 @@ function fromArrayLike<Value>(array: ArrayLike<Value>): Observable<Value> {
 	});
 }
 
+/** @internal */
 function fromPromise<Value>(promise: PromiseLike<Value>): Observable<Value> {
 	return new Observable(async (subscriber) => {
 		try {
@@ -119,7 +168,10 @@ function fromPromise<Value>(promise: PromiseLike<Value>): Observable<Value> {
 	});
 }
 
-function fromAsyncIterable<T>(asyncIterable: AsyncIterable<T>): Observable<T> {
+/** @internal */
+function fromAsyncIterable<Value>(
+	asyncIterable: AsyncIterable<Value>,
+): Observable<Value> {
 	return new Observable(async (subscriber) => {
 		try {
 			for await (const value of asyncIterable) {
@@ -135,7 +187,8 @@ function fromAsyncIterable<T>(asyncIterable: AsyncIterable<T>): Observable<T> {
 	});
 }
 
-function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
+/** @internal */
+function fromIterable<Value>(iterable: Iterable<Value>): Observable<Value> {
 	return new Observable((subscriber) => {
 		for (const value of iterable) {
 			subscriber.next(value);
@@ -147,6 +200,7 @@ function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
 	});
 }
 
+/** @internal */
 function fromInteropObservable<Value>(
 	interopObservable: InteropObservable<Value>,
 ): Observable<Value>;
@@ -166,6 +220,7 @@ function fromInteropObservable(
 	});
 }
 
+/** @internal */
 function isArrayLike<Value>(x: unknown): x is ArrayLike<Value> {
 	return (
 		!!x &&
@@ -176,6 +231,7 @@ function isArrayLike<Value>(x: unknown): x is ArrayLike<Value> {
 	);
 }
 
+/** @internal */
 function isIterable<Value>(value: unknown): value is Iterable<Value> {
 	return (
 		!!value &&
@@ -185,6 +241,7 @@ function isIterable<Value>(value: unknown): value is Iterable<Value> {
 	);
 }
 
+/** @internal */
 function isAsyncIterable<Value>(value: unknown): value is AsyncIterable<Value> {
 	return (
 		!!value &&
@@ -194,6 +251,7 @@ function isAsyncIterable<Value>(value: unknown): value is AsyncIterable<Value> {
 	);
 }
 
+/** @internal */
 function isPromiseLike<Value>(value: unknown): value is PromiseLike<Value> {
 	return (
 		!!value &&
@@ -203,9 +261,10 @@ function isPromiseLike<Value>(value: unknown): value is PromiseLike<Value> {
 	);
 }
 
+/** @internal */
 function isReadableStreamLike<Value>(
 	value: unknown,
-): value is Pick<ReadableStream<Value>, 'getReader'> {
+): value is ReadableStreamLike<Value> {
 	return (
 		!!value &&
 		typeof value === 'object' &&
@@ -214,6 +273,7 @@ function isReadableStreamLike<Value>(
 	);
 }
 
+/** @internal */
 function isInteropObservable<Value>(
 	value: unknown,
 ): value is InteropObservable<Value> {

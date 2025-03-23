@@ -33,7 +33,8 @@
     "noUnusedParameters": false, // Enforced by linter
     "noUnusedLocals": false, // Enforced by linter
     "noImplicitThis": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "stripInternal": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
