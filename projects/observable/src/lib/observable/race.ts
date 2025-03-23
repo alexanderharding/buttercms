@@ -1,6 +1,5 @@
-import { any } from 'abort-signal-interop';
 import { empty } from './empty';
-import { from, ObservableInput, ObservedValuesOf } from './from';
+import { from, type ObservableInput, type ObservedValuesOf } from './from';
 import { Observable } from './observable';
 
 export function race<const Inputs extends ReadonlyArray<ObservableInput>>(
@@ -16,9 +15,18 @@ export function race<const Inputs extends ReadonlyArray<ObservableInput>>(
 		for (let inputIndex = 0; shouldContinue(inputIndex); inputIndex++) {
 			const controller = new AbortController();
 			controllers.set(inputIndex, controller);
+
+			// If the subscriber's signal aborts, abort this controller
+			// with the same reason.
+			subscriber.signal.addEventListener(
+				'abort',
+				() => controller.abort(subscriber.signal.reason),
+				{ signal: subscriber.signal },
+			);
+
 			from(inputs[inputIndex]).subscribe({
 				...subscriber,
-				signal: any(controller.signal, subscriber.signal),
+				signal: controller.signal,
 				next: (value: ObservedValuesOf<Inputs>[number]) => {
 					if (controllers.size) finish(inputIndex);
 					subscriber.next(value);
