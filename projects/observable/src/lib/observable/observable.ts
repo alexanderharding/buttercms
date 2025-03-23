@@ -153,6 +153,7 @@ export interface Observable<Value = unknown>
 
 export interface ObservableConstructor {
 	new (): Observable<never>;
+	new (subscribe: undefined | null): Observable<never>;
 	/**
 	 * @param subscribe The function that is called when the Observable is
 	 * initially subscribed to. This function is given a Subscriber, to which new values
@@ -160,7 +161,7 @@ export interface ObservableConstructor {
 	 * `complete` can be called to notify of a successful completion.
 	 */
 	new <Value>(
-		subscribe?: (
+		subscribe: (
 			this: Observable<Value>,
 			subscriber: Subscriber<Value>,
 		) => unknown,
@@ -179,14 +180,16 @@ export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
 
 	/** @internal */
-	readonly #subscribe?: (this: this, subscriber: Subscriber) => unknown;
+	readonly #subscribe?:
+		| ((this: this, subscriber: Subscriber) => unknown)
+		| null;
 
 	/** @internal */
 	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
 	constructor(
-		subscribe?: (this: Observable, subscriber: Subscriber) => unknown,
+		subscribe?: ((this: Observable, subscriber: Subscriber) => unknown) | null,
 	) {
 		this.#subscribe = subscribe;
 	}
