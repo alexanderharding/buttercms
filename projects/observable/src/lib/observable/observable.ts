@@ -1,5 +1,5 @@
 import { Observer, Subscriber } from 'subscriber';
-import { Pipeline } from '../pipe/pipeline';
+import { Pipeline } from '../pipe';
 import { InteropObservable } from './from';
 
 export const subscribe = Symbol('subscribe');
