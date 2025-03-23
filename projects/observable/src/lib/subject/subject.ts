@@ -59,7 +59,7 @@ export interface Subject<Value = void>
 }
 
 export interface SubjectConstructor {
-	new <Value>(signal?: AbortSignal): Subject<Value>;
+	new <Value>(): Subject<Value>;
 	readonly prototype: Subject;
 }
 
@@ -107,7 +107,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	readonly #subscribers = new Set<Subscriber>();
+	readonly #subscribers = new Map<symbol, Subscriber>();
 
 	/**
 	 * @internal
@@ -118,17 +118,24 @@ export const Subject: SubjectConstructor = class {
 		this.#checkFinalizers(subscriber);
 
 		// If the subscriber is already aborted then there's nothing to do.
-		// This could be because the subscriber was aborted before it was added to the subject
+		// This could be because the subscriber was aborted before it passed to this subject
 		// or from this subject being in a finalized state (this.#checkFinalizers(subscriber)).
 		if (subscriber.signal.aborted) return;
 
-		// Add the subscriber to this subject so it can receive notifications.
-		this.#addSubscriber(subscriber);
+		// Use a unique symbol to identify the subscriber since it is allowed for the same
+		// subscriber to be added multiple times.
+		const symbol = Symbol('Subject subscriber');
 
-		// Cleanup subscriber when it is at the end of its lifecycle.
+		// Add the subscriber to the subscribers Map so it can begin to receive push notifications.
+		this.#subscribers.set(symbol, subscriber);
+
+		// Reset the subscribers snapshot since it is now stale.
+		this.#subscribersSnapshot = undefined;
+
+		// Remove the subscriber from the subscribers Map when it is at the end of it's lifecycle.
 		subscriber.signal.addEventListener(
 			'abort',
-			() => this.#deleteSubscriber(subscriber),
+			() => this.#subscribers.delete(symbol),
 			{ signal: subscriber.signal },
 		);
 	});
@@ -168,9 +175,7 @@ export const Subject: SubjectConstructor = class {
 		if (this.signal.aborted) return;
 
 		// Push the next value to all subscribers.
-		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
-			(subscriber) => subscriber.next(value),
-		);
+		this.#forEachSubscriber((subscriber) => subscriber.next(value));
 	}
 
 	/**
@@ -185,9 +190,7 @@ export const Subject: SubjectConstructor = class {
 		this.#controller.abort();
 
 		// Push the complete notification to all subscribers.
-		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
-			(subscriber) => subscriber.complete(),
-		);
+		this.#forEachSubscriber((subscriber) => subscriber.complete());
 
 		// Teardown after all subscribers have been notified.
 		this.#finalizer();
@@ -209,9 +212,7 @@ export const Subject: SubjectConstructor = class {
 		this.#controller.abort();
 
 		// Push the error notification to all subscribers.
-		(this.#subscribersSnapshot ??= this.#takeSubscriberSnapshot()).forEach(
-			(subscriber) => subscriber.error(error),
-		);
+		this.#forEachSubscriber((subscriber) => subscriber.error(error));
 
 		// Teardown after all subscribers have been notified.
 		this.#finalizer();
@@ -237,20 +238,12 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#takeSubscriberSnapshot(): ReadonlyArray<Subscriber> {
-		return Array.from(this.#subscribers.values());
-	}
-
-	/**
-	 * @internal
-	 * @ignore
-	 */
 	#checkFinalizers(subscriber: Subscriber): void {
 		if (this.#hasError) {
 			// This Subject has errored so we need to notify the subscriber.
 			subscriber.error(this.#thrownError);
 		} else if (this.signal.aborted) {
-			// This Subject has been aborted so it will no longer push any more values.
+			// This Subject has been aborted so it will no longer push any more next notifications.
 			subscriber.complete();
 		}
 	}
@@ -259,18 +252,24 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#addSubscriber(subscriber: Subscriber): void {
-		this.#subscribersSnapshot = undefined;
-		this.#subscribers.add(subscriber);
+	#forEachSubscriber(callback: (subscriber: Subscriber) => void): void {
+		this.#ensureSubscribersSnapshot().forEach(callback);
 	}
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	#deleteSubscriber(subscriber: Subscriber): void {
-		this.#subscribersSnapshot = undefined;
-		this.#subscribers.delete(subscriber);
+	#ensureSubscribersSnapshot(): ReadonlyArray<Subscriber> {
+		return (this.#subscribersSnapshot ??= this.#takeSubscribersSnapshot());
+	}
+
+	/**
+	 * @internal
+	 * @ignore
+	 */
+	#takeSubscribersSnapshot(): ReadonlyArray<Subscriber> {
+		return Array.from(this.#subscribers.values());
 	}
 
 	/**
