@@ -123,11 +123,15 @@ export const Subscriber: SubscriberConstructor = class {
 		this.#controller.abort();
 
 		try {
-			this.#observer?.error?.(error);
-		} catch {
-			// do nothing (for now)
+			if (this.#observer?.error) {
+				this.#observer.error(error);
+			} else {
+				throw error;
+			}
+		} catch (error) {
+			reportUnhandledError(error);
 		} finally {
-			this.#observer?.finalize?.();
+			this.#finalize();
 		}
 	}
 
@@ -142,10 +146,29 @@ export const Subscriber: SubscriberConstructor = class {
 
 		try {
 			this.#observer?.complete?.();
-		} catch {
-			// do nothing (for now)
+		} catch (error) {
+			reportUnhandledError(error);
 		} finally {
+			this.#finalize();
+		}
+	}
+
+	/** @internal */
+	#finalize(): void {
+		try {
 			this.#observer?.finalize?.();
+		} catch (error) {
+			reportUnhandledError(error);
 		}
 	}
 };
+
+/** @internal */
+function reportUnhandledError(error: unknown): void {
+	// Throw error asynchronously to ensure it does not interfere with
+	// the library's execution.
+	globalThis.setTimeout(() => {
+		// Throw so it is picked up by the runtime's uncaught error mechanism.
+		throw error;
+	});
+}
