@@ -1,7 +1,6 @@
-import { Observer } from 'subscriber';
-import { Observable, subscribe } from '../observable/observable';
+import { Observable, subscribe, type Observer } from '../observable';
 import { Subject } from './subject';
-import { Pipeline } from '../pipe/pipeline';
+import { Pipeline } from '../pipe';
 
 /**
  * A variant of {@linkcode Subject} that requires an initial value and

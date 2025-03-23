@@ -1,7 +1,11 @@
-import { Observer } from 'subscriber';
-import { Observable } from '../observable/observable';
-import { from, ObservableInput, ObservedValueOf } from '../observable/from';
-import { UnaryFunction } from '../pipe/unary-function';
+import {
+	from,
+	Observable,
+	type Observer,
+	type ObservableInput,
+	type ObservedValueOf,
+} from '../observable';
+import type { UnaryFunction } from '../pipe';
 
 export function tap<In extends ObservableInput>(
 	observerOrNext:
@@ -10,7 +14,8 @@ export function tap<In extends ObservableInput>(
 ): UnaryFunction<In, Observable<ObservedValueOf<In>>> {
 	return (source) =>
 		new Observable((subscriber) => {
-			from(source).subscribe(observerOrNext);
-			from(source).subscribe(subscriber);
+			const normalizedSource = from(source);
+			normalizedSource.subscribe(observerOrNext);
+			normalizedSource.subscribe(subscriber);
 		});
 }

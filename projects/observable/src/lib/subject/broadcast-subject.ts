@@ -1,7 +1,6 @@
 import { Subject } from './subject';
-import { Observable, subscribe } from '../observable/observable';
-import { Observer } from 'subscriber';
-import { Pipeline } from '../pipe/pipeline';
+import { Observable, subscribe, type Observer } from '../observable';
+import { Pipeline, type UnaryFunction } from '../pipe';
 
 /**
  * A wrapper around the {@linkcode BroadcastChannel} object provided by the browser.
@@ -57,7 +56,7 @@ export interface BroadcastSubjectConstructor {
 	readonly prototype: BroadcastSubject;
 }
 
-export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
+export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	/**
 	 * @internal
 	 * @readonly
@@ -77,7 +76,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @private
 	 */
-	readonly #delegate = new Subject<Value>();
+	readonly #delegate = new Subject();
 
 	/**
 	 * @internal
@@ -96,8 +95,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		this.#channel = new BroadcastChannel(name);
 
 		// Message handling
-		this.#channel.onmessage = (event: MessageEvent<Value>) =>
-			this.#delegate.next(event.data);
+		this.#channel.onmessage = (event) => this.#delegate.next(event.data);
 		this.#channel.onmessageerror = (event) => this.error(event);
 
 		// Teardown
@@ -138,9 +136,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	[subscribe](
-		observerOrNext?: ((value: Value) => void) | Partial<Observer<Value>> | null,
-	): void {
+	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		this.subscribe(observerOrNext);
 	}
 
@@ -149,9 +145,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	subscribe(
-		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
-	): void {
+	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
@@ -160,7 +154,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	next(value: Value): void {
+	next(value: unknown): void {
 		if (!this.signal.aborted) this.#channel.postMessage(value);
 	}
 
@@ -187,7 +181,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	asObservable(): Observable<Value> {
+	asObservable(): Observable {
 		return this.#delegate.asObservable();
 	}
 };

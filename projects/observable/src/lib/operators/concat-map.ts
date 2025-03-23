@@ -10,7 +10,7 @@ export function concatMap<
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
 		new Observable((subscriber) => {
-			let queue: Array<ObservedValueOf<In>> = [];
+			const queue: Array<ObservedValueOf<In>> = [];
 			from(source).subscribe({
 				...subscriber,
 				next: (value) => {
@@ -18,11 +18,11 @@ export function concatMap<
 					else from(mapFn(value)).subscribe(subscriber);
 				},
 				complete: () => {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					if (queue.length) from(mapFn(queue.shift()!)).subscribe(subscriber);
+					const value = queue.shift();
+					if (value !== void 0) from(mapFn(value)).subscribe(subscriber);
 					else subscriber.complete();
 				},
-				finalize: () => (queue = []),
+				finalize: () => (queue.length = 0),
 			});
 		});
 }

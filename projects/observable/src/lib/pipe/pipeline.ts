@@ -1,11 +1,35 @@
-/**
- * A function type interface that describes a function that accepts one parameter `In`
- * and returns another parameter `Out`.
- *
- * Usually used to describe OperatorFunction - it always takes a single
- * parameter (the source Observable) and returns another Observable.
- */
-export type UnaryFunction<In = unknown, Out = unknown> = (value: In) => Out;
+import { map, Observable } from 'rxjs';
+import { UnaryFunction } from './unary-function';
+
+export type Foo<Inputs extends ReadonlyArray<UnaryFunction>> = Readonly<{
+	[Key in keyof Inputs]: number;
+}>;
+
+type Bar<In, Input extends UnaryFunction<In>> =
+	Input extends UnaryFunction<In, infer Out> ? Out : never;
+
+type Baz<In, Input extends UnaryFunction<In>> =
+	Input extends UnaryFunction<In, infer Out> ? Out : never;
+
+export type PipeResult<T, Fns extends ReadonlyArray<unknown>> = Fns extends []
+	? T
+	: Fns extends [UnaryFunction<T, infer U>, ...infer Rest]
+		? PipeResult<U, Rest>
+		: never;
+
+// export type Piped<T, Fns extends ReadonlyArray<UnaryFunction>> = Fns extends []
+// 	? T
+// 	: Fns extends [UnaryFunction<T, infer U>, ...infer Rest]
+// 		? Rest extends ReadonlyArray<UnaryFunction>
+// 			? Piped<U, Rest>
+// 			: never
+// 		: never;
+
+// export interface Pipeline<Value = unknown> {
+// 	pipe<Fns extends ReadonlyArray<UnaryFunction>>(
+// 		...fns: [...Fns]
+// 	): Piped<Value, Fns>;
+// }
 
 export interface Pipeline<Value = unknown> {
 	pipe(): Value;
@@ -104,3 +128,23 @@ export const Pipeline: PipelineConstructor = class<Value> {
 		);
 	}
 };
+
+const o = new Observable<number>();
+
+o.pipe(
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+).pipe(
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+	map((x) => x + 1),
+);

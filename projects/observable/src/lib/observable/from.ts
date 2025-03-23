@@ -1,14 +1,12 @@
 import { subscribe, Observable } from './observable';
-import { Observer } from 'subscriber';
 import { throwError } from './throw-error';
 import { AnyCatcher } from '../any-catcher';
+import { UnaryFunction } from '../pipe';
+import { Observer } from './subscriber';
 
-/**
- * An object that implements the `InteropObservable` interface.
- */
 export interface InteropObservable<Value = unknown> {
 	[subscribe](
-		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => void) | null,
+		observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
 	): void;
 }
 
@@ -66,15 +64,15 @@ export function from(value: ObservableInput | null | undefined): Observable {
 	return throwError(() => new TypeError('value must be an ObservableInput'));
 }
 
-export function fromReadableStreamLike<T>(
-	readableStream: Pick<ReadableStream<T>, 'getReader'>,
-) {
+function fromReadableStreamLike<Value>(
+	readableStream: Pick<ReadableStream<Value>, 'getReader'>,
+): Observable<Value> {
 	return fromAsyncIterable(readableStreamLikeToAsyncGenerator(readableStream));
 }
 
-export async function* readableStreamLikeToAsyncGenerator<T>(
-	readableStream: Pick<ReadableStream<T>, 'getReader'>,
-): AsyncGenerator<T> {
+async function* readableStreamLikeToAsyncGenerator<Value>(
+	readableStream: Pick<ReadableStream<Value>, 'getReader'>,
+): AsyncGenerator<Value> {
 	const reader = readableStream.getReader();
 	try {
 		while (true) {
@@ -87,17 +85,10 @@ export async function* readableStreamLikeToAsyncGenerator<T>(
 	}
 }
 
-/**
- * Synchronously emits the values of an array like and completes.
- * This is exported because there are creation functions and operators that need to
- * make direct use of the same logic, and there's no reason to make them run through
- * `from` conditionals because we *know* they're dealing with an array.
- * @param array The array to emit values from
- */
-export function fromArrayLike<T>(array: ArrayLike<T>): Observable<T> {
-	return new Observable<T>((subscriber) => {
+function fromArrayLike<Value>(array: ArrayLike<Value>): Observable<Value> {
+	return new Observable<Value>((subscriber) => {
 		// Loop over the array and emit each value. Note two things here:
-		// 1. We're making sure that the subscriber is not closed on each loop.
+		// 1. We're making sure that the subscriber is not aborted on each loop.
 		//    This is so we don't continue looping over a very large array after
 		//    something like a `take`, `takeWhile`, or other synchronous unsubscription
 		//    has already unsubscribed.
@@ -106,19 +97,18 @@ export function fromArrayLike<T>(array: ArrayLike<T>): Observable<T> {
 		//    be to copy the array before executing the loop, but this has
 		//    performance implications.
 		const length = array.length;
-		for (let i = 0; i < length; i++) {
-			if (subscriber.signal.aborted) return;
+		for (let i = 0; i < length && !subscriber.signal.aborted; i++) {
 			subscriber.next(array[i]);
 		}
 		subscriber.complete();
 	});
 }
 
-export function fromPromise<T>(promise: PromiseLike<T>): Observable<T> {
+function fromPromise<Value>(promise: PromiseLike<Value>): Observable<Value> {
 	return new Observable(async (subscriber) => {
 		try {
 			const value = await promise;
-			// A side-effect may have closed our subscriber,
+			// A side-effect may have aborted our subscriber,
 			// check before the resolved value is emitted.
 			if (subscriber.signal.aborted) return;
 			subscriber.next(value);
@@ -129,14 +119,12 @@ export function fromPromise<T>(promise: PromiseLike<T>): Observable<T> {
 	});
 }
 
-export function fromAsyncIterable<T>(
-	asyncIterable: AsyncIterable<T>,
-): Observable<T> {
+function fromAsyncIterable<T>(asyncIterable: AsyncIterable<T>): Observable<T> {
 	return new Observable(async (subscriber) => {
 		try {
 			for await (const value of asyncIterable) {
 				subscriber.next(value);
-				// A side-effect may have closed our subscriber,
+				// A side-effect may have aborted our subscriber,
 				// check before the next iteration.
 				if (subscriber.signal.aborted) return;
 			}
@@ -147,11 +135,11 @@ export function fromAsyncIterable<T>(
 	});
 }
 
-export function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
+function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
 	return new Observable((subscriber) => {
 		for (const value of iterable) {
 			subscriber.next(value);
-			// A side-effect may have closed our subscriber,
+			// A side-effect may have aborted our subscriber,
 			// check before the next iteration.
 			if (subscriber.signal.aborted) return;
 		}
@@ -159,28 +147,26 @@ export function fromIterable<T>(iterable: Iterable<T>): Observable<T> {
 	});
 }
 
-/**
- * Creates an RxJS Observable from an object that implements `observable` Symbol.
- * @param obj An object that properly implements `observable` Symbol.
- */
-export function fromInteropObservable<T>(
-	obj: InteropObservable<T>,
-): Observable<T>;
-export function fromInteropObservable(obj: InteropObservable): Observable {
+function fromInteropObservable<Value>(
+	interopObservable: InteropObservable<Value>,
+): Observable<Value>;
+function fromInteropObservable(
+	interopObservable: InteropObservable,
+): Observable {
 	// If an instance of one of our Observables, just return it.
-	if (obj instanceof Observable) return obj;
+	if (interopObservable instanceof Observable) return interopObservable;
 	return new Observable((subscriber) => {
-		if (typeof obj[subscribe] === 'function') {
-			return obj[subscribe](subscriber);
+		if (typeof interopObservable[subscribe] === 'function') {
+			return interopObservable[subscribe](subscriber);
 		}
 		// Should be caught by observable subscribe function error handling.
 		throw new TypeError(
-			'Provided object does not correctly implement observable Symbol',
+			"Provided object does not correctly implement the 'subscribe' Symbol",
 		);
 	});
 }
 
-export function isArrayLike<T>(x: unknown): x is ArrayLike<T> {
+function isArrayLike<Value>(x: unknown): x is ArrayLike<Value> {
 	return (
 		!!x &&
 		typeof x === 'object' &&
@@ -190,49 +176,51 @@ export function isArrayLike<T>(x: unknown): x is ArrayLike<T> {
 	);
 }
 
-export function isIterable<T>(x: unknown): x is Iterable<T> {
+function isIterable<Value>(value: unknown): value is Iterable<Value> {
 	return (
-		!!x &&
-		typeof x === 'object' &&
-		Symbol.iterator in x &&
-		typeof x[Symbol.iterator] === 'function'
+		!!value &&
+		typeof value === 'object' &&
+		Symbol.iterator in value &&
+		typeof value[Symbol.iterator] === 'function'
 	);
 }
 
-export function isAsyncIterable<T>(x: unknown): x is AsyncIterable<T> {
+function isAsyncIterable<Value>(value: unknown): value is AsyncIterable<Value> {
 	return (
-		!!x &&
-		typeof x === 'object' &&
-		Symbol.asyncIterator in x &&
-		typeof x[Symbol.asyncIterator] === 'function'
+		!!value &&
+		typeof value === 'object' &&
+		Symbol.asyncIterator in value &&
+		typeof value[Symbol.asyncIterator] === 'function'
 	);
 }
 
-export function isPromiseLike<T>(x: unknown): x is PromiseLike<T> {
+function isPromiseLike<Value>(value: unknown): value is PromiseLike<Value> {
 	return (
-		!!x &&
-		(typeof x === 'object' || typeof x === 'function') &&
-		'then' in x &&
-		typeof x.then === 'function'
+		!!value &&
+		(typeof value === 'object' || typeof value === 'function') &&
+		'then' in value &&
+		typeof value.then === 'function'
 	);
 }
 
-export function isReadableStreamLike<T>(
-	x: unknown,
-): x is Pick<ReadableStream<T>, 'getReader'> {
+function isReadableStreamLike<Value>(
+	value: unknown,
+): value is Pick<ReadableStream<Value>, 'getReader'> {
 	return (
-		!!x &&
-		typeof x === 'object' &&
-		'getReader' in x &&
-		typeof x.getReader === 'function'
+		!!value &&
+		typeof value === 'object' &&
+		'getReader' in value &&
+		typeof value.getReader === 'function'
 	);
 }
 
-export function isInteropObservable<T>(x: unknown): x is InteropObservable<T> {
+function isInteropObservable<Value>(
+	value: unknown,
+): value is InteropObservable<Value> {
 	return (
-		!!x &&
-		typeof x === 'object' &&
-		subscribe in x &&
-		typeof x[subscribe] === 'function'
+		!!value &&
+		typeof value === 'object' &&
+		subscribe in value &&
+		typeof value[subscribe] === 'function'
 	);
 }

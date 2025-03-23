@@ -1,10 +1,11 @@
-import { Observable } from '../observable/observable';
-import { ObservableInput, from, ObservedValueOf } from '../observable/from';
-import { UnaryFunction } from '../pipe/unary-function';
-import { Subscriber } from 'subscriber';
+import {
+	Observable,
+	type ObservableInput,
+	type ObservedValueOf,
+} from '../observable';
+import { type UnaryFunction, pipe } from '../pipe';
 import { scan } from './scan';
 import { switchMap } from './switch-map';
-import { pipe } from '../pipe/pipe';
 
 export function switchScan<Value extends ObservableInput>(
 	accumulator: (

@@ -1,7 +1,11 @@
-import { Observer, Subscriber } from 'subscriber';
-import { Observable, subscribe } from '../observable/observable';
+import {
+	Observable,
+	subscribe,
+	type Observer,
+	type Subscriber,
+} from '../observable';
 import { Subject } from './subject';
-import { Pipeline, UnaryFunction } from '../pipe';
+import { Pipeline, type UnaryFunction } from '../pipe';
 
 /**
  * A variant of Subject that only emits a value when it completes. It will emit

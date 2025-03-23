@@ -1,8 +1,10 @@
-import { ObservableInput, from } from '../observable/from';
-import { Observable } from '../observable/observable';
-import { empty } from '../observable/empty';
-import { UnaryFunction } from '../pipe/unary-function';
+import { Observable, empty, ObservableInput, from } from '../observable';
+import { UnaryFunction } from '../pipe';
 
+/**
+ * A pipeable operator that completes the returned {@linkcode Observable} after a
+ * {@linkcode count|specified number} of `next` notifications have been pushed.
+ */
 export function take<Value>(
 	count: number,
 ): UnaryFunction<ObservableInput<Value>, Observable<Value>> {

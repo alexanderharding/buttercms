@@ -1,6 +1,5 @@
-import { Observer, Subscriber } from 'subscriber';
-import { Observable, subscribe } from '../observable/observable';
-import { Pipeline } from '../pipe/pipeline';
+import { Observable, subscribe, Observer, Subscriber } from '../observable';
+import { Pipeline, UnaryFunction } from '../pipe';
 
 /**
  * A Subject is a special type of Observable that allows values to be
@@ -150,9 +149,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	[subscribe](
-		observerOrNext?: ((value: unknown) => void) | Partial<Observer> | null,
-	): void {
+	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		this.subscribe(observerOrNext);
 	}
 
@@ -160,9 +157,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	subscribe(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
-	): void {
+	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 

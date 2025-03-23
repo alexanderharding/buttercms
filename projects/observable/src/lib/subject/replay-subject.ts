@@ -1,5 +1,4 @@
-import { Observer } from 'subscriber';
-import { Observable, subscribe } from '../observable/observable';
+import { Observable, subscribe, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline } from '../pipe';
 /**

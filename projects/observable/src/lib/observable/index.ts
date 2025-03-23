@@ -1,11 +1,8 @@
-export { Observable } from './observable';
-export { from } from './from';
+export { Observable, subscribe } from './observable';
+export { from, type ObservableInput, type ObservedValueOf } from './from';
 export { never } from './never';
 export { empty } from './empty';
 export { of } from './of';
 export { timer } from './timer';
 export { fromEvent } from './from-event';
-// export { fromFetch } from './from-fetch';
-// export { fromInteropObservable } from './from-interop-observable';
-// export { fromReadableStreamLike } from './from-readable-stream-like';
-// export { fromArrayLike } from './from-array-like';
+export { type Observer, Subscriber } from './subscriber';

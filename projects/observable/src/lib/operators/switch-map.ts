@@ -1,7 +1,11 @@
-import { Observable } from '../observable/observable';
-import { ObservableInput, from, ObservedValueOf } from '../observable/from';
-import { UnaryFunction } from '../pipe/unary-function';
-import { Subscriber } from 'subscriber';
+import {
+	Observable,
+	Subscriber,
+	type ObservableInput,
+	from,
+	type ObservedValueOf,
+} from '../observable';
+import type { UnaryFunction } from '../pipe';
 
 export function switchMap<
 	In extends ObservableInput,
