@@ -15,7 +15,6 @@ export interface Subject<Value = void>
 	 * @internal
 	 * @ignore
 	 * @readonly
-	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
@@ -58,7 +57,7 @@ export interface Subject<Value = void>
 }
 
 export interface SubjectConstructor {
-	new <Value>(): Subject<Value>;
+	new <Value = void>(): Subject<Value>;
 	readonly prototype: Subject;
 }
 
