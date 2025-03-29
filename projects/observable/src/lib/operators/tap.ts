@@ -7,11 +7,11 @@ import {
 } from '../observable';
 import type { UnaryFunction } from '../pipe';
 
-export function tap<In extends ObservableInput>(
+export function tap<T extends ObservableInput>(
 	observerOrNext:
-		| Partial<Observer<ObservedValueOf<In>>>
-		| ((value: ObservedValueOf<In>) => void),
-): UnaryFunction<In, Observable<ObservedValueOf<In>>> {
+		| Partial<Observer<ObservedValueOf<T>>>
+		| ((value: ObservedValueOf<T>) => void),
+): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>
 		new Observable((subscriber) => {
 			const normalizedSource = from(source);

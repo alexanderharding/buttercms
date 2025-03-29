@@ -1,5 +1,13 @@
-export { Observable, subscribe } from './observable';
-export { from, type ObservableInput, type ObservedValueOf } from './from';
+export { Observable } from './observable';
+export {
+	from,
+	type ObservableInput,
+	type ObservedValueOf,
+	type ReadableStreamLike,
+	type InteropObservable,
+	type ObservedValuesOf,
+	subscribe,
+} from './from';
 export { never } from './never';
 export { empty } from './empty';
 export { of } from './of';

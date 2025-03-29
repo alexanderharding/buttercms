@@ -1,6 +1,8 @@
 import { Pipeline } from './pipeline';
 import { UnaryFunction } from './unary-function';
 
+export function pipe<T>(): UnaryFunction<T, T>;
+export function pipe<A, B>(op1: UnaryFunction<A, B>): UnaryFunction<A, B>;
 export function pipe<A, B, C>(
 	op1: UnaryFunction<A, B>,
 	op2: UnaryFunction<B, C>,

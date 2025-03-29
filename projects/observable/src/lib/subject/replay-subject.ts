@@ -1,14 +1,52 @@
 import { Observable, subscribe, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline } from '../pipe';
+
 /**
- * A variant of {@linkcode Subject} that emits a buffer of the last N values, or all values if less than N.
+ * A variant of {@linkcode Subject} that emits a buffer of the last N values,
+ * or all values if less than N. If N is not specified, an infinite amount of
+ * values will be replayed. The minimum N is 1, so if 0 or less is specified,
+ * 1 will be used instead.
+ *
+ * @example
+ * import { ReplaySubject } from "observable";
+ *
+ * const subject = new ReplaySubject<number>(3);
+ *
+ * subject.next(1); // Stored in buffer
+ * subject.next(2); // Stored in buffer
+ * subject.next(3); // Stored in buffer
+ * subject.next(4); // Stored in buffer and 1 gets trimmed off
+ *
+ * subject.subscribe((value) => console.log(value));
+ *
+ * // Console output:
+ * // 2
+ * // 3
+ * // 4
+ *
+ * // Values pushed after the subscribe will emit immediately
+ * // unless the subject is already finalized.
+ * subject.next(5); // Stored in buffer and 2 gets trimmed off
+ *
+ * // Console output:
+ * // 5
+ *
+ * subject.subscribe((value) => console.log(value));
+ *
+ * // Console output:
+ * // 3
+ * // 4
+ * // 5
+ *
+ * @class
+ * @public
  */
 export type ReplaySubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
 	Pipeline<ReplaySubject<Value>>;
 
 export interface ReplaySubjectConstructor {
-	new <Value>(count?: number): ReplaySubject<Value>;
+	new <Value>(bufferSize?: number): ReplaySubject<Value>;
 	readonly prototype: ReplaySubject;
 }
 
@@ -17,7 +55,7 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 	readonly [Symbol.toStringTag] = this.constructor.name;
 
 	/** @internal */
-	readonly #count: number;
+	readonly #bufferSize: number;
 
 	/** @internal */
 	readonly #buffer: Array<Value> = [];
@@ -43,8 +81,8 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 	});
 
 	/** @internal */
-	constructor(count = Infinity) {
-		this.#count = Math.max(1, count);
+	constructor(bufferSize = Infinity) {
+		this.#bufferSize = Math.max(1, bufferSize);
 
 		// Remove all references to the buffer values on finalization
 		// of this subject so they can be garbage collected.
@@ -78,7 +116,7 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 			this.#buffer.push(value);
 			// Trim the buffer before pushing it to the delegate so
 			// reentrant code does not get pushed more values than it should.
-			while (this.#buffer.length > this.#count) this.#buffer.shift();
+			while (this.#buffer.length > this.#bufferSize) this.#buffer.shift();
 		}
 
 		this.#delegate.next(value);

@@ -1,12 +1,8 @@
-import { any } from 'abort-signal-interop';
 import { noop } from '../noop';
-import {
-	from,
-	Observable,
-	ObservableInput,
-	ObservedValueOf,
-} from '../observable';
-import { UnaryFunction } from '../pipe';
+import { Observable, ObservableInput, ObservedValueOf } from '../observable';
+import { Pipeline, UnaryFunction } from '../pipe';
+import { filter } from './filter';
+import { take } from './take';
 
 export function skipUntil<Input extends ObservableInput>(
 	notifier: ObservableInput,
@@ -15,22 +11,13 @@ export function skipUntil<Input extends ObservableInput>(
 		new Observable((subscriber) => {
 			let skip = true;
 
-			const controller = new AbortController();
-			const signal = any(controller.signal, subscriber.signal);
-			controller.signal.addEventListener('abort', () => (skip = false), {
-				signal,
-			});
-
-			from(notifier).subscribe({
+			new Pipeline(notifier).pipe(take(1)).subscribe({
 				...subscriber,
-				signal,
-				next: () => controller.abort(),
+				next: () => (skip = false),
+				error: (error) => subscriber.error(error),
 				complete: noop,
 			});
 
-			from(source).subscribe({
-				...subscriber,
-				next: (value) => !skip && subscriber.next(value),
-			});
+			new Pipeline(source).pipe(filter(() => !skip)).subscribe(subscriber);
 		});
 }

@@ -8,8 +8,31 @@ import { Subject } from './subject';
 import { Pipeline, type UnaryFunction } from '../pipe';
 
 /**
- * A variant of Subject that only emits a value when it completes. It will emit
- * its latest value to all its observers on completion.
+ * A variant of {@linkcode Subject} that only multicasts it's latest value, if any, on completion.
+ * Late subscribers will receive the latest value from the subject and then complete.
+ *
+ * @example
+ * import { AsyncSubject } from "observable";
+ *
+ * const subject = new AsyncSubject<number>();
+ *
+ * subject.next(1);
+ * subject.next(2);
+ *
+ * subject.subscribe((value) => console.log(value));
+ *
+ * subject.next(3);
+ *
+ * subject.complete();
+ *
+ * // Console output:
+ * // 3
+ *
+ * subject.subscribe((value) => console.log(value));
+ *
+ * // Console output:
+ * // 3
+ *
  */
 export type AsyncSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
 	Pipeline<AsyncSubject<Value>>;
@@ -24,7 +47,7 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly [Symbol.toStringTag] = this.constructor.name;
 
 	/** @internal */
-	readonly #delegate = new Subject();
+	readonly #delegate = new Subject<unknown>();
 
 	/** @internal */
 	readonly signal = this.#delegate.signal;
@@ -113,7 +136,6 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 			subscriber.error(this.#thrownError);
 		} else if (this.signal.aborted) {
 			if (this.#hasValue) subscriber.next(this.#value);
-			// This Subject has been aborted so it will no longer push any more next notifications.
 			subscriber.complete();
 		}
 	}

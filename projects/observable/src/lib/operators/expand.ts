@@ -1,28 +1,38 @@
 import { ObservableInput, from, ObservedValueOf } from '../observable/from';
 import { Observable } from '../observable/observable';
 import { UnaryFunction } from '../pipe/unary-function';
+import { mergeMap } from './merge-map';
 
-export function mergeMap<T extends ObservableInput<ObservableInput>>(
+export function expand<T extends ObservableInput<ObservableInput>>(
 	concurrent?: number,
 ): UnaryFunction<T, Observable<ObservedValueOf<ObservedValueOf<T>>>>;
-export function mergeMap<
-	In extends ObservableInput,
-	Out extends ObservableInput,
->(
-	project: (value: ObservedValueOf<In>, index: number) => Out,
+export function expand<T extends ObservableInput>(
+	project: (value: ObservedValueOf<T>, index: number) => T,
 	concurrent?: number,
-): UnaryFunction<In, Observable<ObservedValueOf<Out>>>;
-export function mergeMap<
-	In extends ObservableInput,
-	Out extends ObservableInput,
->(
+): UnaryFunction<T, Observable<ObservedValueOf<T>>>;
+export function expand<T extends ObservableInput>(
 	projectOrConcurrent?:
-		| ((value: ObservedValueOf<In>, index: number) => Out)
+		| ((value: ObservedValueOf<T>, index: number) => T)
 		| number,
 	concurrent = typeof projectOrConcurrent === 'number'
 		? projectOrConcurrent
 		: Infinity,
-): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
+): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
+	// return (source) =>
+	// 	new Observable((subscriber) => {
+	// 		const project =
+	// 			typeof projectOrConcurrent === 'function'
+	// 				? projectOrConcurrent
+	// 				: undefined;
+	// 		from(source)
+	// 			.pipe(
+	// 				mergeMap((value, index) => {
+	// 					subscriber.next(value);
+	// 					return project(value, index++);
+	// 				}),
+	// 			)
+	// 			.subscribe(subscriber);
+	// 	});
 	return (source) =>
 		new Observable((subscriber) => {
 			// The number of active inner subscriptions.
@@ -33,7 +43,7 @@ export function mergeMap<
 			let isOuterComplete = false;
 
 			const project = ensureProject(projectOrConcurrent);
-			const buffer: Array<ObservedValueOf<In>> = [];
+			const buffer: Array<ObservedValueOf<T>> = [];
 			concurrent = Math.max(concurrent, 1);
 
 			from(source).subscribe({
@@ -43,7 +53,12 @@ export function mergeMap<
 				finalize: outerFinalize,
 			});
 
-			function doInnerSub(value: ObservedValueOf<In>): void {
+			function doInnerSub(value: ObservedValueOf<T>): void {
+				// We need to emit the outer values and the inner values
+				// as the inners will "become outers" in a way as they are recursively fed
+				// back to the projection mechanism.
+				subscriber.next(value);
+
 				// Increment the number of active subscriptions so we can track it
 				// against our concurrency limit later.
 				active++;
@@ -55,6 +70,7 @@ export function mergeMap<
 
 				from(project(value, index++)).subscribe({
 					...subscriber,
+					next: outerNext,
 					complete: innerComplete,
 					finalize: innerFinalize,
 				});
@@ -91,7 +107,7 @@ export function mergeMap<
 				}
 			}
 
-			function outerNext(value: ObservedValueOf<In>): void {
+			function outerNext(value: ObservedValueOf<T>): void {
 				active < concurrent ? doInnerSub(value) : buffer.push(value);
 			}
 
@@ -118,17 +134,17 @@ export function mergeMap<
 }
 
 /** @internal */
-function ensureProject<In extends ObservableInput, Out extends ObservableInput>(
-	mapFnOrConcurrent?:
-		| ((value: ObservedValueOf<In>, index: number) => Out)
+function ensureProject<Value extends ObservableInput>(
+	projectOrConcurrent?:
+		| ((value: ObservedValueOf<Value>, index: number) => Value)
 		| number,
-): (value: ObservedValueOf<In>, index: number) => Out;
+): (value: ObservedValueOf<Value>, index: number) => Value;
 function ensureProject(
-	mapFnOrConcurrent?:
-		| ((value: ObservableInput, index: number) => ObservableInput)
+	projectOrConcurrent?:
+		| ((value: unknown, index: number) => ObservableInput)
 		| number,
-): (value: ObservableInput, index: number) => unknown {
-	return typeof mapFnOrConcurrent === 'function'
-		? mapFnOrConcurrent
+): (value: unknown, index: number) => unknown {
+	return typeof projectOrConcurrent === 'function'
+		? projectOrConcurrent
 		: (value) => value;
 }

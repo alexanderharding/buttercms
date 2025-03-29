@@ -1,17 +1,16 @@
-import {
-	Observable,
-	type ObservableInput,
-	type ObservedValueOf,
-} from '../observable';
-import { Pipeline, type UnaryFunction } from '../pipe';
-import { switchMap } from './switch-map';
+import { from, ObservableInput, ObservedValueOf } from '../observable/from';
+import { Observable } from '../observable/observable';
+import { Pipeline } from '../pipe';
+import { UnaryFunction } from '../pipe/unary-function';
+import { exhaustMap } from './exhaust-map';
+import { map } from './map';
 
-export function switchScan<
+export function exhaustScan<
 	In extends ObservableInput,
 	Out extends ObservableInput,
 >(
 	accumulator: (
-		acc: ObservedValueOf<Out>,
+		accumulated: ObservedValueOf<Out>,
 		value: ObservedValueOf<In>,
 		index: number,
 	) => Out,
@@ -22,7 +21,7 @@ export function switchScan<
 			let accumulated = seed;
 
 			const value = new Pipeline(source).pipe(
-				switchMap((value, index) => accumulator(accumulated, value, index++)),
+				exhaustMap((value, index) => accumulator(accumulated, value, index++)),
 			);
 
 			value.subscribe({

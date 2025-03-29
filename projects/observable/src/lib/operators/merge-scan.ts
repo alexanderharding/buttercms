@@ -1,28 +1,29 @@
-import {
-	Observable,
-	type ObservableInput,
-	type ObservedValueOf,
-} from '../observable';
-import { Pipeline, type UnaryFunction } from '../pipe';
-import { switchMap } from './switch-map';
+import { ObservableInput, from, ObservedValueOf } from '../observable/from';
+import { Observable } from '../observable/observable';
+import { UnaryFunction } from '../pipe/unary-function';
+import { mergeMap } from './merge-map';
 
-export function switchScan<
+export function mergeScan<
 	In extends ObservableInput,
 	Out extends ObservableInput,
 >(
 	accumulator: (
-		acc: ObservedValueOf<Out>,
+		accumulated: ObservedValueOf<Out>,
 		value: ObservedValueOf<In>,
 		index: number,
 	) => Out,
 	seed: ObservedValueOf<Out>,
+	concurrent?: number,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
 		new Observable((subscriber) => {
 			let accumulated = seed;
 
-			const value = new Pipeline(source).pipe(
-				switchMap((value, index) => accumulator(accumulated, value, index++)),
+			const value = from(source).pipe(
+				mergeMap(
+					(value, index) => accumulator(accumulated, value, index++),
+					concurrent,
+				),
 			);
 
 			value.subscribe({
