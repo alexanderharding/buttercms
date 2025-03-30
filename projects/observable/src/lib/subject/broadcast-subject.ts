@@ -1,6 +1,7 @@
 import { Subject } from './subject';
-import { Observable, subscribe, type Observer } from '../observable';
+import { Observable, type Observer } from '../observable';
 import { Pipeline, type UnaryFunction } from '../pipe';
+import { subscribe } from '../operators';
 
 /**
  * A wrapper around the {@linkcode BroadcastChannel} object provided by the browser.
@@ -76,7 +77,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @readonly
 	 * @private
 	 */
-	readonly #delegate = new Subject();
+	readonly #delegate = new Subject<unknown>();
 
 	/**
 	 * @internal

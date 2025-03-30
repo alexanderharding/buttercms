@@ -1,11 +1,7 @@
-import {
-	Observable,
-	subscribe,
-	type Observer,
-	type Subscriber,
-} from '../observable';
+import { Observable, type Observer, type Subscriber } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, type UnaryFunction } from '../pipe';
+import { subscribe } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that only multicasts it's latest value, if any, on completion.

@@ -1,5 +1,6 @@
-import { Observable, subscribe, Observer, Subscriber } from '../observable';
+import { Observable, Observer, Subscriber } from '../observable';
 import { Pipeline, UnaryFunction } from '../pipe';
+import { subscribe } from '../operators';
 
 /**
  * A Subject is a special type of Observable that allows values to be

@@ -1,6 +1,7 @@
-import { Observable, subscribe, type Observer } from '../observable';
+import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline } from '../pipe';
+import { subscribe } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that emits a buffer of the last N values,
