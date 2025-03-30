@@ -102,11 +102,10 @@ export function catchError<
 ): UnaryFunction<In, Observable<ObservedValueOf<In> | ObservedValueOf<Out>>> {
 	return (source) =>
 		new Observable((subscriber) => {
-			const normalizedSource = from(source);
-			normalizedSource.subscribe({
+			const caught = from(source);
+			caught.subscribe({
 				...subscriber,
-				error: (error) =>
-					from(selector(error, normalizedSource)).subscribe(subscriber),
+				error: (error) => from(selector(error, caught)).subscribe(subscriber),
 			});
 		});
 }
