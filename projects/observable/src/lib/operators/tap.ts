@@ -9,7 +9,7 @@ import type { UnaryFunction } from '../pipe';
 
 export function tap<T extends ObservableInput>(
 	observerOrNext:
-		| Partial<Observer<ObservedValueOf<T>>>
+		| Omit<Partial<Observer<ObservedValueOf<T>>>, 'signal'>
 		| ((value: ObservedValueOf<T>) => void),
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>

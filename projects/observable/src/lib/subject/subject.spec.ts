@@ -1,5 +1,5 @@
 import { Subject } from './subject';
-import { Observable, of, timer } from '../observable';
+import { Observable, of } from '../observable';
 import { delay } from '../operators';
 
 describe(Subject.name, () => {
@@ -343,7 +343,7 @@ describe(Subject.name, () => {
 	});
 
 	xit('should be usable as an Observer of a finite delayed Observable', (done: DoneFn) => {
-		const source = of(1, 2, 3).pipe(delay(timer(50)));
+		const source = of(1, 2, 3).pipe(delay(50));
 		const subject = new Subject<number>();
 
 		const expected = [1, 2, 3];

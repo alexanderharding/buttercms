@@ -3,26 +3,23 @@ import { Observable } from '../observable/observable';
 import { scan } from './scan';
 import { UnaryFunction } from '../pipe/unary-function';
 
-// export function reduce<Input extends ObservableInput, Value>(
-// 	accumulator: (
-// 		acc: ObservedValueOf<Input> | Value,
-// 		value: ObservedValueOf<Input>,
-// 		index: number,
-// 	) => Value,
-// ): UnaryFunction<Input, Observable<ObservedValueOf<Input> | Value>>;
 export function reduce<Input extends ObservableInput>(
 	accumulator: (
-		acc: ObservedValueOf<Input>,
+		accumulated: ObservedValueOf<Input>,
 		value: ObservedValueOf<Input>,
 		index: number,
 	) => ObservedValueOf<Input>,
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>>;
 export function reduce<In extends ObservableInput, Out>(
-	accumulator: (acc: Out, value: ObservedValueOf<In>, index: number) => Out,
-	seed?: Out,
+	accumulator: (
+		accumulated: Out,
+		value: ObservedValueOf<In>,
+		index: number,
+	) => Out,
+	seed: Out,
 ): UnaryFunction<In, Observable<Out>>;
 export function reduce(
-	accumulator: (acc: unknown, value: unknown, index: number) => unknown,
+	accumulator: (accumulated: unknown, value: unknown, index: number) => unknown,
 	seed?: unknown,
 ): UnaryFunction<ObservableInput, Observable> {
 	return (source) =>

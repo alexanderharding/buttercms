@@ -33,7 +33,7 @@ export function scan(
 			// The state that we're tracking, starting with the seed,
 			// if there is one, and then updated by the return value
 			// from the accumulator on each emission.
-			let state = seed;
+			let accumulated = seed;
 			// An index to pass to the accumulator function.
 			let index = 0;
 
@@ -44,16 +44,16 @@ export function scan(
 					if (hasState) {
 						// We already have state, so we can get the new state from the accumulator.
 						// Always increment the index.
-						state = accumulator(state, value, index++);
+						accumulated = accumulator(accumulated, value, index++);
 					} else {
 						// We didn't have state yet, a seed value was not provided, so
 						// we set the state to the first value, and mark that we have state now.
 						hasState = true;
-						state = value;
+						accumulated = value;
 					}
 
 					// Send it to the consumer.
-					subscriber.next(state);
+					subscriber.next(accumulated);
 				},
 			});
 		});

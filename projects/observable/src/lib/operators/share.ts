@@ -1,9 +1,19 @@
-export interface ShareConfig<T> {
+import {
+	from,
+	Observable,
+	ObservedValueOf,
+	Subscriber,
+	ObservableInput,
+} from '../observable';
+import { UnaryFunction } from '../pipe';
+import { Subject } from '../subject';
+
+export interface ShareConfig<Value = unknown> {
 	/**
 	 * The factory used to create the subject that will connect the source observable to
 	 * multicast consumers.
 	 */
-	connector?: () => Subject<T>;
+	connector?: () => Subject<Value>;
 	/**
 	 * If `true`, the resulting observable will reset internal state on error from source and return to a "cold" state. This
 	 * allows the resulting observable to be "retried" in the event of an error.
@@ -14,7 +24,7 @@ export interface ShareConfig<T> {
 	 * It is also possible to pass a notifier factory returning an `ObservableInput` instead which grants more fine-grained
 	 * control over how and when the reset should happen. This allows behaviors like conditional or delayed resets.
 	 */
-	resetOnError?: boolean | ((error: any) => ObservableInput<any>);
+	readonly resetOnError?: boolean | ((error: unknown) => ObservableInput);
 	/**
 	 * If `true`, the resulting observable will reset internal state on completion from source and return to a "cold" state. This
 	 * allows the resulting observable to be "repeated" after it is done.
@@ -24,7 +34,7 @@ export interface ShareConfig<T> {
 	 * It is also possible to pass a notifier factory returning an `ObservableInput` instead which grants more fine-grained
 	 * control over how and when the reset should happen. This allows behaviors like conditional or delayed resets.
 	 */
-	resetOnComplete?: boolean | (() => ObservableInput<any>);
+	readonly resetOnComplete?: boolean | (() => ObservableInput);
 	/**
 	 * If `true`, when the number of subscribers to the resulting observable reaches zero due to those subscribers unsubscribing, the
 	 * internal state will be reset and the resulting observable will return to a "cold" state. This means that the next
@@ -35,26 +45,31 @@ export interface ShareConfig<T> {
 	 * It is also possible to pass a notifier factory returning an `ObservableInput` instead which grants more fine-grained
 	 * control over how and when the reset should happen. This allows behaviors like conditional or delayed resets.
 	 */
-	resetOnRefCountZero?: boolean | (() => ObservableInput<any>);
+	readonly resetOnRefCountZero?: boolean | (() => ObservableInput);
 }
 
 export function share<Input extends ObservableInput>(
-	connector: () => Subject<ObservedValueOf<Input>>,
-): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
-	return (input) => {
-		let active = 0;
+	options?: ShareConfig<ObservedValueOf<Input>>,
+): UnaryFunction<Input, Observable<ObservedValueOf<Input>>>;
+export function share<Input extends ObservableInput>({
+	connector = () => new Subject(),
+	resetOnError = true,
+	resetOnComplete = true,
+	resetOnRefCountZero = true,
+}: ShareConfig<ObservedValueOf<Input>> = {}): UnaryFunction<
+	Input,
+	Observable<ObservedValueOf<Input>>
+> {
+	return (source) => {
+		let refCount = 0;
 		let subject: Subject<ObservedValueOf<Input>> | undefined;
-		let controller: AbortController | null;
 		let hasCompleted = false;
 		let hasErrored = false;
-		let connection: Subscriber<ObservedValueOf<Input>> | undefined;
+		let controller: AbortController | undefined;
 		let resetController: AbortController | undefined;
 
-		const source = connectable(from(input), connector);
 		return new Observable((subscriber) => {
-			if (subscriber.signal.aborted) return;
-
-			active++;
+			refCount++;
 
 			if (!hasErrored && !hasCompleted) cancelReset();
 
@@ -62,76 +77,58 @@ export function share<Input extends ObservableInput>(
 			// it as well, which avoids non-null assertions when using it and, if we
 			// connect to it now, then error/complete need a reference after it was
 			// reset.
-			const dest = (subject = subject ?? connector());
+			const destination = (subject = subject ?? connector());
 
 			new Subscriber({
 				signal: subscriber.signal,
 				finalize: () => {
-					active--;
-
 					// If we're resetting on refCount === 0, and it's 0, we only want to do
 					// that on "unsubscribe", really. Resetting on error or completion is a different
 					// configuration.
-					if (active === 0 && !hasErrored && !hasCompleted) {
-						resetController = handleReset(resetAndUnsubscribe, true);
-					}
+					if (--refCount !== 0 || hasErrored || hasCompleted) return;
+					resetController = handleReset(
+						resetAndUnsubscribe,
+						resetOnRefCountZero,
+					);
 				},
 			});
 
-			dest.subscribe(subscriber);
+			destination.subscribe(subscriber);
 
-			if (
-				!connection &&
-				// Check this shareReplay is still activate - it can be reset to 0
-				// and be "unsubscribed" _before_ it actually subscribes.
-				// If we were to subscribe then, it'd leak and get stuck.
-				active > 0
-			) {
-				// We need to create a subscriber here - rather than pass an observer and
-				// assign the returned subscription to connection - because it's possible
-				// for reentrant subscriptions to the shared observable to occur and in
-				// those situations we want connection to be already-assigned so that we
-				// don't create another connection to the source.
-				connection = new Subscriber({
-					signal: setController(new AbortController()).signal,
-					next: (value) => dest.next(value),
-					error: (err) => {
-						hasErrored = true;
-						cancelReset();
-						resetController = handleReset(reset, true, err);
-						dest.error(err);
-					},
-					complete: () => {
-						hasCompleted = true;
-						cancelReset();
-						resetController = handleReset(reset, true);
-						dest.complete();
-					},
-				});
-				from(source).subscribe(connection);
-			}
+			// Check this share is still active - it can be reset to 0
+			// and be "unsubscribed" _before_ it actually subscribes.
+			// If we were to subscribe then, it'd leak and get stuck.
+			if (controller || refCount <= 0) return;
+			from(source).subscribe({
+				...destination,
+				signal: (controller = new AbortController()).signal,
+				error(error) {
+					hasErrored = true;
+					cancelReset();
+					resetController = handleReset(reset, resetOnError, error);
+					destination.error(error);
+				},
+				complete() {
+					hasCompleted = true;
+					cancelReset();
+					resetController = handleReset(reset, resetOnComplete);
+					destination.complete();
+				},
+			});
 		});
-
-		function setController<Value extends AbortController | null>(
-			value: Value,
-		): Value {
-			controller?.abort();
-			controller = value;
-			return value;
-		}
 
 		function reset(): void {
 			cancelReset();
-			connection = subject = undefined;
+			controller = subject = undefined;
 			hasCompleted = hasErrored = false;
 		}
 
 		function resetAndUnsubscribe(): void {
-			// We need to capture the connection before
+			// We need to capture the controller before
 			// we reset (if we need to reset).
-			const conn = connection;
+			const controllerRef = controller;
 			reset();
-			conn?.complete();
+			controllerRef?.abort();
 		}
 
 		function cancelReset(): void {
@@ -145,77 +142,23 @@ function handleReset<T extends Array<unknown> = Array<never>>(
 	reset: () => void,
 	on: boolean | ((...args: T) => ObservableInput),
 	...args: T
-) {
+): AbortController | undefined {
 	if (on === true) {
 		reset();
 		return;
 	}
 
-	if (on === false) {
-		return;
-	}
+	if (on === false) return;
 
 	const controller = new AbortController();
-	const onSubscriber = new Subscriber({
+
+	from(on(...args)).subscribe({
 		signal: controller.signal,
-		next: () => {
+		next() {
 			controller.abort();
 			reset();
 		},
 	});
 
-	from(on(...args)).subscribe(onSubscriber);
-
 	return controller;
-}
-
-export function shareReplay<Input extends ObservableInput>(
-	count?: number,
-): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
-	return pipe(
-		share(() => new ReplaySubject(count)),
-		keepAlive(),
-	);
-}
-
-export function keepAlive<Input extends ObservableInput>(): UnaryFunction<
-	Input,
-	Observable<ObservedValueOf<Input>>
-> {
-	return (input) =>
-		new Observable((subscriber) =>
-			from(input).subscribe({ ...subscriber, signal: undefined }),
-		);
-}
-
-export function retry<Input extends ObservableInput>(): UnaryFunction<
-	Input,
-	Observable<ObservedValueOf<Input>>
-> {
-	return catchError((_, caught) => caught);
-}
-
-export function repeat<Input extends ObservableInput>(): UnaryFunction<
-	Input,
-	Observable<ObservedValueOf<Input>>
-> {
-	return (input) =>
-		new Observable((subscriber) => {
-			init();
-
-			function init(): void {
-				if (subscriber.signal.aborted) return;
-				from(input).subscribe({ ...subscriber, complete: init });
-			}
-		});
-}
-
-export function refCount(): UnaryFunction<ObservableInput, Observable<number>> {
-	return (input) =>
-		new Observable((subscriber) => {
-			const source = from(input);
-			const subject = connectable(source);
-			source.subscribe(subject);
-			subject.subscribe(subscriber);
-		});
 }

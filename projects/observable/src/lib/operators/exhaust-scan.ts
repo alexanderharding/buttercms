@@ -1,9 +1,8 @@
-import { from, ObservableInput, ObservedValueOf } from '../observable/from';
+import { ObservableInput, ObservedValueOf } from '../observable/from';
 import { Observable } from '../observable/observable';
 import { Pipeline } from '../pipe';
 import { UnaryFunction } from '../pipe/unary-function';
 import { exhaustMap } from './exhaust-map';
-import { map } from './map';
 
 export function exhaustScan<
 	In extends ObservableInput,
