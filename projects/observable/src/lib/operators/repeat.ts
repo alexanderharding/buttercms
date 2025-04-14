@@ -1,13 +1,7 @@
-import {
-	empty,
-	from,
-	Observable,
-	ObservableInput,
-	ObservedValueOf,
-	timer,
-} from '../observable';
+import { empty, Observable } from '../observable';
 import { UnaryFunction } from '../pipe';
-import { take } from './take';
+import { from, ObservableInput, ObservedValueOf, timer } from './creation';
+import { take } from './filtering';
 
 export interface RepeatConfig {
 	/**
@@ -131,19 +125,19 @@ export function repeat<T extends ObservableInput>(
 		countOrConfig && typeof countOrConfig === 'object'
 			? countOrConfig
 			: { count: countOrConfig };
-
-	if (count <= 0) return () => empty;
-
-	return (source) =>
-		new Observable((subscriber) => {
+	return (source) => {
+		if (count <= 0) return empty;
+		return new Observable((subscriber) => {
 			if (subscriber.signal.aborted) return;
 
 			let soFar = 0;
 			let sourceController: AbortController | null;
 
-			subscriber.signal.addEventListener('abort', unsubscribeSource, {
-				once: true,
-			});
+			subscriber.signal.addEventListener(
+				'abort',
+				() => unsubscribeSource(subscriber.signal.reason),
+				{ once: true },
+			);
 
 			subscribeToSource();
 
@@ -151,9 +145,8 @@ export function repeat<T extends ObservableInput>(
 				from(source).subscribe({
 					...subscriber,
 					signal: (sourceController = new AbortController()).signal,
-					complete() {
-						++soFar < count ? resubscribe() : subscriber.complete();
-					},
+					complete: () =>
+						++soFar < count ? resubscribe() : subscriber.complete(),
 				});
 			}
 
@@ -168,9 +161,10 @@ export function repeat<T extends ObservableInput>(
 				});
 			}
 
-			function unsubscribeSource(): void {
-				sourceController?.abort();
+			function unsubscribeSource(reason?: unknown): void {
+				sourceController?.abort(reason);
 				sourceController = null;
 			}
 		});
+	};
 }

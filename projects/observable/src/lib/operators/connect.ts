@@ -1,12 +1,8 @@
 import { UnaryFunction } from '../pipe';
-import {
-	Observer,
-	Observable,
-	ObservableInput,
-	ObservedValueOf,
-} from '../observable';
+import { Observer, Observable } from '../observable';
 import { Subscribable } from './subscribable';
 import { connectable } from './connectable';
+import { ObservableInput, ObservedValueOf } from './creation';
 
 export function connect<Input extends ObservableInput>(
 	connector?: (

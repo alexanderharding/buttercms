@@ -1,8 +1,7 @@
-import { ObservableInput, ObservedValueOf } from '../observable/from';
-import { mergeMap } from './merge-map';
-import { Observable } from '../observable/observable';
-import { of } from '../observable/of';
-import { UnaryFunction } from '../pipe/unary-function';
+import { mergeMap } from './transformation';
+import { Observable } from '../observable';
+import { UnaryFunction } from '../pipe';
+import { ObservableInput, ObservedValueOf, of } from './creation';
 
 export function mergeWith<
 	T1 extends ObservableInput,

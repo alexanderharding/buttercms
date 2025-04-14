@@ -1,11 +1,6 @@
-import {
-	ObservableInput,
-	ObservedValueOf,
-	Observable,
-	Observer,
-	from,
-} from '../observable';
+import { Observable, Observer } from '../observable';
 import { Subject } from '../subject';
+import { from, type ObservableInput, type ObservedValueOf } from './creation';
 import { Subscribable } from './subscribable';
 
 export function connectable<Input extends ObservableInput>(
@@ -20,6 +15,7 @@ export function connectable<Input extends ObservableInput>(
 		const source = from(input);
 		const subject = connector(source);
 		subject.subscribe(subscriber);
+		if (subscriber.signal.aborted) return;
 		source.subscribe(subject);
 	});
 }

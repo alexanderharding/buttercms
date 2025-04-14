@@ -1,8 +1,6 @@
+import { InteropObservable, subscribe } from '../operators';
 import { Pipeline, UnaryFunction } from '../pipe';
-import { InteropObservable } from './from';
 import { Observer, Subscriber } from './subscriber';
-
-export const subscribe = Symbol('subscribe');
 
 /**
  * A representation of any set of values over any amount of time.

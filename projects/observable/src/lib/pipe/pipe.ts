@@ -63,7 +63,7 @@ export function pipe<A, B, C, D, E, F, G, H, I, J>(
 	op8: UnaryFunction<H, I>,
 	op9: UnaryFunction<I, J>,
 ): UnaryFunction<A, J>;
-export function pipe<A, B, C, D, E, F, G, H, I, J>(
+export function pipe<A, B, C, D, E, F, G, H, I, J, K>(
 	op1: UnaryFunction<A, B>,
 	op2: UnaryFunction<B, C>,
 	op3: UnaryFunction<C, D>,
@@ -73,8 +73,48 @@ export function pipe<A, B, C, D, E, F, G, H, I, J>(
 	op7: UnaryFunction<G, H>,
 	op8: UnaryFunction<H, I>,
 	op9: UnaryFunction<I, J>,
-	...operations: ReadonlyArray<UnaryFunction>
-): UnaryFunction;
+	op10: UnaryFunction<J, K>,
+): UnaryFunction<A, K>;
+export function pipe<A, B, C, D, E, F, G, H, I, J, K, L>(
+	op1: UnaryFunction<A, B>,
+	op2: UnaryFunction<B, C>,
+	op3: UnaryFunction<C, D>,
+	op4: UnaryFunction<D, E>,
+	op5: UnaryFunction<E, F>,
+	op6: UnaryFunction<F, G>,
+	op7: UnaryFunction<G, H>,
+	op8: UnaryFunction<H, I>,
+	op9: UnaryFunction<I, J>,
+	op10: UnaryFunction<J, K>,
+	op11: UnaryFunction<K, L>,
+): UnaryFunction<A, L>;
+export function pipe<A, B, C, D, E, F, G, H, I, J, K, L, M>(
+	op1: UnaryFunction<A, B>,
+	op2: UnaryFunction<B, C>,
+	op3: UnaryFunction<C, D>,
+	op4: UnaryFunction<D, E>,
+	op5: UnaryFunction<E, F>,
+	op6: UnaryFunction<F, G>,
+	op7: UnaryFunction<G, H>,
+	op8: UnaryFunction<H, I>,
+	op9: UnaryFunction<I, J>,
+	op10: UnaryFunction<J, K>,
+	op11: UnaryFunction<K, L>,
+	op12: UnaryFunction<L, M>,
+): UnaryFunction<A, M>;
+
+// export function pipe<A, B, C, D, E, F, G, H, I, J>(
+// 	op1: UnaryFunction<A, B>,
+// 	op2: UnaryFunction<B, C>,
+// 	op3: UnaryFunction<C, D>,
+// 	op4: UnaryFunction<D, E>,
+// 	op5: UnaryFunction<E, F>,
+// 	op6: UnaryFunction<F, G>,
+// 	op7: UnaryFunction<G, H>,
+// 	op8: UnaryFunction<H, I>,
+// 	op9: UnaryFunction<I, J>,
+// 	...operations: ReadonlyArray<UnaryFunction>
+// ): UnaryFunction;
 export function pipe<T>(
 	...operations: ReadonlyArray<UnaryFunction<T, T>>
 ): UnaryFunction<T, T>;

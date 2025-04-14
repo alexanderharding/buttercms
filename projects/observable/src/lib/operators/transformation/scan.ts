@@ -29,7 +29,7 @@ export function scan(
 			// Whether or not we have state yet. This will only be
 			// false before the first value arrives if we didn't get
 			// a seed value.
-			let hasState = args.length === 2;
+			let hasState = args.length > 1;
 			// The state that we're tracking, starting with the seed,
 			// if there is one, and then updated by the return value
 			// from the accumulator on each emission.
