@@ -1,10 +1,10 @@
 import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, type UnaryFunction } from '../pipe';
-import { subscribe } from '../operators';
+import { observable, Subscribable } from '../operators';
 
 /**
- * A variant of {@linkcode Subject} that only multicasts it's latest value, if any, on completion.
+ * A variant of {@linkcode Subject} that only multicast it's latest value, if any, on completion.
  * Late subscribers will receive the latest value from the subject and then complete.
  *
  * @example
@@ -85,12 +85,12 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	}
 
 	/** @internal */
-	[subscribe](observerOrNext?: UnaryFunction | Partial<Observer> | null): void {
-		this.subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/** @internal */
-	subscribe(observerOrNext?: UnaryFunction | Partial<Observer> | null): void {
+	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 

@@ -2,7 +2,6 @@ import { from, ObservableInput, ObservedValueOf } from '../creation';
 import { UnaryFunction } from '../../pipe';
 import { Observable } from '../../observable';
 import { noop } from '../../noop';
-import { takeUntil } from 'rxjs';
 
 const noValue = Symbol('no value');
 

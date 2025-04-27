@@ -1,7 +1,7 @@
 import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, UnaryFunction } from '../pipe';
-import { subscribe } from '../operators';
+import { observable, Subscribable } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that emits a buffer of the last N values,
@@ -98,8 +98,8 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 	}
 
 	/** @internal */
-	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.asObservable().subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/** @internal */
@@ -109,13 +109,19 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 
 	/** @internal */
 	next(value: Value): void {
-		if (!this.signal.aborted) {
-			this.#buffer.push(value);
-			// Trim the buffer before pushing it to the delegate so
-			// reentrant code does not get pushed more values than it should.
-			while (this.#buffer.length > this.#bufferSize) this.#buffer.shift();
+		// If this subject has been aborted, there is nothing to do.
+		if (this.signal.aborted) return;
+
+		// Store next value in the buffer.
+		this.#buffer.push(value);
+
+		// Trim the buffer before pushing it to the delegate so
+		// reentrant code does not get pushed more values than it should.
+		if (this.#buffer.length > this.#bufferSize) {
+			this.#buffer.splice(0, this.#buffer.length - this.#bufferSize);
 		}
 
+		// Push the value to the delegate.
 		this.#delegate.next(value);
 	}
 

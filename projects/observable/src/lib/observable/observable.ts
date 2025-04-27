@@ -1,4 +1,4 @@
-import { InteropObservable, subscribe } from '../operators';
+import { InteropObservable, observable, Subscribable } from '../operators';
 import { Pipeline, UnaryFunction } from '../pipe';
 import { Observer, Subscriber } from './subscriber';
 
@@ -49,8 +49,8 @@ export const Observable: ObservableConstructor = class {
 	}
 
 	/** @internal */
-	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/** @internal */

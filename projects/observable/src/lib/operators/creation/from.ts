@@ -1,16 +1,18 @@
-import { Observable, type Observer } from '../../observable';
+import { Observable, Subscriber } from '../../observable';
 import { throwError } from './throw-error';
-import { UnaryFunction } from '../../pipe';
 import { AnyCatcher } from '../../any-catcher';
 
 /** @public */
-export const subscribe = Symbol('Interop Observable');
+export const observable = Symbol('Interop Observable');
 
 /** @public */
 export interface InteropObservable<Value = unknown> {
-	[subscribe](
-		observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
-	): void;
+	[observable](): Subscribable<Value>;
+}
+
+/** @public */
+export interface Subscribable<Value = unknown> {
+	subscribe(subscriber: Subscriber<Value>): void;
 }
 
 export type ObservableInput<Value = unknown> =
@@ -104,8 +106,13 @@ export function from(value: ObservableInput | null | undefined): Observable {
 	if (isReadableStreamLike(value)) return fromReadableStreamLike(value);
 
 	// The user has ticked the TSC. We will still return an Observable, but it will
-	// emit a `TypeError` through the `error` notification.
-	return throwError(() => new TypeError('value must be an ObservableInput'));
+	// emit a `TypeError` through the `error` notification. We use a try/catch
+	// so that the thrown error has a stack trace.
+	try {
+		throw new TypeError('value must be an ObservableInput');
+	} catch (error) {
+		return throwError(() => error);
+	}
 }
 
 /** @internal */
@@ -209,12 +216,12 @@ function fromInteropObservable(
 	// If an instance of one of our Observables, just return it.
 	if (interopObservable instanceof Observable) return interopObservable;
 	return new Observable((subscriber) => {
-		if (typeof interopObservable[subscribe] === 'function') {
-			return interopObservable[subscribe](subscriber);
+		if (typeof interopObservable[observable] === 'function') {
+			return interopObservable[observable]().subscribe(subscriber);
 		}
 		// Should be caught by observable subscribe function error handling.
 		throw new TypeError(
-			"Provided object does not correctly implement the 'subscribe' Symbol",
+			"Provided object does not correctly implement the 'observable' Symbol",
 		);
 	});
 }
@@ -279,7 +286,7 @@ function isInteropObservable<Value>(
 	return (
 		!!value &&
 		typeof value === 'object' &&
-		subscribe in value &&
-		typeof value[subscribe] === 'function'
+		observable in value &&
+		typeof value[observable] === 'function'
 	);
 }

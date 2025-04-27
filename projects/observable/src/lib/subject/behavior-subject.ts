@@ -1,7 +1,7 @@
 import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, UnaryFunction } from '../pipe';
-import { subscribe } from '../operators';
+import { observable, Subscribable } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that requires an initial value and
@@ -103,8 +103,8 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.#output.subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/**

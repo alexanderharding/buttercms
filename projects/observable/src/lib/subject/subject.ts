@@ -1,6 +1,6 @@
 import { Observable, Observer, Subscriber } from '../observable';
 import { Pipeline, UnaryFunction } from '../pipe';
-import { subscribe } from '../operators';
+import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
  * @usage The default value type for a {@linkcode Subject}.
@@ -10,11 +10,11 @@ import { subscribe } from '../operators';
 type DefaultValue = void;
 
 /**
- * @usage A special type of {@linkcode Observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter.
+ * @usage A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter.
  * @public
  */
 export interface Subject<Value = DefaultValue>
-	extends Omit<Observable<Value>, 'pipe' | 'subscribe'>,
+	extends InteropObservable<Value>,
 		Pipeline<Subject<Value>> {
 	/**
 	 * @readonly
@@ -24,35 +24,41 @@ export interface Subject<Value = DefaultValue>
 	/**
 	 * @usage Determining if/when this {@linkcode Subject|subject} has been aborted and is no longer accepting new notifications.
 	 * @readonly
+	 * @property
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
 	 * @usage Multicast a {@linkcode value} to all {@linkcode Subscriber|subscribers} of this {@linkcode Subject|subject}. Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param value The {@linkcode value} to multicast to all {@linkcode Subscriber|subscribers}.
+	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
 	 * @usage Abort this {@linkcode Subject|subject} and multicast a complete notification to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
 	 * @usage Abort this {@linkcode Subject|subject} and multicast an {@linkcode error} to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param error The {@linkcode error} to multicast to all {@linkcode Subscriber|subscribers}.
+	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
 	 * @usage Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode Subject|subject} casts to.
+	 * @method
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
 	/**
 	 * @usage Observing notifications from this {@linkcode Subject|subject}.
 	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Subject|subject}.
+	 * @method
 	 * @public
 	 */
 	subscribe(
@@ -154,8 +160,8 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.#delegate.subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/**

@@ -1,6 +1,7 @@
 import { Subject } from './subject';
 import { Observable } from '../observable';
 import { delay, of } from '../operators';
+import { noop } from '../noop';
 
 describe(Subject.name, () => {
 	it('should allow next with undefined when created with no type', (done: DoneFn) => {
@@ -429,11 +430,11 @@ describe(Subject.name, () => {
 			};
 
 			const source = new Subject<number>();
-			source.subscribe();
+			source.subscribe(noop);
 			source.subscribe(() => {
 				throw new Error('Boom!');
 			});
-			source.subscribe();
+			source.subscribe(noop);
 			expect(() => source.next(42)).not.toThrow();
 		});
 	});

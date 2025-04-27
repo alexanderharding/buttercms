@@ -1,7 +1,7 @@
 import { Subject } from './subject';
 import { Observable, type Observer } from '../observable';
 import { Pipeline, type UnaryFunction } from '../pipe';
-import { subscribe } from '../operators';
+import { observable, Subscribable } from '../operators';
 
 /**
  * A wrapper around the {@linkcode BroadcastChannel} object provided by the browser.
@@ -46,12 +46,6 @@ export interface BroadcastSubject<Value = void>
 	readonly name: string;
 }
 
-/**
- * Constructs a new {@linkcode BroadcastSubject} instance.
- * @param name The name of the underlying {@linkcode BroadcastChannel}.
- * @constructor
- * @public
- */
 export interface BroadcastSubjectConstructor {
 	new <Value>(name: string): BroadcastSubject<Value>;
 	readonly prototype: BroadcastSubject;
@@ -137,8 +131,8 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @readonly
 	 * @public
 	 */
-	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.asObservable().subscribe(observerOrNext);
+	[observable](): Subscribable {
+		return this;
 	}
 
 	/**
