@@ -25,10 +25,10 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "ES2023",
+    "target": "ES2024",
     "module": "ES2022",
     "useDefineForClassFields": false,
-    "lib": ["ES2023", "dom"],
+    "lib": ["ES2024", "dom"],
     "useUnknownInCatchVariables": true,
     "noUnusedParameters": false, // Enforced by linter
     "noUnusedLocals": false, // Enforced by linter
