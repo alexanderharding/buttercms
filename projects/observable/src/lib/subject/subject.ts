@@ -62,6 +62,12 @@ export interface SubjectConstructor {
 	readonly prototype: Subject;
 }
 
+/**
+ * @usage Flag indicating that an error is not set.
+ * @internal
+ */
+const noError = Symbol('noError');
+
 export const Subject: SubjectConstructor = class {
 	/**
 	 * @internal
@@ -85,13 +91,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#thrownError: unknown;
-
-	/**
-	 * @internal
-	 * @ignore
-	 */
-	#hasError = false;
+	#error: unknown = noError;
 
 	/**
 	 * This is used to track a known array of subscribers, so we don't have to
@@ -114,7 +114,8 @@ export const Subject: SubjectConstructor = class {
 	 */
 	readonly #delegate = new Observable((subscriber) => {
 		// Check if this subject has finalized so we can notify the subscriber immediately.
-		this.#checkFinalizers(subscriber);
+		if (this.#error !== noError) subscriber.error(this.#error);
+		else if (this.signal.aborted) subscriber.complete();
 
 		// If the subscriber is already aborted then there's nothing to do.
 		// This could be because the subscriber was aborted before it passed to this subject
@@ -170,7 +171,9 @@ export const Subject: SubjectConstructor = class {
 		if (this.signal.aborted) return;
 
 		// Push the next value to all subscribers.
-		this.#forEachSubscriber((subscriber) => subscriber.next(value));
+		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
+			subscriber.next(value),
+		);
 	}
 
 	/**
@@ -185,10 +188,13 @@ export const Subject: SubjectConstructor = class {
 		this.#controller.abort();
 
 		// Push the complete notification to all subscribers.
-		this.#forEachSubscriber((subscriber) => subscriber.complete());
+		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
+			subscriber.complete(),
+		);
 
-		// Teardown after all subscribers have been notified.
-		this.#finalizer();
+		// Clear subscriber state after all have been notified.
+		this.#subscribers.clear();
+		this.#subscribersSnapshot = undefined;
 	}
 
 	/**
@@ -200,17 +206,19 @@ export const Subject: SubjectConstructor = class {
 		if (this.signal.aborted) return;
 
 		// Set the finalization state before aborting in-case of reentrant code.
-		this.#hasError = true;
-		this.#thrownError = error;
+		this.#error = error;
 
 		// Abort this subject before pushing the error notification in-case of reentrant code.
 		this.#controller.abort();
 
 		// Push the error notification to all subscribers.
-		this.#forEachSubscriber((subscriber) => subscriber.error(error));
+		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
+			subscriber.error(error),
+		);
 
-		// Teardown after all subscribers have been notified.
-		this.#finalizer();
+		// Clear subscriber state after all have been notified.
+		this.#subscribers.clear();
+		this.#subscribersSnapshot = undefined;
 	}
 
 	/**
@@ -233,28 +241,6 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#checkFinalizers(subscriber: Subscriber): void {
-		if (this.#hasError) {
-			// This Subject has errored so we need to notify the subscriber.
-			subscriber.error(this.#thrownError);
-		} else if (this.signal.aborted) {
-			// This Subject has been aborted so it will no longer push any more next notifications.
-			subscriber.complete();
-		}
-	}
-
-	/**
-	 * @internal
-	 * @ignore
-	 */
-	#forEachSubscriber(callback: (subscriber: Subscriber) => void): void {
-		this.#ensureSubscribersSnapshot().forEach(callback);
-	}
-
-	/**
-	 * @internal
-	 * @ignore
-	 */
 	#ensureSubscribersSnapshot(): ReadonlyArray<Subscriber> {
 		return (this.#subscribersSnapshot ??= this.#takeSubscribersSnapshot());
 	}
@@ -265,14 +251,5 @@ export const Subject: SubjectConstructor = class {
 	 */
 	#takeSubscribersSnapshot(): ReadonlyArray<Subscriber> {
 		return Array.from(this.#subscribers.values());
-	}
-
-	/**
-	 * @internal
-	 * @ignore
-	 */
-	#finalizer(): void {
-		this.#subscribers.clear();
-		this.#subscribersSnapshot = undefined;
 	}
 };

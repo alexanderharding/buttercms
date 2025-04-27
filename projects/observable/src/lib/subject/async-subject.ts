@@ -1,4 +1,4 @@
-import { Observable, type Observer, type Subscriber } from '../observable';
+import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, type UnaryFunction } from '../pipe';
 import { subscribe } from '../operators';
@@ -38,6 +38,18 @@ export interface AsyncSubjectConstructor {
 	readonly prototype: AsyncSubject;
 }
 
+/**
+ * @usage Flag indicating that a value is not set.
+ * @internal
+ */
+const noValue = Symbol('noValue');
+
+/**
+ * @usage Flag indicating that an error is not set.
+ * @internal
+ */
+const noError = Symbol('noError');
+
 export const AsyncSubject: AsyncSubjectConstructor = class {
 	/** @internal */
 	readonly [Symbol.toStringTag] = this.constructor.name;
@@ -52,22 +64,18 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
-	#value: unknown;
+	#value: unknown = noValue;
 
 	/** @internal */
-	#hasValue = false;
-
-	/** @internal */
-	#hasError = false;
-
-	/** @internal */
-	#thrownError: unknown;
+	#error: unknown = noError;
 
 	/** @internal */
 	readonly #output = new Observable((subscriber) => {
 		// Check if this subject has finalized so we can notify the subscriber immediately.
-		this.#checkFinalizers(subscriber);
+		if (this.#error !== noError) subscriber.error(this.#error);
+		else if (this.signal.aborted) this.#complete(subscriber);
 
+		// Always subscribe to the delegate subject.
 		this.#delegate.subscribe(subscriber);
 	});
 
@@ -92,14 +100,12 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		if (this.signal.aborted) return;
 
 		// Set the value state so it is available to the complete method.
-		this.#hasValue = true;
 		this.#value = value;
 	}
 
 	/** @internal */
 	complete(): void {
-		if (this.#hasValue) this.#delegate.next(this.#value);
-		this.#delegate.complete();
+		this.#complete();
 	}
 
 	/** @internal */
@@ -109,14 +115,12 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 
 		// We have entered the error flow so we need to reset the value state
 		// since it is no longer relevant and should be garbage collected.
-		this.#hasValue = false;
-		this.#value = undefined;
+		this.#value = noValue;
 
-		// Set the finalization state before pushing the error notification in-case of reentrant code.
-		this.#hasError = true;
-		this.#thrownError = error;
+		// Set the error state before pushing the error notification in-case of reentrant code.
+		this.#error = error;
 
-		// Push the error notification to all subscribers.
+		// Push the error notification to all subscribers via the delegate subject.
 		this.#delegate.error(error);
 	}
 
@@ -126,13 +130,14 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	}
 
 	/** @internal */
-	#checkFinalizers(subscriber: Subscriber): void {
-		if (this.#hasError) {
-			// This Subject has errored so we need to notify the subscriber.
-			subscriber.error(this.#thrownError);
-		} else if (this.signal.aborted) {
-			if (this.#hasValue) subscriber.next(this.#value);
-			subscriber.complete();
-		}
+	#complete(
+		observer: Pick<Observer, 'next' | 'complete'> = this.#delegate,
+	): void {
+		// If this subject has a value then we need to push it to the observer before
+		// pushing the complete notification.
+		if (this.#value !== noValue) observer.next(this.#value);
+
+		// Push the completion notification to the observer.
+		observer.complete();
 	}
 };
