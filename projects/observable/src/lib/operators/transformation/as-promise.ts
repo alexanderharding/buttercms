@@ -17,7 +17,7 @@ export function asPromise<Input extends ObservableInput>(): UnaryFunction<
 				complete: () => {
 					if (output !== noValue) resolve(output);
 				},
-				finalize: () => (output = noValue),
+				finally: () => (output = noValue),
 			});
 		});
 }

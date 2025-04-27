@@ -40,7 +40,7 @@ export function debounce<T extends ObservableInput>(
 					emit();
 					subscriber.complete();
 				},
-				finalize: () => (lastValue = noValue),
+				finally: () => (lastValue = noValue),
 			});
 
 			function setController<Value extends AbortController | null>(
@@ -90,7 +90,7 @@ export function debounce2<T extends ObservableInput>(
 					emit();
 					subscriber.complete();
 				},
-				finalize() {
+				finally() {
 					lastValue = noValue;
 					setController(null);
 				},

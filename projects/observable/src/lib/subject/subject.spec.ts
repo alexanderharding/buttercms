@@ -1,6 +1,6 @@
 import { Subject } from './subject';
-import { Observable, of } from '../observable';
-import { delay } from '../operators';
+import { Observable } from '../observable';
+import { delay, of } from '../operators';
 
 describe(Subject.name, () => {
 	it('should allow next with undefined when created with no type', (done: DoneFn) => {
@@ -77,7 +77,7 @@ describe(Subject.name, () => {
 			next: (x) => results1.push(x),
 			error: () => results1.push('E'),
 			complete: () => results1.push('C'),
-			finalize: () => results1.push('F'),
+			finally: () => results1.push('F'),
 		});
 
 		subject.next(5);
@@ -88,7 +88,7 @@ describe(Subject.name, () => {
 			next: (x) => results2.push(x),
 			error: () => results2.push('E'),
 			complete: () => results2.push('C'),
-			finalize: () => results2.push('F'),
+			finally: () => results2.push('F'),
 		});
 
 		subject.next(6);
@@ -109,7 +109,7 @@ describe(Subject.name, () => {
 			next: (x) => results3.push(x),
 			error: () => results3.push('E'),
 			complete: () => results3.push('C'),
-			finalize: () => results3.push('F'),
+			finally: () => results3.push('F'),
 		});
 
 		subject.next(11);
@@ -138,7 +138,7 @@ describe(Subject.name, () => {
 			next: (x) => results1.push(x),
 			error: () => results1.push('E'),
 			complete: () => results1.push('C'),
-			finalize: () => results1.push('F'),
+			finally: () => results1.push('F'),
 		});
 
 		subject.next(5);
@@ -149,7 +149,7 @@ describe(Subject.name, () => {
 			next: (x) => results2.push(x),
 			error: () => results2.push('E'),
 			complete: () => results2.push('C'),
-			finalize: () => results2.push('F'),
+			finally: () => results2.push('F'),
 		});
 
 		subject.next(6);
@@ -167,7 +167,7 @@ describe(Subject.name, () => {
 			next: (x) => results3.push(x),
 			error: () => results3.push('E'),
 			complete: () => results3.push('C'),
-			finalize: () => results3.push('F'),
+			finally: () => results3.push('F'),
 		});
 
 		controller3.abort();
@@ -194,7 +194,7 @@ describe(Subject.name, () => {
 			next: (x) => results1.push(x),
 			error: () => results1.push('E'),
 			complete: () => results1.push('C'),
-			finalize: () => results1.push('F'),
+			finally: () => results1.push('F'),
 		});
 
 		subject.next(5);
@@ -205,7 +205,7 @@ describe(Subject.name, () => {
 			next: (x) => results2.push(x),
 			error: () => results2.push('E'),
 			complete: () => results2.push('C'),
-			finalize: () => results2.push('F'),
+			finally: () => results2.push('F'),
 		});
 
 		subject.next(6);
@@ -223,7 +223,7 @@ describe(Subject.name, () => {
 			next: (x) => results3.push(x),
 			error: () => results3.push('E'),
 			complete: () => results3.push('C'),
-			finalize: () => results3.push('F'),
+			finally: () => results3.push('F'),
 		});
 
 		controller3.abort();
@@ -245,7 +245,7 @@ describe(Subject.name, () => {
 			next: (x) => results1.push(x),
 			error: () => results1.push('E'),
 			complete: () => results1.push('C'),
-			finalize: () => results1.push('F'),
+			finally: () => results1.push('F'),
 		});
 
 		const controller2 = new AbortController();
@@ -254,7 +254,7 @@ describe(Subject.name, () => {
 			next: (x) => results2.push(x),
 			error: () => results2.push('E'),
 			complete: () => results2.push('C'),
-			finalize: () => results2.push('F'),
+			finally: () => results2.push('F'),
 		});
 
 		controller1.abort();
@@ -269,7 +269,7 @@ describe(Subject.name, () => {
 			next: (x) => results3.push(x),
 			error: () => results3.push('E'),
 			complete: () => results3.push('C'),
-			finalize: () => results3.push('F'),
+			finally: () => results3.push('F'),
 		});
 
 		controller3.abort();
@@ -291,7 +291,7 @@ describe(Subject.name, () => {
 			next: (x) => results1.push(x),
 			error: () => results1.push('E'),
 			complete: () => results1.push('C'),
-			finalize: () => results1.push('F'),
+			finally: () => results1.push('F'),
 		});
 
 		subject.next(1);
@@ -303,7 +303,7 @@ describe(Subject.name, () => {
 			next: (x) => results2.push(x),
 			error: () => results2.push('E'),
 			complete: () => results2.push('C'),
-			finalize: () => results2.push('F'),
+			finally: () => results2.push('F'),
 		});
 
 		subject.next(3);
@@ -318,7 +318,7 @@ describe(Subject.name, () => {
 			next: (x) => results3.push(x),
 			error: () => results3.push('E'),
 			complete: () => results3.push('C'),
-			finalize: () => results3.push('F'),
+			finally: () => results3.push('F'),
 		});
 
 		expect(subject.signal.aborted).toBeTrue();

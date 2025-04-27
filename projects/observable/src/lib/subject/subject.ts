@@ -14,7 +14,7 @@ type DefaultValue = void;
  * @public
  */
 export interface Subject<Value = DefaultValue>
-	extends Omit<Observable<Value>, 'pipe'>,
+	extends Omit<Observable<Value>, 'pipe' | 'subscribe'>,
 		Pipeline<Subject<Value>> {
 	/**
 	 * @readonly
@@ -50,6 +50,14 @@ export interface Subject<Value = DefaultValue>
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
+	/**
+	 * @usage Observing notifications from this {@linkcode Subject|subject}.
+	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Subject|subject}.
+	 * @public
+	 */
+	subscribe(
+		observerOrNext: Partial<Observer<Value>> | UnaryFunction<Value>,
+	): void;
 }
 
 /**
@@ -147,14 +155,14 @@ export const Subject: SubjectConstructor = class {
 	 * @ignore
 	 */
 	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.subscribe(observerOrNext);
+		this.#delegate.subscribe(observerOrNext);
 	}
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
+	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 

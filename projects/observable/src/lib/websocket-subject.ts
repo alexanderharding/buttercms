@@ -51,6 +51,10 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class<Value> {
 		return this.#socket.readyState === WebSocket.CONNECTING;
 	}
 
+	get open(): boolean {
+		return this.#socket.readyState === WebSocket.OPEN;
+	}
+
 	get closing(): boolean {
 		return this.#socket.readyState === WebSocket.CLOSING;
 	}
@@ -84,7 +88,11 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class<Value> {
 	}
 
 	next(value: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-		this.#socket.send(value);
+		try {
+			this.#socket.send(value);
+		} catch (error) {
+			this.error(error);
+		}
 	}
 
 	error(error: unknown): void {

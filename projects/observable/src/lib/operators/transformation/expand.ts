@@ -49,7 +49,7 @@ export function expand<T extends ObservableInput>(
 				...subscriber,
 				next: outerNext,
 				complete: outerComplete,
-				finalize: outerFinalize,
+				finally: outerFinally,
 			});
 
 			function doInnerSub(value: ObservedValueOf<T>): void {
@@ -71,7 +71,7 @@ export function expand<T extends ObservableInput>(
 					...subscriber,
 					next: outerNext,
 					complete: innerComplete,
-					finalize: innerFinalize,
+					finally: innerFinally,
 				});
 
 				function innerComplete(): void {
@@ -80,7 +80,7 @@ export function expand<T extends ObservableInput>(
 					isInnerComplete = true;
 				}
 
-				function innerFinalize(): void {
+				function innerFinally(): void {
 					// During finalization, if the inner completed (it wasn't errored or
 					// cancelled), then we want to try the next item in the buffer if
 					// there is one.
@@ -115,7 +115,7 @@ export function expand<T extends ObservableInput>(
 				checkComplete();
 			}
 
-			function outerFinalize(): void {
+			function outerFinally(): void {
 				if (!isOuterComplete) buffer.length = 0;
 			}
 

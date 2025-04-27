@@ -74,7 +74,7 @@ describe(Observable.name, () => {
 			expect(observer.next).toHaveBeenCalledOnceWith(1);
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 			expect(observer.complete).toHaveBeenCalledOnceWith();
-			expect(observer.finalize).toHaveBeenCalledOnceWith();
+			expect(observer.finally).toHaveBeenCalledOnceWith();
 		});
 
 		it('should not create a new subscriber when subscribe is called with an existing open subscriber', () => {

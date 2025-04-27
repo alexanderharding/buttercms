@@ -46,9 +46,9 @@ export function tap<T extends ObservableInput>(
 					tapObserver.complete?.();
 					subscriber.complete();
 				},
-				finalize() {
+				finally() {
 					if (isUnsubscribe) tapObserver.unsubscribe?.();
-					tapObserver.finalize?.();
+					tapObserver.finally?.();
 				},
 			} satisfies Observer<ObservedValueOf<T>>);
 		});

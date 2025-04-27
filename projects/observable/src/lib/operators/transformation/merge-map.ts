@@ -40,7 +40,7 @@ export function mergeMap<
 				...subscriber,
 				next: outerNext,
 				complete: outerComplete,
-				finalize: outerFinalize,
+				finally: outerFinally,
 			});
 
 			function doInnerSub(value: ObservedValueOf<In>): void {
@@ -56,7 +56,7 @@ export function mergeMap<
 				from(project(value, index++)).subscribe({
 					...subscriber,
 					complete: innerComplete,
-					finalize: innerFinalize,
+					finally: innerFinally,
 				});
 
 				function innerComplete(): void {
@@ -65,7 +65,7 @@ export function mergeMap<
 					isInnerComplete = true;
 				}
 
-				function innerFinalize(): void {
+				function innerFinally(): void {
 					// During finalization, if the inner completed (it wasn't errored or
 					// cancelled), then we want to try the next item in the buffer if
 					// there is one.
@@ -100,7 +100,7 @@ export function mergeMap<
 				checkComplete();
 			}
 
-			function outerFinalize(): void {
+			function outerFinally(): void {
 				if (!isOuterComplete) buffer.length = 0;
 			}
 

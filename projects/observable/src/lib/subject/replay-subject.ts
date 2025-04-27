@@ -1,6 +1,6 @@
 import { Observable, type Observer } from '../observable';
 import { Subject } from './subject';
-import { Pipeline } from '../pipe';
+import { Pipeline, UnaryFunction } from '../pipe';
 import { subscribe } from '../operators';
 
 /**
@@ -98,16 +98,12 @@ export const ReplaySubject: ReplaySubjectConstructor = class<Value> {
 	}
 
 	/** @internal */
-	[subscribe](
-		observerOrNext?: ((value: Value) => void) | Partial<Observer<Value>> | null,
-	): void {
-		this.subscribe(observerOrNext);
+	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
+		this.asObservable().subscribe(observerOrNext);
 	}
 
 	/** @internal */
-	subscribe(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => void) | null,
-	): void {
+	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 

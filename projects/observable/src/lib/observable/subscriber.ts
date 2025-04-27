@@ -2,69 +2,65 @@ import { UnhandledError } from '../errors';
 import { UnaryFunction } from '../pipe';
 
 /**
- * An object interface that defines a set of callback functions a user can use to get
- * notified of any set of {@link Subscriber} events.
+ * @usage An object interface that defines a set of callback functions a user can use to get notified of any set of {@linkcode Subscriber|subscriber} events.
  */
 export interface Observer<Value = unknown> {
 	/**
-	 * A signifier indicating if/when this {@linkcode Observer|observer} has been
-	 * aborted and is no longer receiving new notifications.
+	 * @usage Aborting this {@linkcode Observer|observer} and no longer accept new notifications from a {@linkcode Subscriber|subscriber}.
+	 * @readonly
+	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * The callback to receive notifications of type `next` from
-	 * the Subscriber, with a value. The Subscriber may call this method 0 or more
-	 * times.
-	 * @param value The `next` value.
+	 * @usage Receiving notifications of type `next` from a {@linkcode Subscriber|subscriber}, with a {@linkcode value}.
+	 * @param value The {@linkcode value} received along with the `next` notification.
+	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * The callback to receive notifications of type `error`, with an attached `Error`.
-	 * Notifies the Observer that the Subscriber has experienced an error condition.
-	 * @param err The `error` exception.
+	 * @usage Receiving notifications of type `error`, with an attached {@linkcode error} indicating that a {@linkcode Subscriber|subscriber} has experienced an error condition and has finished sending push-based notifications. This is exclusive of the `complete` notification.
+	 * @param error The {@linkcode error} value received along with the `error` notification.
+	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * The callback to receive a valueless notification of type
-	 * `complete` from the Subscriber. Notifies the Observer that the Subscriber
-	 * has finished sending push-based notifications.
+	 * @usage Receiving a notification of type `complete` from a {@linkcode Subscriber|subscriber} indicating that the {@linkcode Subscriber|subscriber} has finished sending push-based notifications. This is exclusive of the `error` notification.
+	 * @public
 	 */
 	complete(): void;
 	/**
-	 * The callback to receive a valueless notification of type
-	 * `abort` from the Subscriber. Notifies the Observer that the Subscriber
-	 * has finished sending push-based notifications.
+	 * @usage Called when this {@linkcode Observer|observer} has finished receiving notifications from a {@linkcode Subscriber|subscriber} and/or is no longer accepting new notifications.
+	 * @public
 	 */
-	finalize(): void;
+	finally(): void;
 }
 
 /**
- * An object interface that defines a set of functions a user can use to push
- * notifications to an {@link Observer|observer}.
+ * @usage An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
+ * @public
  */
 export interface Subscriber<Value = unknown> {
 	/**
-	 * A signifier indicating if/when this {@linkcode Subscriber|subscriber} has been
-	 * aborted and is no longer pushing notifications.
+	 * @usage Determining if/when this {@linkcode Subscriber|subscriber} has been aborted and is no longer pushing new notifications.
+	 * @readonly
+	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * The callback to receive notifications of type `next` from
-	 * the Subscriber, with a value. The Subscriber may call this method 0 or more
-	 * times.
-	 * @param value The `next` value.
+	 * @usage Pushing notifications of type `next` from this Subscriber, with a {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * @param value The {@linkcode value} to send along with the `next` notification.
+	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * The callback to receive notifications of type `error`, with an attached `Error`.
-	 * Notifies the Observer that the Subscriber has experienced an error condition.
-	 * @param err The `error` exception.
+	 * @usage Aborting this Subscriber and pushing a notification of type `error`, with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * @param error The {@linkcode error} value to send along with the `error` notification.
+	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * The callback to receive a valueless notification of type
-	 * `complete` from the Subscriber. Notifies the Observer that the Subscriber
-	 * has finished sending push-based notifications.
+	 * @usage Aborting this Subscriber and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * @public
 	 */
 	complete(): void;
 }
@@ -93,7 +89,7 @@ export const Subscriber: SubscriberConstructor = class {
 			const { signal: observerSignal } = this.#observer;
 			const finalizer = () => {
 				this.#controller.abort();
-				this.#observer?.finalize?.();
+				this.#observer?.finally?.();
 			};
 			observerSignal.addEventListener('abort', finalizer, {
 				signal: this.signal,
@@ -134,7 +130,7 @@ export const Subscriber: SubscriberConstructor = class {
 		} catch (error) {
 			reportUnhandledError(error);
 		} finally {
-			this.#finalize();
+			this.#finally();
 		}
 	}
 
@@ -152,14 +148,14 @@ export const Subscriber: SubscriberConstructor = class {
 		} catch (error) {
 			reportUnhandledError(error);
 		} finally {
-			this.#finalize();
+			this.#finally();
 		}
 	}
 
 	/** @internal */
-	#finalize(): void {
+	#finally(): void {
 		try {
-			this.#observer?.finalize?.();
+			this.#observer?.finally?.();
 		} catch (error) {
 			reportUnhandledError(error);
 		}
@@ -170,7 +166,7 @@ export const Subscriber: SubscriberConstructor = class {
 function reportUnhandledError(error: unknown): void {
 	// Throw error asynchronously to ensure it does not interfere with
 	// the library's execution.
-	globalThis.setTimeout(() => {
+	globalThis.queueMicrotask(() => {
 		throw ensureUnhandledError(error);
 	});
 }

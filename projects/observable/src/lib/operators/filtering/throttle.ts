@@ -2,7 +2,6 @@ import { from, ObservableInput, ObservedValueOf } from '../creation';
 import { UnaryFunction } from '../../pipe';
 import { Observable } from '../../observable';
 import { noop } from '../../noop';
-import { takeWhile } from 'rxjs';
 
 const noValue = Symbol('no value');
 
@@ -29,7 +28,7 @@ export function debounce<T extends ObservableInput>(
 					emit();
 					subscriber.complete();
 				},
-				finalize() {
+				finally() {
 					lastValue = noValue;
 					setController(null);
 				},
@@ -82,7 +81,7 @@ export function debounce2<T extends ObservableInput>(
 					emit();
 					subscriber.complete();
 				},
-				finalize() {
+				finally() {
 					lastValue = noValue;
 					setController(null);
 				},

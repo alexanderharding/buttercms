@@ -76,7 +76,7 @@ export function share<Input extends ObservableInput>({
 
 			new Subscriber({
 				signal: subscriber.signal,
-				finalize: () => {
+				finally() {
 					// If we're resetting on refCount === 0, and it's 0, we only want to do
 					// that on "unsubscribe", really. Resetting on error or completion is a different
 					// configuration.

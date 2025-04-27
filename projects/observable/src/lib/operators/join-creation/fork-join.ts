@@ -125,9 +125,7 @@ export function forkJoin(
 	const parts = arrayOrObject(inputs);
 
 	if (!parts) {
-		return throwError(
-			() => new TypeError('sources must be an array or object'),
-		);
+		return throwError(() => new TypeError('inputs must be an array or object'));
 	}
 
 	const { args: normalizedInputs, keys } = parts;
@@ -154,32 +152,29 @@ export function forkJoin(
 		// The loop to kick off subscription. We're keying everything with it's index to relate the observables passed
 		// in to the slot in the output array or the key in the array of keys in the output dictionary.
 		normalizedInputs.forEach((input, index) => {
-			from(input).subscribe({ ...subscriber, next, complete, finalize });
+			from(input).subscribe({
+				...subscriber,
+				next(value) {
+					const hasValue = index in values;
+					// When we get a value, record it in our set of values.
+					values[index] = value;
+					// If this is our first value, record that.
+					if (!hasValue) remainingEmissions--;
+				},
+				complete: () => remainingCompletions--,
+				finally() {
+					const hasValue = index in values;
+					if (remainingCompletions && hasValue) return;
 
-			function next(value: unknown): void {
-				const hasValue = index in values;
-				// When we get a value, record it in our set of values.
-				values[index] = value;
-				// If this is our first value, record that.
-				if (!hasValue) remainingEmissions--;
-			}
+					if (remainingEmissions === 0) {
+						subscriber.next(keys ? createObject(keys, values) : values);
+						subscriber.complete();
+						return;
+					}
 
-			function complete(): void {
-				remainingCompletions--;
-			}
-
-			function finalize(): void {
-				const hasValue = index in values;
-				if (remainingCompletions && hasValue) return;
-
-				if (remainingEmissions === 0) {
-					subscriber.next(keys ? createObject(keys, values) : values);
-					subscriber.complete();
-					return;
-				}
-
-				subscriber.error(new Error('No elements in sequence'));
-			}
+					subscriber.error(new Error('No elements in sequence'));
+				},
+			});
 		});
 	});
 }

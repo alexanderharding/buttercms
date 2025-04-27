@@ -26,7 +26,7 @@ export function exhaustScan<
 			value.subscribe({
 				...subscriber,
 				next: (value) => subscriber.next((accumulated = value)),
-				finalize: () => (accumulated = null!),
+				finally: () => (accumulated = null!),
 			});
 		});
 }

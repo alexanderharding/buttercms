@@ -19,7 +19,7 @@ export function switchMap<
 				...subscriber,
 				next: outerNext,
 				complete: outerComplete,
-				finalize: () => setController(null),
+				finally: () => setController(null),
 			});
 
 			function outerNext(value: ObservedValueOf<In>): void {

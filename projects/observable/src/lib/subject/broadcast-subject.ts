@@ -138,7 +138,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @public
 	 */
 	[subscribe](observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
-		this.subscribe(observerOrNext);
+		this.asObservable().subscribe(observerOrNext);
 	}
 
 	/**
@@ -146,7 +146,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @readonly
 	 * @public
 	 */
-	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
+	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
