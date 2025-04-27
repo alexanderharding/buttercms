@@ -3,62 +3,60 @@ import { Pipeline, UnaryFunction } from '../pipe';
 import { subscribe } from '../operators';
 
 /**
- * A Subject is a special type of Observable that allows values to be
- * multicasted to many Observers. Subjects are like EventEmitters.
- *
- * You can subscribe to a Subject, and you can call next to feed values
- * as well as error and complete.
+ * @usage The default value type for a {@linkcode Subject}.
+ * @internal
  */
-export interface Subject<Value = void>
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+type DefaultValue = void;
+
+/**
+ * @usage A special type of {@linkcode Observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter.
+ * @public
+ */
+export interface Subject<Value = DefaultValue>
 	extends Omit<Observable<Value>, 'pipe'>,
 		Pipeline<Subject<Value>> {
 	/**
-	 * @internal
-	 * @ignore
 	 * @readonly
+	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * A signifier indicating if/when this {@linkcode Subject|subject} has been aborted
-	 * and is no longer accepting new notifications.
+	 * @usage Determining if/when this {@linkcode Subject|subject} has been aborted and is no longer accepting new notifications.
 	 * @readonly
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Multicast a value to all subscribers of this {@linkcode Subject|subject}.
-	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param value The value to multicast to all subscribers.
+	 * @usage Multicast a {@linkcode value} to all {@linkcode Subscriber|subscribers} of this {@linkcode Subject|subject}. Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param value The {@linkcode value} to multicast to all {@linkcode Subscriber|subscribers}.
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Aborts this {@linkcode Subject|subject} and multicasts a completion notification to all subscribers.
-	 * Any future subscribers will be immediately completed (unless they are already aborted).
-	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @usage Abort this {@linkcode Subject|subject} and multicast a complete notification to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Aborts this {@linkcode Subject|subject} and multicasts an error to all subscribers.
-	 * Any future subscribers will be immediately notified of the error (unless they are already aborted).
-	 * Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param error The error to multicast to all subscribers.
+	 * @usage Abort this {@linkcode Subject|subject} and multicast an {@linkcode error} to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all {@linkcode Subscriber|subscribers}.
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * Creates a new Observable with this {@linkcode Subject|subject} as the source. You can do this
-	 * to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from
-	 * code that uses the Observable.
-	 * @return Observable that this {@linkcode Subject|subject} casts to.
+	 * @usage Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode Subject|subject} casts to.
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
 }
 
+/**
+ * @public
+ */
 export interface SubjectConstructor {
-	new <Value = void>(): Subject<Value>;
+	new <Value = DefaultValue>(): Subject<Value>;
 	readonly prototype: Subject;
 }
 
@@ -73,7 +71,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	readonly [Symbol.toStringTag] = this.constructor.name;
+	readonly [Symbol.toStringTag] = 'Subject';
 
 	/**
 	 * @internal
@@ -94,9 +92,7 @@ export const Subject: SubjectConstructor = class {
 	#error: unknown = noError;
 
 	/**
-	 * This is used to track a known array of subscribers, so we don't have to
-	 * clone them while iterating to prevent reentrant behaviors.
-	 * (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
+	 * @usage Tracking a known array of subscribers, so we don't have to clone them while iterating to prevent reentrant behaviors. (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
 	 * @internal
 	 * @private
 	 */
