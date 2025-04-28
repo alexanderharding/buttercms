@@ -1,49 +1,70 @@
 import { Subject } from './subject';
 import { Observable, type Observer } from '../observable';
 import { Pipeline, type UnaryFunction } from '../pipe';
-import { observable, Subscribable } from '../operators';
+import { observable, Subscribable, InteropObservable } from '../operators';
 
 /**
- * A wrapper around the {@linkcode BroadcastChannel} object provided by the browser.
- *
- * When a {@linkcode BroadcastSubject} is created, it establishes a new {@linkcode BroadcastChannel} connection
- * with the specified name. Any messages posted to this channel by other {@linkcode BroadcastChannel} objects
- * will be emitted as values in the stream.
- *
- * If at any point there is an error in message processing or posting, the stream will error with
- * whatever the {@linkcode BroadcastChannel} API has thrown. Note that these errors will close the underlying
- * channel - subscribers will need to create a new instance to continue receiving messages.
- *
- * By virtue of being a {@linkcode Subject}, {@linkcode BroadcastSubject} allows for both sending and receiving
- * messages. To send a message to other {@linkcode BroadcastChannel} objects, use the `next` method. The value passed
- * to `next` must be {@linkcode structuredClone|cloneable} - if it's not, subscribers to the current {@linkcode BroadcastSubject}
- * will receive an error. The `complete` and `error` methods both close the underlying channel so it can no longer
- * send or receive messages.
- *
- * @template Value - The type of values that can be sent/received through the channel.
- * @example
- * // Create a broadcast subject to communicate between tabs
- * const subject = new BroadcastSubject('my-channel');
- *
- * // Send messages to other tabs
- * subject.next('Hello from tab 1!');
- *
- * // Receive messages from other tabs
- * subject.subscribe(message => console.log('Received:', message));
- *
- * @see {@link BroadcastChannel}
+ * @usage A variant of {@linkcode Subject} where the `next` notification can only multicast {@linkcode structuredClone|structured cloneable} values and to _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
  * @public
  */
 export interface BroadcastSubject<Value = void>
-	extends Omit<Subject<Value>, 'pipe'>,
+	extends InteropObservable<Value>,
 		Pipeline<BroadcastSubject<Value>> {
 	/**
-	 * The name of the underlying {@linkcode BroadcastChannel}.
-	 * @see {@linkcode BroadcastChannel.name}
+	 * @property
 	 * @readonly
 	 * @public
 	 */
 	readonly name: string;
+	/**
+	 * @property
+	 * @readonly
+	 * @public
+	 */
+	readonly [Symbol.toStringTag]: string;
+	/**
+	 * @usage Determining if/when this {@linkcode BroadcastSubject|subject} has been aborted and is no longer accepting new notifications.
+	 * @property
+	 * @readonly
+	 * @public
+	 */
+	readonly signal: AbortSignal;
+	/**
+	 * @usage Multicast a {@linkcode structuredClone|structured clone} of the {@linkcode value} to all _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab). Subscribers of this {@linkcode BroadcastSubject|subject} will not receive this value unless it is received from another {@linkcode BroadcastSubject|subject} of the same name. Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * @param value The {@linkcode value} to multicast to all _other_ {@linkcode BroadcastSubject|subjects} of the same name.
+	 * @method
+	 * @public
+	 */
+	next(value: Value): void;
+	/**
+	 * @usage Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Subscriber|subscribers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * @method
+	 * @public
+	 */
+	complete(): void;
+	/**
+	 * @usage Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Subscriber|subscribers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}.
+	 * @method
+	 * @public
+	 */
+	error(error: unknown): void;
+	/**
+	 * @usage Create a new {@linkcode Observable|observable} with this {@linkcode BroadcastSubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode BroadcastSubject|subject} and conceal it from code that uses the {@linkcode Observable|observable}.
+	 * @returns An {@linkcode Observable|observable} that this {@linkcode BroadcastSubject|subject} casts to.
+	 * @method
+	 * @public
+	 */
+	asObservable(): Observable<Value>;
+	/**
+	 * @usage Observing all notifications from _this_ {@linkcode BroadcastSubject|subject} except for `next`, which is only received from _other_ {@linkcode BroadcastSubject|subjects} of the same name.
+	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode BroadcastSubject|subject}.
+	 * @method
+	 * @public
+	 */
+	subscribe(
+		observerOrNext: Partial<Observer<Value>> | UnaryFunction<Value>,
+	): void;
 }
 
 export interface BroadcastSubjectConstructor {
@@ -51,13 +72,27 @@ export interface BroadcastSubjectConstructor {
 	readonly prototype: BroadcastSubject;
 }
 
+/**
+ * @usage A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our {@linkcode BroadcastSubject|subjects} only communicates with other {@linkcode BroadcastSubject|subjects} from the same origin.
+ * @constant
+ * @internal
+ */
+const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
+
 export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	/**
 	 * @internal
 	 * @readonly
 	 * @public
 	 */
-	readonly [Symbol.toStringTag] = this.constructor.name;
+	readonly name: string;
+
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
+	readonly [Symbol.toStringTag] = 'BroadcastSubject';
 
 	/**
 	 * @internal
@@ -80,14 +115,9 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 */
 	readonly #pipeline = new Pipeline(this);
 
-	/**
-	 * @internal
-	 * @constructor
-	 * @public
-	 */
 	constructor(name: string) {
 		// Initialization
-		this.#channel = new BroadcastChannel(name);
+		this.#channel = new BroadcastChannel(`${namePrefix}-${(this.name = name)}`);
 
 		// Message handling
 		this.#channel.onmessage = (event) => this.#delegate.next(event.data);
@@ -97,15 +127,6 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 		this.signal.addEventListener('abort', () => this.#channel.close(), {
 			signal: this.signal,
 		});
-	}
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
-	get name(): string {
-		return this.#channel.name;
 	}
 
 	/**
@@ -150,7 +171,11 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @public
 	 */
 	next(value: unknown): void {
-		if (!this.signal.aborted) this.#channel.postMessage(value);
+		try {
+			if (!this.signal.aborted) this.#channel.postMessage(value);
+		} catch (error) {
+			this.error(error);
+		}
 	}
 
 	/**
