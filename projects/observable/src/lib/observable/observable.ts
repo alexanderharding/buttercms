@@ -1,4 +1,9 @@
-import { InteropObservable, observable, Subscribable } from '../operators';
+import {
+	InteropObservable,
+	observable,
+	Subscribable,
+	throwError,
+} from '../operators';
 import { Pipeline, UnaryFunction } from '../pipe';
 import { Observer, Subscriber } from './subscriber';
 
@@ -16,7 +21,10 @@ export interface Observable<Value = unknown>
 	 * @public
 	 */
 	subscribe(
-		observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
+		observerOrNext?:
+			| Partial<Observer<Value>>
+			| ((value: Value) => unknown)
+			| null,
 	): void;
 }
 
@@ -28,7 +36,21 @@ export interface ObservableConstructor {
 	 */
 	new <Value>(subscribe: UnaryFunction<Subscriber<Value>>): Observable<Value>;
 	readonly prototype: Observable;
+	from<Input extends ObservableInput>(
+		input: Input,
+	): Observable<ObservedValueOf<Input>>;
 }
+
+export type ObservableInput<Value = unknown> =
+	| InteropObservable<Value>
+	| Subscribable<Value>;
+
+export type ObservedValueOf<Input extends ObservableInput> =
+	Input extends InteropObservable<infer Value>
+		? Value
+		: Input extends Subscribable<infer Value>
+			? Value
+			: never;
 
 /**
  * @param subscribe The function that is called when the Observable is initially subscribed to. This function is given a Subscriber, to which new values can be `next`ed, or an `error` method can be called to raise an error, or `complete` can be called to notify of a successful completion.
@@ -46,6 +68,26 @@ export const Observable: ObservableConstructor = class {
 	/** @internal */
 	constructor(subscribe?: UnaryFunction<Subscriber> | null) {
 		this.#subscribe = subscribe;
+	}
+
+	static from<Input extends ObservableInput>(
+		input: Input,
+	): Observable<ObservedValueOf<Input>> {
+		if (input instanceof Observable) return input;
+
+		if (typeof input !== 'object' || input === null) {
+			try {
+				throw new TypeError('Observable.from called on non-object');
+			} catch (error) {
+				return throwError(() => error);
+			}
+		}
+
+		return new Observable((subscriber) =>
+			observable in input
+				? input[observable]().subscribe(subscriber)
+				: input.subscribe(subscriber),
+		);
 	}
 
 	/** @internal */
@@ -76,4 +118,46 @@ function ensureSubscriber(
 	return observerOrNext instanceof Subscriber
 		? observerOrNext
 		: new Subscriber(observerOrNext);
+}
+
+/** @internal */
+function fromInteropObservable(
+	interopObservable: InteropObservable,
+): Observable {
+	// If an instance of one of our Observables, just return it.
+	if (interopObservable instanceof Observable) return interopObservable;
+	return new Observable((subscriber) => {
+		if (typeof interopObservable[observable] === 'function') {
+			return interopObservable[observable]().subscribe(subscriber);
+		}
+		// Should be caught by observable subscribe function error handling.
+		throw new TypeError(
+			"Provided object does not correctly implement the 'observable' Symbol",
+		);
+	});
+}
+
+function throwTypeError(message: string): Observable<never> {
+	try {
+		throw new TypeError(message);
+	} catch (error) {
+		return new Observable((subscriber) => {
+			subscriber.error(error);
+		});
+	}
+}
+
+/** @internal */
+function fromSubscribable(interopObservable: InteropObservable): Observable {
+	// If an instance of one of our Observables, just return it.
+	if (interopObservable instanceof Observable) return interopObservable;
+	return new Observable((subscriber) => {
+		if (typeof interopObservable[observable] === 'function') {
+			return interopObservable[observable]().subscribe(subscriber);
+		}
+		// Should be caught by observable subscribe function error handling.
+		throw new TypeError(
+			"Provided object does not correctly implement the 'observable' Symbol",
+		);
+	});
 }

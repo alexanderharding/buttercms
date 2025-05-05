@@ -4,31 +4,32 @@ import { Pipeline, type UnaryFunction } from '../pipe';
 import { observable, Subscribable, InteropObservable } from '../operators';
 
 /**
- * @usage A variant of {@linkcode Subject} where the `next` notification can only multicast {@linkcode structuredClone|structured cloneable} values and to _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
+ * @usage A variant of {@linkcode Subject} where the `next` notification will exclusively multicast {@linkcode structuredClone|structured cloneable} values to _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
  * @public
  */
 export interface BroadcastSubject<Value = void>
 	extends InteropObservable<Value>,
 		Pipeline<BroadcastSubject<Value>> {
 	/**
+	 * @usage Getting the name of this {@linkcode BroadcastSubject|subject}.
 	 * @property
 	 * @readonly
 	 * @public
 	 */
 	readonly name: string;
 	/**
+	 * @usage Determining if/when this {@linkcode BroadcastSubject|subject} has been aborted and is no longer accepting new notifications.
+	 * @readonly
+	 * @property
+	 * @public
+	 */
+	readonly signal: AbortSignal;
+	/**
 	 * @property
 	 * @readonly
 	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
-	/**
-	 * @usage Determining if/when this {@linkcode BroadcastSubject|subject} has been aborted and is no longer accepting new notifications.
-	 * @property
-	 * @readonly
-	 * @public
-	 */
-	readonly signal: AbortSignal;
 	/**
 	 * @usage Multicast a {@linkcode structuredClone|structured clone} of the {@linkcode value} to all _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab). Subscribers of this {@linkcode BroadcastSubject|subject} will not receive this value unless it is received from another {@linkcode BroadcastSubject|subject} of the same name. Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
 	 * @param value The {@linkcode value} to multicast to all _other_ {@linkcode BroadcastSubject|subjects} of the same name.
@@ -57,18 +58,18 @@ export interface BroadcastSubject<Value = void>
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * @usage Observing all notifications from _this_ {@linkcode BroadcastSubject|subject} except for `next`, which is only received from _other_ {@linkcode BroadcastSubject|subjects} of the same name.
+	 * @usage Observing any notifications from _this_ {@linkcode BroadcastSubject|subject} except for `next`, which is only received from _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
 	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode BroadcastSubject|subject}.
 	 * @method
 	 * @public
 	 */
 	subscribe(
-		observerOrNext: Partial<Observer<Value>> | UnaryFunction<Value>,
+		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => unknown),
 	): void;
 }
 
 export interface BroadcastSubjectConstructor {
-	new <Value>(name: string): BroadcastSubject<Value>;
+	new <Value = void>(name: string): BroadcastSubject<Value>;
 	readonly prototype: BroadcastSubject;
 }
 
@@ -161,8 +162,8 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	 * @readonly
 	 * @public
 	 */
-	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
-		this.#delegate.subscribe(observerOrNext);
+	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
+		this.#delegate.subscribe(observerOrNext!);
 	}
 
 	/**

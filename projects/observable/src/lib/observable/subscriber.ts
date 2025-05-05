@@ -66,7 +66,10 @@ export interface Subscriber<Value = unknown> {
 }
 
 export type SubscriberConstructor = new <Value = unknown>(
-	observerOrNext?: Partial<Observer<Value>> | UnaryFunction<Value> | null,
+	observerOrNext?:
+		| Partial<Observer<Value>>
+		| ((value: Value) => unknown)
+		| null,
 ) => Subscriber<Value>;
 
 export const Subscriber: SubscriberConstructor = class {
