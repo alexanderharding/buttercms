@@ -1,22 +1,16 @@
 import { Observable, Observer, Subscriber } from '../observable';
-import { Pipeline, UnaryFunction } from '../pipe';
+import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * @usage The default value type for a {@linkcode Subject}.
- * @internal
- */
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-type DefaultValue = void;
-
-/**
- * @usage A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter.
+ * @usage A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter. If the {@linkcode Subject|subject} has already pushed the notification of type `complete` or `error`, late {@linkcode Observer|observers} will be immediately pushed the same notification on `subscribe`.
  * @public
  */
-export interface Subject<Value = DefaultValue>
+export interface Subject<Value = void>
 	extends InteropObservable<Value>,
 		Pipeline<Subject<Value>> {
 	/**
+	 * @usage A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
 	 * @readonly
 	 * @public
 	 */
@@ -29,21 +23,21 @@ export interface Subject<Value = DefaultValue>
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Multicast a {@linkcode value} to all {@linkcode Subscriber|subscribers} of this {@linkcode Subject|subject}. Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param value The {@linkcode value} to multicast to all {@linkcode Subscriber|subscribers}.
+	 * @usage Multicast a notification of type `next` with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode Subject|subject}. This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param value The {@linkcode value} to multicast to all {@linkcode Observer|observers}.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Abort this {@linkcode Subject|subject} and multicast a complete notification to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @usage Abort this {@linkcode Subject|subject} and multicast a notification of type `complete` to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * @usage Abort this {@linkcode Subject|subject} and multicast an {@linkcode error} to all {@linkcode Subscriber|subscribers}. Any future {@linkcode Subscriber|subscribers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all {@linkcode Subscriber|subscribers}.
+	 * @usage Abort this {@linkcode Subject|subject} and multicast a notification of type `error` with the attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers}.
 	 * @method
 	 * @public
 	 */
@@ -57,12 +51,15 @@ export interface Subject<Value = DefaultValue>
 	asObservable(): Observable<Value>;
 	/**
 	 * @usage Observing notifications from this {@linkcode Subject|subject}.
-	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Subject|subject}.
+	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all options or the `next` handler (equivalent of `subscribe({ next })`).
 	 * @method
 	 * @public
 	 */
 	subscribe(
-		observerOrNext: Partial<Observer<Value>> | UnaryFunction<Value>,
+		observerOrNext?:
+			| Partial<Observer<Value>>
+			| ((value: Value) => unknown)
+			| null,
 	): void;
 }
 
@@ -70,7 +67,8 @@ export interface Subject<Value = DefaultValue>
  * @public
  */
 export interface SubjectConstructor {
-	new <Value = DefaultValue>(): Subject<Value>;
+	new (): Subject;
+	new <Value>(): Subject<Value>;
 	readonly prototype: Subject;
 }
 
@@ -80,7 +78,7 @@ export interface SubjectConstructor {
  */
 const noError = Symbol('noError');
 
-export const Subject: SubjectConstructor = class {
+export const Subject: SubjectConstructor = class<Value> {
 	/**
 	 * @internal
 	 * @ignore
@@ -110,19 +108,19 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @private
 	 */
-	#subscribersSnapshot?: ReadonlyArray<Subscriber>;
+	#subscribersSnapshot?: ReadonlyArray<Subscriber<Value>>;
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	readonly #subscribers = new Map<symbol, Subscriber>();
+	readonly #subscribers = new Map<symbol, Subscriber<Value>>();
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	readonly #delegate = new Observable((subscriber) => {
+	readonly #delegate = new Observable<Value>((subscriber) => {
 		// Check if this subject has finalized so we can notify the subscriber immediately.
 		if (this.#error !== noError) subscriber.error(this.#error);
 		else if (this.signal.aborted) subscriber.complete();
@@ -142,7 +140,7 @@ export const Subject: SubjectConstructor = class {
 		// Reset the subscribers snapshot since it is now stale.
 		this.#subscribersSnapshot = undefined;
 
-		// Remove the subscriber from the subscribers Map when it is at the end of it's lifecycle.
+		// Remove the subscriber from the subscribers Map when it's at the end of it's lifecycle.
 		subscriber.signal.addEventListener(
 			'abort',
 			() => this.#subscribers.delete(symbol),
@@ -156,11 +154,23 @@ export const Subject: SubjectConstructor = class {
 	 */
 	readonly #pipeline = new Pipeline(this);
 
+	constructor() {
+		// Free up memory whenever this subject is at the end of it's lifecycle.
+		this.signal.addEventListener(
+			'abort',
+			() => {
+				this.#subscribers.clear();
+				this.#subscribersSnapshot = undefined;
+			},
+			{ signal: this.signal },
+		);
+	}
+
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	[observable](): Subscribable {
+	[observable](): Subscribable<Value> {
 		return this;
 	}
 
@@ -168,7 +178,12 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
+	subscribe(
+		observerOrNext?:
+			| Partial<Observer<Value>>
+			| ((value: Value) => unknown)
+			| null,
+	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
@@ -176,11 +191,11 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	next(value: unknown): void {
+	next(value: Value): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Push the next value to all subscribers.
+		// Multicast this notification.
 		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
 			subscriber.next(value),
 		);
@@ -194,17 +209,14 @@ export const Subject: SubjectConstructor = class {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort this subject before pushing the complete notification in-case of reentrant code.
+		// Get the subscribers snapshot before aborting because it will be cleared.
+		const subscribers = this.#ensureSubscribersSnapshot();
+
+		// Abort this subject before pushing this notification in-case of reentrant code.
 		this.#controller.abort();
 
-		// Push the complete notification to all subscribers.
-		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
-			subscriber.complete(),
-		);
-
-		// Clear subscriber state after all have been notified.
-		this.#subscribers.clear();
-		this.#subscribersSnapshot = undefined;
+		// Multicast this notification.
+		subscribers.forEach((subscriber) => subscriber.complete());
 	}
 
 	/**
@@ -218,17 +230,14 @@ export const Subject: SubjectConstructor = class {
 		// Set the finalization state before aborting in-case of reentrant code.
 		this.#error = error;
 
+		// Get the subscribers snapshot before aborting because it will be cleared.
+		const subscribers = this.#ensureSubscribersSnapshot();
+
 		// Abort this subject before pushing the error notification in-case of reentrant code.
 		this.#controller.abort();
 
-		// Push the error notification to all subscribers.
-		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
-			subscriber.error(error),
-		);
-
-		// Clear subscriber state after all have been notified.
-		this.#subscribers.clear();
-		this.#subscribersSnapshot = undefined;
+		// Multicast this notification.
+		subscribers.forEach((subscriber) => subscriber.error(error));
 	}
 
 	/**
@@ -243,7 +252,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	asObservable(): Observable {
+	asObservable(): Observable<Value> {
 		return this.#delegate;
 	}
 
@@ -251,7 +260,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#ensureSubscribersSnapshot(): ReadonlyArray<Subscriber> {
+	#ensureSubscribersSnapshot(): ReadonlyArray<Subscriber<Value>> {
 		return (this.#subscribersSnapshot ??= this.#takeSubscribersSnapshot());
 	}
 
@@ -259,7 +268,7 @@ export const Subject: SubjectConstructor = class {
 	 * @internal
 	 * @ignore
 	 */
-	#takeSubscribersSnapshot(): ReadonlyArray<Subscriber> {
+	#takeSubscribersSnapshot(): ReadonlyArray<Subscriber<Value>> {
 		return Array.from(this.#subscribers.values());
 	}
 };
