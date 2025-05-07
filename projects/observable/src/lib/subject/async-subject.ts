@@ -8,7 +8,7 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * Late subscribers will receive the latest value, if any, from the subject and then complete.
  *
  * @example
- * import { AsyncSubject } from "observable";
+ * import { AsyncSubject } from "@xander/observable";
  *
  * const subject = new AsyncSubject<number>();
  *

@@ -10,7 +10,7 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * 1 will be used instead.
  *
  * @example
- * import { ReplaySubject } from "observable";
+ * import { ReplaySubject } from "@xander/observable";
  *
  * const subject = new ReplaySubject<number>(3);
  *
