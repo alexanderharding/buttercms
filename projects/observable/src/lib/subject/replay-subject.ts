@@ -47,47 +47,47 @@ export interface ReplaySubject<Value = unknown>
 	extends InteropObservable<Value>,
 		Pipeline<ReplaySubject<Value>> {
 	/**
-	 * @usage A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
+	 * A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
 	 * @readonly
 	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * @usage Determining if/when this {@linkcode ReplaySubject|subject} has been aborted and is no longer accepting new notifications.
+	 * Determining if/when this {@linkcode ReplaySubject|subject} has been aborted and is no longer accepting new notifications.
 	 * @readonly
 	 * @property
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Update the replay buffer and multicast a `next` notification with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode ReplaySubject|subject}. This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * Update the replay buffer and multicast a `next` notification with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode ReplaySubject|subject}. This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
 	 * @param value The {@linkcode value} to store in the buffer and attach to the multicast `next` notification.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Abort this {@linkcode ReplaySubject|subject} and multicast a `complete` notification to all {@linkcode Observer|observers}. If a value was previously stored via `next()`, that value will be multicast to all {@linkcode Observer|observers} before completing. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then immediately be notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * Abort this {@linkcode ReplaySubject|subject} and multicast a `complete` notification to all {@linkcode Observer|observers}. If a value was previously stored via `next()`, that value will be multicast to all {@linkcode Observer|observers} before completing. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then immediately be notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * @usage Abort this {@linkcode ReplaySubject|subject} and multicast an `error` notification with an attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * Abort this {@linkcode ReplaySubject|subject} and multicast an `error` notification with an attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
 	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers}.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * @usage Create a new {@linkcode Observable} with this {@linkcode ReplaySubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode ReplaySubject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode ReplaySubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode ReplaySubject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode ReplaySubject|subject} casts to.
 	 * @method
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * @usage Observing notifications from this {@linkcode ReplaySubject|subject}.
+	 * Observing notifications from this {@linkcode ReplaySubject|subject}.
 	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all options, the `next` handler (equivalent to `subscribe({ next })`).
 	 * @method
 	 * @public

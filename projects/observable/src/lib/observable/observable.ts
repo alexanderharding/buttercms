@@ -16,7 +16,7 @@ export interface Observable<Value = unknown>
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * @usage Invoking an execution of an {@linkcode Observable} and registers {@linkcode Observer} handlers for notifications it can but is not required to emit.
+	 * Invoking an execution of an {@linkcode Observable} and registers {@linkcode Observer} handlers for notifications it can but is not required to emit.
 	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
 	 * @public
 	 */
@@ -40,7 +40,7 @@ export interface ObservableConstructor {
 	): Observable<Value>;
 	readonly prototype: Observable;
 	/**
-	 * @usage Converting custom observables, probably exported by libraries, to proper observables.
+	 * Converting custom observables, probably exported by libraries, to proper observables.
 	 * @returns If input is an interop observable, it's `[observable]()` method is called to obtain the subscribable. Otherwise, input is assumed to be a subscribable. If the input is already instanceof Observable (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new Observable object is created that wraps the original input.
 	 * @throws If input is not an object or is null.
 	 */

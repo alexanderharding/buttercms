@@ -1,5 +1,11 @@
-export { Subject } from './subject';
-export { BehaviorSubject } from './behavior-subject';
-export { BroadcastSubject } from './broadcast-subject';
-export { ReplaySubject } from './replay-subject';
-export { AsyncSubject } from './async-subject';
+export { Subject, type SubjectConstructor } from './subject';
+export {
+	BehaviorSubject,
+	type BehaviorSubjectConstructor,
+} from './behavior-subject';
+export {
+	BroadcastSubject,
+	type BroadcastSubjectConstructor,
+} from './broadcast-subject';
+export { ReplaySubject, type ReplaySubjectConstructor } from './replay-subject';
+export { AsyncSubject, type AsyncSubjectConstructor } from './async-subject';

@@ -2,64 +2,64 @@ import { UnhandledError } from '../errors';
 import { UnaryFunction } from '../pipe';
 
 /**
- * @usage An object interface that defines a set of callback functions a user can use to get notified of any set of {@linkcode Subscriber|subscriber} events.
+ * An object interface that defines a set of callback functions a user can use to get notified of any set of {@linkcode Subscriber|subscriber} events.
  */
 export interface Observer<Value = unknown> {
 	/**
-	 * @usage Aborting this {@linkcode Observer|observer} and no longer accept new notifications from a {@linkcode Subscriber|subscriber}.
+	 * Aborting this {@linkcode Observer|observer} and no longer accept new notifications from a {@linkcode Subscriber|subscriber}.
 	 * @readonly
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Receiving notifications of type `next` from a {@linkcode Subscriber|subscriber}, with a {@linkcode value}.
+	 * Receiving notifications of type `next` from a {@linkcode Subscriber|subscriber}, with a {@linkcode value}.
 	 * @param value The {@linkcode value} received along with the `next` notification.
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Receiving notifications of type `error`, with an attached {@linkcode error} indicating that a {@linkcode Subscriber|subscriber} has experienced an error condition and has finished sending push-based notifications. This is exclusive of the `complete` notification.
+	 * Receiving notifications of type `error`, with an attached {@linkcode error} indicating that a {@linkcode Subscriber|subscriber} has experienced an error condition and has finished sending push-based notifications. This is exclusive of the `complete` notification.
 	 * @param error The {@linkcode error} value received along with the `error` notification.
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * @usage Receiving a notification of type `complete` from a {@linkcode Subscriber|subscriber} indicating that the {@linkcode Subscriber|subscriber} has finished sending push-based notifications. This is exclusive of the `error` notification.
+	 * Receiving a notification of type `complete` from a {@linkcode Subscriber|subscriber} indicating that the {@linkcode Subscriber|subscriber} has finished sending push-based notifications. This is exclusive of the `error` notification.
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * @usage Called when this {@linkcode Observer|observer} has finished receiving notifications from a {@linkcode Subscriber|subscriber} and/or is no longer accepting new notifications.
+	 * Called when this {@linkcode Observer|observer} has finished receiving notifications from a {@linkcode Subscriber|subscriber} and/or is no longer accepting new notifications.
 	 * @public
 	 */
 	finally(): void;
 }
 
 /**
- * @usage An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
+ * An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
  * @public
  */
 export interface Subscriber<Value = unknown> {
 	/**
-	 * @usage Determining if/when this {@linkcode Subscriber|subscriber} has been aborted and is no longer pushing new notifications.
+	 * Determining if/when this {@linkcode Subscriber|subscriber} has been aborted and is no longer pushing new notifications.
 	 * @readonly
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Pushing notifications of type `next` from this Subscriber, with a {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * Pushing notifications of type `next` from this Subscriber, with a {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
 	 * @param value The {@linkcode value} to send along with the `next` notification.
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Aborting this Subscriber and pushing a notification of type `error`, with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * Aborting this Subscriber and pushing a notification of type `error`, with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
 	 * @param error The {@linkcode error} value to send along with the `error` notification.
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * @usage Aborting this Subscriber and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * Aborting this Subscriber and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
 	 * @public
 	 */
 	complete(): void;

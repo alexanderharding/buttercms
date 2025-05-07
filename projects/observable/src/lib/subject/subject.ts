@@ -3,54 +3,54 @@ import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * @usage A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter. If the {@linkcode Subject|subject} has already pushed the notification of type `complete` or `error`, late {@linkcode Observer|observers} will be immediately pushed the same notification on `subscribe`.
+ * A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter. If the {@linkcode Subject|subject} has already pushed the notification of type `complete` or `error`, late {@linkcode Observer|observers} will be immediately pushed the same notification on `subscribe`.
  * @public
  */
 export interface Subject<Value = void>
 	extends InteropObservable<Value>,
 		Pipeline<Subject<Value>> {
 	/**
-	 * @usage A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
+	 * A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
 	 * @readonly
 	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * @usage Determining if/when this {@linkcode Subject|subject} has been aborted and is no longer accepting new notifications.
+	 * Determining if/when this {@linkcode Subject|subject} has been aborted and is no longer accepting new notifications.
 	 * @readonly
 	 * @property
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Multicast a notification of type `next` with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode Subject|subject}. This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * Multicast a notification of type `next` with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode Subject|subject}. This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param value The {@linkcode value} to multicast to all {@linkcode Observer|observers}.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Abort this {@linkcode Subject|subject} and multicast a notification of type `complete` to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `complete` to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * @usage Abort this {@linkcode Subject|subject} and multicast a notification of type `error` with the attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `error` with the attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers}.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * @usage Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode Subject|subject} casts to.
 	 * @method
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * @usage Observing notifications from this {@linkcode Subject|subject}.
+	 * Observing notifications from this {@linkcode Subject|subject}.
 	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all options or the `next` handler (equivalent of `subscribe({ next })`).
 	 * @method
 	 * @public
@@ -73,7 +73,7 @@ export interface SubjectConstructor {
 }
 
 /**
- * @usage Flag indicating that an error is not set.
+ * Flag indicating that an error is not set.
  * @internal
  */
 const noError = Symbol('noError');
@@ -104,7 +104,7 @@ export const Subject: SubjectConstructor = class<Value> {
 	#error: unknown = noError;
 
 	/**
-	 * @usage Tracking a known array of subscribers, so we don't have to clone them while iterating to prevent reentrant behaviors. (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
+	 * Tracking a known array of subscribers, so we don't have to clone them while iterating to prevent reentrant behaviors. (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
 	 * @internal
 	 * @private
 	 */

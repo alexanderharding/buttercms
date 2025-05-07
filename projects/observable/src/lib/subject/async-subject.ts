@@ -93,13 +93,13 @@ export interface AsyncSubjectConstructor {
 }
 
 /**
- * @usage Flag indicating that a value is not set.
+ * Flag indicating that a value is not set.
  * @internal
  */
 const noValue = Symbol('noValue');
 
 /**
- * @usage Flag indicating that an error is not set.
+ * Flag indicating that an error is not set.
  * @internal
  */
 const noError = Symbol('noError');
