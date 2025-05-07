@@ -37,4 +37,4 @@ import { Observable } from './observable';
  * @constant
  * @public
  */
-export const never = new Observable();
+export const never: Observable<never> = new Observable();

@@ -39,6 +39,6 @@ import { Observable } from './observable';
  * @constant
  * @public
  */
-export const empty = new Observable<never>((subscriber) =>
+export const empty: Observable<never> = new Observable<never>((subscriber) =>
 	subscriber.complete(),
 );
