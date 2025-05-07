@@ -34,47 +34,47 @@ export interface AsyncSubject<Value = unknown>
 	extends InteropObservable<Value>,
 		Pipeline<AsyncSubject<Value>> {
 	/**
-	 * @usage A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
+	 * A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
 	 * @readonly
 	 * @public
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * @usage Determining if/when this {@linkcode AsyncSubject|subject} has been aborted and is no longer accepting new notifications.
+	 * Determining if/when this {@linkcode AsyncSubject|subject} has been aborted and is no longer accepting new notifications.
 	 * @readonly
 	 * @property
 	 * @public
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @usage Store a {@linkcode value} to be multicast to all subscribers of this {@linkcode AsyncSubject|subject} on complete. Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * Store a {@linkcode value} to be multicast to all subscribers of this {@linkcode AsyncSubject|subject} on complete. Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
 	 * @param value The {@linkcode value} to multicast to all subscribers on complete.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * @usage Abort this {@linkcode AsyncSubject|subject} and multicast a complete notification to all subscribers. If a value was previously stored via `next()`, that value will be multicast to all subscribers before completing. Any future subscribers will receive the stored value (if any) and then complete (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * Abort this {@linkcode AsyncSubject|subject} and multicast a complete notification to all subscribers. If a value was previously stored via `next()`, that value will be multicast to all subscribers before completing. Any future subscribers will receive the stored value (if any) and then complete (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * @usage Abort this {@linkcode AsyncSubject|subject} and multicast an {@linkcode error} to all subscribers. Any future subscribers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * Abort this {@linkcode AsyncSubject|subject} and multicast an {@linkcode error} to all subscribers. Any future subscribers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
 	 * @param error The {@linkcode error} to multicast to all subscribers.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * @usage Create a new {@linkcode Observable} with this {@linkcode AsyncSubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode AsyncSubject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode AsyncSubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode AsyncSubject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode AsyncSubject|subject} casts to.
 	 * @method
 	 * @public
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * @usage Observing notifications from this {@linkcode AsyncSubject|subject}.
+	 * Observing notifications from this {@linkcode AsyncSubject|subject}.
 	 * @param observerOrNext Either an {@linkcode Observer} with some or all options, or the `next` handler that is called for each value emitted from the subscribed {@linkcode AsyncSubject|subject}.
 	 * @method
 	 * @public
