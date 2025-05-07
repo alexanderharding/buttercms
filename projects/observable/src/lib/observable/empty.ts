@@ -11,8 +11,8 @@ import { Observable } from './observable';
  * Regardless of the state of the {@linkcode AbortSignal|signal}, the `finally`
  * notification will still be pushed.
  *
- * @example <caption>Without Observer signal</caption>
- *
+ * ```ts
+ * // Without Observer signal
  * import { empty } from '@xander/observable';
  *
  * empty.subscribe({
@@ -22,8 +22,9 @@ import { Observable } from './observable';
  * 	complete: () => console.log('Complete'), // Called immediately
  * 	finally: () => console.log('finally'), // Called after complete
  * });
- * @example <caption>With Observer signal</caption>
- *
+ * ```
+ * ```ts
+ * // With Observer signal
  * import { empty } from '@xander/observable';
  *
  * const controller = new AbortController();
@@ -37,6 +38,7 @@ import { Observable } from './observable';
  * 	complete: () => console.log('Complete'), // Never called
  * 	finally: () => console.log('finally'), // Called immediately
  * });
+ * ```
  * @see {@linkcode Observable}
  * @constant
  * @public
