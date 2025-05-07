@@ -9,7 +9,7 @@ import { from, type ObservableInput, type ObservedValueOf } from './from';
  *  allowing for deferred execution and fresh values for each subscriber.
  *
  * @example
- * import { defer } from 'observable';
+ * import { defer } from '@xander/observable';
  *
  * // Convert a function that returns a Promise (eager) into an Observable (lazy)
  * const observable = defer(async () => fetch('https://example.com/api/data'));

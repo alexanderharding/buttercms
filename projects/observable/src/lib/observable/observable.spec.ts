@@ -52,7 +52,7 @@ describe(Observable.name, () => {
 			const controller = new AbortController();
 			const observer = jasmine.createSpyObj<Observer<number>>(
 				'observer',
-				['next', 'error', 'complete', 'finalize'],
+				['next', 'error', 'complete', 'finally'],
 				{ signal: controller.signal },
 			);
 			const subscribeSpy =

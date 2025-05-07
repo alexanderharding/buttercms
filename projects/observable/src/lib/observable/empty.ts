@@ -8,21 +8,23 @@ import { Observable } from './observable';
  * provide an already aborted {@linkcode AbortSignal|signal} to the `Observer`.
  * For most use-cases this is not useful, but good to know. This is unnecessary to
  * prevent memory leaks, since the {@linkcode Observable} _never_ does any work.
- * Regardless of the state of the {@linkcode AbortSignal|signal}, the `finalize`
+ * Regardless of the state of the {@linkcode AbortSignal|signal}, the `finally`
  * notification will still be pushed.
  *
  * @example <caption>Without Observer signal</caption>
- * import { empty } from 'observable';
+ *
+ * import { empty } from '@xander/observable';
  *
  * empty.subscribe({
  *  signal: undefined, // This property is unnecessary, but is explicitly defined for clarity
  * 	next: () => console.log('Next'), // Never called
  * 	error: () => console.log('Error'), // Never called
  * 	complete: () => console.log('Complete'), // Called immediately
- * 	finalize: () => console.log('Finalize'), // Called after complete
+ * 	finally: () => console.log('finally'), // Called after complete
  * });
  * @example <caption>With Observer signal</caption>
- * import { empty } from 'observable';
+ *
+ * import { empty } from '@xander/observable';
  *
  * const controller = new AbortController();
  *
@@ -33,7 +35,7 @@ import { Observable } from './observable';
  * 	next: () => console.log('Next'), // Never called
  * 	error: () => console.log('Error'), // Never called
  * 	complete: () => console.log('Complete'), // Never called
- * 	finalize: () => console.log('Finalize'), // Called immediately
+ * 	finally: () => console.log('finally'), // Called immediately
  * });
  * @see {@linkcode Observable}
  * @constant
