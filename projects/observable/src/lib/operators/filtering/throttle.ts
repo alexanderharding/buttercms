@@ -9,15 +9,15 @@ export function debounce<T extends ObservableInput>(
 	durationSelector: (value: ObservedValueOf<T>) => ObservableInput,
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			let lastValue: ObservedValueOf<T> | typeof noValue = noValue;
 			let controller: AbortController | null;
 
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next: (value) =>
 					from(durationSelector((lastValue = value))).subscribe({
-						...subscriber,
+						...dispatcher,
 						signal: setController(new AbortController()).signal,
 						complete: noop,
 						next: emit,
@@ -26,7 +26,7 @@ export function debounce<T extends ObservableInput>(
 					// Source completed.
 					// Emit any pending debounced values then complete
 					emit();
-					subscriber.complete();
+					dispatcher.complete();
 				},
 				finally() {
 					lastValue = noValue;
@@ -51,7 +51,7 @@ export function debounce<T extends ObservableInput>(
 				// We have a value! Free up memory first, then emit the value.
 				const value = lastValue;
 				lastValue = noValue;
-				subscriber.next(value);
+				dispatcher.next(value);
 			}
 		});
 }
@@ -60,16 +60,16 @@ export function debounce2<T extends ObservableInput>(
 	notifier: ObservableInput,
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			let lastValue: ObservedValueOf<T> | typeof noValue = noValue;
 			let controller: AbortController | null;
 
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next: (value) => {
 					lastValue = value;
 					from(notifier).subscribe({
-						...subscriber,
+						...dispatcher,
 						signal: setController(new AbortController()).signal,
 						complete: noop,
 						next: emit,
@@ -79,7 +79,7 @@ export function debounce2<T extends ObservableInput>(
 					// Source completed.
 					// Emit any pending debounced values then complete
 					emit();
-					subscriber.complete();
+					dispatcher.complete();
 				},
 				finally() {
 					lastValue = noValue;
@@ -104,7 +104,7 @@ export function debounce2<T extends ObservableInput>(
 				// We have a value! Free up memory first, then emit the value.
 				const value = lastValue;
 				lastValue = noValue;
-				subscriber.next(value);
+				dispatcher.next(value);
 			}
 		});
 }

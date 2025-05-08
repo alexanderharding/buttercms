@@ -6,10 +6,10 @@ export function startWith<A extends ObservableInput, B extends ObservableInput>(
 	input: B,
 ): UnaryFunction<A, Observable<ObservedValueOf<A> | ObservedValueOf<B>>> {
 	return (source) =>
-		new Observable((subscriber) =>
+		new Observable((dispatcher) =>
 			from(input).subscribe({
-				...subscriber,
-				complete: () => from(source).subscribe(subscriber),
+				...dispatcher,
+				complete: () => from(source).subscribe(dispatcher),
 			}),
 		);
 }

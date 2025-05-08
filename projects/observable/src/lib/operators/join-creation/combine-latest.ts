@@ -169,7 +169,7 @@ export function combineLatest(
 	// complete (empty).
 	if (length === 0) return empty;
 
-	return new Observable((subscriber) => {
+	return new Observable((dispatcher) => {
 		// A store for the values each observable has emitted so far. We match observable to value on index.
 		const values = new Array<unknown>(length);
 		// The number of currently active subscriptions, as they complete, we decrement this number to see if
@@ -182,7 +182,7 @@ export function combineLatest(
 		// The loop to kick off subscriptions. We're keying everything with the index to relate the observables passed
 		// in to the slot in the output array or the key in the array of keys in the output dictionary.
 		sources.forEach((input, index) => {
-			from(input).subscribe({ ...subscriber, next, complete });
+			from(input).subscribe({ ...dispatcher, next, complete });
 
 			function next(value: unknown): void {
 				const hasFirstValue = index in values;
@@ -193,14 +193,14 @@ export function combineLatest(
 				if (remainingFirstValues) return;
 				// We're not waiting for any more
 				// first values, so we can emit!
-				subscriber.next(keys ? createObject(keys, values) : values);
+				dispatcher.next(keys ? createObject(keys, values) : values);
 			}
 
 			function complete(): void {
 				if (--active) return;
 				// We only complete the result if we have no more active
 				// inner observables.
-				subscriber.complete();
+				dispatcher.complete();
 			}
 		});
 	});

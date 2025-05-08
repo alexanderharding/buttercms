@@ -6,7 +6,7 @@ import { from, type ObservableInput, type ObservedValueOf } from './from';
  * to make an {@linkcode Observable} for each new Observer.
  *
  * The {@linkcode factory|ObservableInput factory} function is called each time the Observable is subscribed to,
- *  allowing for deferred execution and fresh values for each subscriber.
+ *  allowing for deferred execution and fresh values for each dispatcher.
  *
  * @example
  * import { defer } from '@xander/observable';
@@ -15,18 +15,18 @@ import { from, type ObservableInput, type ObservedValueOf } from './from';
  * const observable = defer(async () => fetch('https://example.com/api/data'));
  *
  * // First subscription - makes a new request
- * observable.subscribe((data) => console.log('First subscriber:', data));
+ * observable.subscribe((data) => console.log('First dispatcher:', data));
  *
  * // Second subscription - makes another fresh request
- * observable.subscribe((data) => console.log('Second subscriber:', data));
+ * observable.subscribe((data) => console.log('Second dispatcher:', data));
  *
  * @param factory A function that returns an {@linkcode ObservableInput} when called.
- * @returns An {@linkcode Observable} that creates a new subscription to the factory result for each subscriber.
+ * @returns An {@linkcode Observable} that creates a new subscription to the factory result for each dispatcher.
  * @function
  * @public
  */
 export function defer<Input extends ObservableInput>(
 	factory: () => Input,
 ): Observable<ObservedValueOf<Input>> {
-	return new Observable((subscriber) => from(factory()).subscribe(subscriber));
+	return new Observable((dispatcher) => from(factory()).subscribe(dispatcher));
 }

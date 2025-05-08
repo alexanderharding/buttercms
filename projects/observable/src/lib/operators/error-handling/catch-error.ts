@@ -101,11 +101,11 @@ export function catchError<
 	selector: (error: unknown, caught: Observable<ObservedValueOf<In>>) => Out,
 ): UnaryFunction<In, Observable<ObservedValueOf<In> | ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			const caught = from(source);
 			caught.subscribe({
-				...subscriber,
-				error: (error) => from(selector(error, caught)).subscribe(subscriber),
+				...dispatcher,
+				error: (error) => from(selector(error, caught)).subscribe(dispatcher),
 			});
 		});
 }

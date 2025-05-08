@@ -24,7 +24,7 @@ export function mergeMap<
 		: Infinity,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			// The number of active inner subscriptions.
 			let active = 0;
 			// An index to pass to our accumulator function
@@ -37,7 +37,7 @@ export function mergeMap<
 			concurrent = Math.max(concurrent, 1);
 
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next: outerNext,
 				complete: outerComplete,
 				finally: outerFinally,
@@ -54,7 +54,7 @@ export function mergeMap<
 				let isInnerComplete = false;
 
 				from(project(value, index++)).subscribe({
-					...subscriber,
+					...dispatcher,
 					complete: innerComplete,
 					finally: innerFinally,
 				});
@@ -73,7 +73,7 @@ export function mergeMap<
 					// We have to wrap this in a try/catch because it happens during
 					// finalization, possibly asynchronously, and we want to pass
 					// any errors that happen (like in a projection function) to
-					// the outer Subscriber.
+					// the outer Dispatcher.
 					try {
 						// Decrement the active count to ensure that the next time
 						// we try to call `doInnerSub`, the number is accurate.
@@ -86,7 +86,7 @@ export function mergeMap<
 						// Check to see if we can complete, and complete if so.
 						checkComplete();
 					} catch (err) {
-						subscriber.error(err);
+						dispatcher.error(err);
 					}
 				}
 			}
@@ -105,7 +105,7 @@ export function mergeMap<
 			}
 
 			function checkComplete(): void {
-				if (isOuterComplete && !buffer.length && !active) subscriber.complete();
+				if (isOuterComplete && !buffer.length && !active) dispatcher.complete();
 			}
 
 			function checkBuffer(): void {

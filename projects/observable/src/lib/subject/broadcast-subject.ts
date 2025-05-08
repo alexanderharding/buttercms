@@ -31,21 +31,21 @@ export interface BroadcastSubject<Value = void>
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Multicast a {@linkcode structuredClone|structured clone} of the {@linkcode value} to all _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab). Subscribers of this {@linkcode BroadcastSubject|subject} will not receive this value unless it is received from another {@linkcode BroadcastSubject|subject} of the same name. Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * Multicast a {@linkcode structuredClone|structured clone} of the {@linkcode value} to all _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab). Dispatchers of this {@linkcode BroadcastSubject|subject} will not receive this value unless it is received from another {@linkcode BroadcastSubject|subject} of the same name. Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
 	 * @param value The {@linkcode value} to multicast to all _other_ {@linkcode BroadcastSubject|subjects} of the same name.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Subscriber|subscribers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Observer|observers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Subscriber|subscribers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all {@linkcode Subscriber|subscribers} of _this_ {@linkcode BroadcastSubject|subject}.
+	 * Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Observer|observers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}.
 	 * @method
 	 * @public
 	 */

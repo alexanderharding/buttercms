@@ -17,26 +17,26 @@ export function exhaustMap(
 	) => value,
 ): UnaryFunction<ObservableInput, Observable> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			let index = 0;
 			let hasInnerSubscription = false;
 			let isOuterComplete = false;
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next(outerValue) {
 					if (hasInnerSubscription) return;
 					hasInnerSubscription = true;
 					from(project(outerValue, index++)).subscribe({
-						...subscriber,
+						...dispatcher,
 						complete() {
 							hasInnerSubscription = false;
-							if (isOuterComplete) subscriber.complete();
+							if (isOuterComplete) dispatcher.complete();
 						},
 					});
 				},
 				complete() {
 					isOuterComplete = true;
-					if (!hasInnerSubscription) subscriber.complete();
+					if (!hasInnerSubscription) dispatcher.complete();
 				},
 			});
 		});

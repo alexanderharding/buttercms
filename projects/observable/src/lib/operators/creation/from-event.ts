@@ -16,9 +16,9 @@ export function fromEvent<E extends Event>(
 	target: EventTargetLike<E>,
 	type: string,
 ): Observable<E> {
-	return new Observable((subscriber) =>
-		target.addEventListener(type, (event) => subscriber.next(event), {
-			signal: subscriber.signal,
+	return new Observable((dispatcher) =>
+		target.addEventListener(type, (event) => dispatcher.next(event), {
+			signal: dispatcher.signal,
 		}),
 	);
 }

@@ -1,4 +1,4 @@
-import { Observable, Observer, Subscriber } from '../observable';
+import { Observable, Observer, Dispatcher } from '../observable';
 import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
@@ -109,47 +109,47 @@ export const Subject: SubjectConstructor = class<Value> {
 	#error: unknown = noError;
 
 	/**
-	 * Tracking a known array of subscribers, so we don't have to clone them while iterating to prevent reentrant behaviors. (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
+	 * Tracking a known array of dispatchers, so we don't have to clone them while iterating to prevent reentrant behaviors. (for example, what if this {@linkcode Subject|subject} is subscribed to when nexting to an observer)
 	 * @internal
 	 * @private
 	 */
-	#subscribersSnapshot?: ReadonlyArray<Subscriber<Value>>;
+	#dispatchersSnapshot?: ReadonlyArray<Dispatcher<Value>>;
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	readonly #subscribers = new Map<symbol, Subscriber<Value>>();
+	readonly #dispatchers = new Map<symbol, Dispatcher<Value>>();
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	readonly #delegate = new Observable<Value>((subscriber) => {
-		// Check if this subject has finalized so we can notify the subscriber immediately.
-		if (this.#error !== noError) subscriber.error(this.#error);
-		else if (this.signal.aborted) subscriber.complete();
+	readonly #delegate = new Observable<Value>((dispatcher) => {
+		// Check if this subject has finalized so we can notify the dispatcher immediately.
+		if (this.#error !== noError) dispatcher.error(this.#error);
+		else if (this.signal.aborted) dispatcher.complete();
 
-		// If the subscriber is already aborted then there's nothing to do.
-		// This could be because the subscriber was aborted before it passed to this subject
-		// or from this subject being in a finalized state (this.#checkFinalizers(subscriber)).
-		if (subscriber.signal.aborted) return;
+		// If the dispatcher is already aborted then there's nothing to do.
+		// This could be because the dispatcher was aborted before it passed to this subject
+		// or from this subject being in a finalized state (this.#checkFinalizers(dispatcher)).
+		if (dispatcher.signal.aborted) return;
 
-		// Use a unique symbol to identify the subscriber since it is allowed for the same
-		// subscriber to be added multiple times.
-		const symbol = Symbol('Subject subscriber');
+		// Use a unique symbol to identify the dispatcher since it is allowed for the same
+		// dispatcher to be added multiple times.
+		const key = Symbol('Subject dispatcher');
 
-		// Add the subscriber to the subscribers Map so it can begin to receive push notifications.
-		this.#subscribers.set(symbol, subscriber);
+		// Add the dispatcher to the dispatchers Map so it can begin to receive push notifications.
+		this.#dispatchers.set(key, dispatcher);
 
-		// Reset the subscribers snapshot since it is now stale.
-		this.#subscribersSnapshot = undefined;
+		// Reset the dispatchers snapshot since it is now stale.
+		this.#dispatchersSnapshot = undefined;
 
-		// Remove the subscriber from the subscribers Map when it's at the end of it's lifecycle.
-		subscriber.signal.addEventListener(
+		// Remove the dispatcher from the dispatchers Map when it's at the end of it's lifecycle.
+		dispatcher.signal.addEventListener(
 			'abort',
-			() => this.#subscribers.delete(symbol),
-			{ signal: subscriber.signal },
+			() => this.#dispatchers.delete(key),
+			{ signal: dispatcher.signal },
 		);
 	});
 
@@ -164,8 +164,8 @@ export const Subject: SubjectConstructor = class<Value> {
 		this.signal.addEventListener(
 			'abort',
 			() => {
-				this.#subscribers.clear();
-				this.#subscribersSnapshot = undefined;
+				this.#dispatchers.clear();
+				this.#dispatchersSnapshot = undefined;
 			},
 			{ signal: this.signal },
 		);
@@ -209,8 +209,8 @@ export const Subject: SubjectConstructor = class<Value> {
 		if (this.signal.aborted) return;
 
 		// Multicast this notification.
-		this.#ensureSubscribersSnapshot().forEach((subscriber) =>
-			subscriber.next(value),
+		this.#ensureDispatchersSnapshot().forEach((dispatcher) =>
+			dispatcher.next(value),
 		);
 	}
 
@@ -222,14 +222,14 @@ export const Subject: SubjectConstructor = class<Value> {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Get the subscribers snapshot before aborting because it will be cleared.
-		const subscribers = this.#ensureSubscribersSnapshot();
+		// Get the dispatchers snapshot before aborting because it will be cleared.
+		const dispatchers = this.#ensureDispatchersSnapshot();
 
 		// Abort this subject before pushing this notification in-case of reentrant code.
 		this.#controller.abort();
 
 		// Multicast this notification.
-		subscribers.forEach((subscriber) => subscriber.complete());
+		dispatchers.forEach((dispatcher) => dispatcher.complete());
 	}
 
 	/**
@@ -243,14 +243,14 @@ export const Subject: SubjectConstructor = class<Value> {
 		// Set the finalization state before aborting in-case of reentrant code.
 		this.#error = error;
 
-		// Get the subscribers snapshot before aborting because it will be cleared.
-		const subscribers = this.#ensureSubscribersSnapshot();
+		// Get the dispatchers snapshot before aborting because it will be cleared.
+		const dispatchers = this.#ensureDispatchersSnapshot();
 
 		// Abort this subject before pushing the error notification in-case of reentrant code.
 		this.#controller.abort();
 
 		// Multicast this notification.
-		subscribers.forEach((subscriber) => subscriber.error(error));
+		dispatchers.forEach((dispatcher) => dispatcher.error(error));
 	}
 
 	/**
@@ -273,15 +273,15 @@ export const Subject: SubjectConstructor = class<Value> {
 	 * @internal
 	 * @ignore
 	 */
-	#ensureSubscribersSnapshot(): ReadonlyArray<Subscriber<Value>> {
-		return (this.#subscribersSnapshot ??= this.#takeSubscribersSnapshot());
+	#ensureDispatchersSnapshot(): ReadonlyArray<Dispatcher<Value>> {
+		return (this.#dispatchersSnapshot ??= this.#takeDispatchersSnapshot());
 	}
 
 	/**
 	 * @internal
 	 * @ignore
 	 */
-	#takeSubscribersSnapshot(): ReadonlyArray<Subscriber<Value>> {
-		return Array.from(this.#subscribers.values());
+	#takeDispatchersSnapshot(): ReadonlyArray<Dispatcher<Value>> {
+		return Array.from(this.#dispatchers.values());
 	}
 };

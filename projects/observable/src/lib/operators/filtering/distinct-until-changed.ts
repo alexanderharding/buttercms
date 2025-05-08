@@ -9,7 +9,7 @@ export function distinctUntilChanged<Input extends ObservableInput>(
 	) => boolean = (previous, current) => previous === current,
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			// The previous value, used to compare against values selected
 			// from new arrivals to determine "distinctiveness".
 			let previous: ObservedValueOf<Input>;
@@ -17,7 +17,7 @@ export function distinctUntilChanged<Input extends ObservableInput>(
 			let first = true;
 
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next: (current) => {
 					// If it's the first value, we always emit it.
 					// Otherwise, we compare this value to the previous value, and
@@ -30,7 +30,7 @@ export function distinctUntilChanged<Input extends ObservableInput>(
 					// value we're tracking in previous needs to change.
 					first = false;
 					// Emit the value!
-					subscriber.next((previous = current));
+					dispatcher.next((previous = current));
 				},
 			});
 		});

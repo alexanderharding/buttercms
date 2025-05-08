@@ -6,11 +6,11 @@ import { share } from './share';
 
 export interface ShareReplayConfig {
 	/**
-	 * If `true`, when the number of subscribers to the resulting observable reaches zero due to those subscribers unsubscribing, the
+	 * If `true`, when the number of dispatchers to the resulting observable reaches zero due to those dispatchers unsubscribing, the
 	 * internal state will be reset and the resulting observable will return to a "cold" state. This means that the next
 	 * time the resulting observable is subscribed to, a new subject will be created and the source will be subscribed to
 	 * again.
-	 * If `false`, when the number of subscribers to the resulting observable reaches zero due to unsubscription, the subject
+	 * If `false`, when the number of dispatchers to the resulting observable reaches zero due to unsubscription, the subject
 	 * will remain connected to the source, and new subscriptions to the result will be connected through that same subject.
 	 * It is also possible to pass a notifier factory returning an `ObservableInput` instead which grants more fine-grained
 	 * control over how and when the reset should happen. This allows behaviors like conditional or delayed resets.

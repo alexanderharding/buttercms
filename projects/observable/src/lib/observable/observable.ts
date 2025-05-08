@@ -1,11 +1,6 @@
-import {
-	InteropObservable,
-	observable,
-	Subscribable,
-	throwError,
-} from '../operators';
+import { InteropObservable, observable, Subscribable } from '../operators';
 import { Pipeline } from '../pipe';
-import { Observer, Subscriber } from './subscriber';
+import { Observer, Dispatcher } from './observer';
 
 /**
  * A representation of any set of values over any amount of time.
@@ -37,10 +32,10 @@ export interface ObservableConstructor {
 	new (): Observable<never>;
 	new (subscribe: undefined | null): Observable<never>;
 	/**
-	 * @param subscribe The function that is called when the Observable is initially subscribed to. This function is given a Subscriber, to which new values can be `next`ed, or an `error` method can be called to raise an error, or `complete` can be called to notify of a successful completion.
+	 * @param subscribe The function that is called when the Observable is initially subscribed to. This function is given a Dispatcher, to which new values can be `next`ed, or an `error` method can be called to raise an error, or `complete` can be called to notify of a successful completion.
 	 */
 	new <Value>(
-		subscribe: (subscriber: Subscriber<Value>) => unknown,
+		subscribe: (dispatcher: Dispatcher<Value>) => unknown,
 	): Observable<Value>;
 	readonly prototype: Observable;
 	/**
@@ -74,13 +69,13 @@ export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
 
 	/** @internal */
-	readonly #subscribe?: ((subscriber: Subscriber) => unknown) | null;
+	readonly #subscribe?: ((dispatcher: Dispatcher) => unknown) | null;
 
 	/** @internal */
 	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
-	constructor(subscribe?: ((subscriber: Subscriber) => unknown) | null) {
+	constructor(subscribe?: ((dispatcher: Dispatcher) => unknown) | null) {
 		this.#subscribe = subscribe;
 	}
 
@@ -95,10 +90,10 @@ export const Observable: ObservableConstructor = class {
 			throw new TypeError('Observable.from called on non-object');
 		}
 
-		return new Observable((subscriber) =>
+		return new Observable((dispatcher) =>
 			observable in input
-				? input[observable]().subscribe(subscriber)
-				: input.subscribe(subscriber),
+				? input[observable]().subscribe(dispatcher)
+				: input.subscribe(dispatcher),
 		);
 	}
 
@@ -189,11 +184,11 @@ export const Observable: ObservableConstructor = class {
 	subscribe(
 		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
-		const subscriber = ensureSubscriber(observerOrNext);
+		const dispatcher = ensureDispatcher(observerOrNext);
 		try {
-			this.#subscribe?.(subscriber);
+			this.#subscribe?.(dispatcher);
 		} catch (error) {
-			subscriber.error(error);
+			dispatcher.error(error);
 		}
 	}
 
@@ -204,10 +199,10 @@ export const Observable: ObservableConstructor = class {
 };
 
 /** @internal */
-function ensureSubscriber(
+function ensureDispatcher(
 	observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
-): Subscriber {
-	return observerOrNext instanceof Subscriber
+): Dispatcher {
+	return observerOrNext instanceof Dispatcher
 		? observerOrNext
-		: new Subscriber(observerOrNext);
+		: new Dispatcher(observerOrNext);
 }

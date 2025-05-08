@@ -106,7 +106,7 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class<Value> {
 	}
 
 	asObservable(): Observable {
-		return new Observable((subscriber) => this.subscribe(subscriber));
+		return new Observable((dispatcher) => this.subscribe(dispatcher));
 	}
 
 	pipe(...operations: []) {

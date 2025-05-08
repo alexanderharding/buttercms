@@ -1,4 +1,4 @@
-import { Observable, Subscriber } from '../../observable';
+import { Observable, Dispatcher } from '../../observable';
 import { throwError } from './throw-error';
 import { AnyCatcher } from '../../any-catcher';
 
@@ -12,7 +12,7 @@ export interface InteropObservable<Value = unknown> {
 
 /** @public */
 export interface Subscribable<Value = unknown> {
-	subscribe(subscriber: Subscriber<Value>): void;
+	subscribe(dispatcher: Dispatcher<Value>): void;
 }
 
 export type ObservableInput<Value = unknown> =
@@ -140,9 +140,9 @@ async function* readableStreamLikeToAsyncGenerator<Value>(
 
 /** @internal */
 function fromArrayLike<Value>(array: ArrayLike<Value>): Observable<Value> {
-	return new Observable<Value>((subscriber) => {
+	return new Observable<Value>((dispatcher) => {
 		// Loop over the array and emit each value. Note two things here:
-		// 1. We're making sure that the subscriber is not aborted on each loop.
+		// 1. We're making sure that the dispatcher is not aborted on each loop.
 		//    This is so we don't continue looping over a very large array after
 		//    something like a `take`, `takeWhile`, or other synchronous unsubscription
 		//    has already unsubscribed.
@@ -151,25 +151,25 @@ function fromArrayLike<Value>(array: ArrayLike<Value>): Observable<Value> {
 		//    be to copy the array before executing the loop, but this has
 		//    performance implications.
 		const length = array.length;
-		for (let i = 0; i < length && !subscriber.signal.aborted; i++) {
-			subscriber.next(array[i]);
+		for (let i = 0; i < length && !dispatcher.signal.aborted; i++) {
+			dispatcher.next(array[i]);
 		}
-		subscriber.complete();
+		dispatcher.complete();
 	});
 }
 
 /** @internal */
 function fromPromise<Value>(promise: PromiseLike<Value>): Observable<Value> {
-	return new Observable(async (subscriber) => {
+	return new Observable(async (dispatcher) => {
 		try {
 			const value = await promise;
-			// A side-effect may have aborted our subscriber,
+			// A side-effect may have aborted our dispatcher,
 			// check before the resolved value is emitted.
-			if (subscriber.signal.aborted) return;
-			subscriber.next(value);
-			subscriber.complete();
+			if (dispatcher.signal.aborted) return;
+			dispatcher.next(value);
+			dispatcher.complete();
 		} catch (error) {
-			subscriber.error(error);
+			dispatcher.error(error);
 		}
 	});
 }
@@ -178,31 +178,31 @@ function fromPromise<Value>(promise: PromiseLike<Value>): Observable<Value> {
 function fromAsyncIterable<Value>(
 	asyncIterable: AsyncIterable<Value>,
 ): Observable<Value> {
-	return new Observable(async (subscriber) => {
+	return new Observable(async (dispatcher) => {
 		try {
 			for await (const value of asyncIterable) {
-				subscriber.next(value);
-				// A side-effect may have aborted our subscriber,
+				dispatcher.next(value);
+				// A side-effect may have aborted our dispatcher,
 				// check before the next iteration.
-				if (subscriber.signal.aborted) return;
+				if (dispatcher.signal.aborted) return;
 			}
-			subscriber.complete();
+			dispatcher.complete();
 		} catch (err) {
-			subscriber.error(err);
+			dispatcher.error(err);
 		}
 	});
 }
 
 /** @internal */
 function fromIterable<Value>(iterable: Iterable<Value>): Observable<Value> {
-	return new Observable((subscriber) => {
+	return new Observable((dispatcher) => {
 		for (const value of iterable) {
-			subscriber.next(value);
-			// A side-effect may have aborted our subscriber,
+			dispatcher.next(value);
+			// A side-effect may have aborted our dispatcher,
 			// check before the next iteration.
-			if (subscriber.signal.aborted) return;
+			if (dispatcher.signal.aborted) return;
 		}
-		subscriber.complete();
+		dispatcher.complete();
 	});
 }
 
@@ -215,9 +215,9 @@ function fromInteropObservable(
 ): Observable {
 	// If an instance of one of our Observables, just return it.
 	if (interopObservable instanceof Observable) return interopObservable;
-	return new Observable((subscriber) => {
+	return new Observable((dispatcher) => {
 		if (typeof interopObservable[observable] === 'function') {
-			return interopObservable[observable]().subscribe(subscriber);
+			return interopObservable[observable]().subscribe(dispatcher);
 		}
 		// Should be caught by observable subscribe function error handling.
 		throw new TypeError(

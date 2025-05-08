@@ -5,7 +5,7 @@ import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that only multicast it's latest value, if any, on completion.
- * Late subscribers will receive the latest value, if any, from the subject and then complete.
+ * Late dispatchers will receive the latest value, if any, from the subject and then complete.
  *
  * @example
  * import { AsyncSubject } from "@xander/observable";
@@ -47,21 +47,21 @@ export interface AsyncSubject<Value = unknown>
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Store a {@linkcode value} to be multicast to all subscribers of this {@linkcode AsyncSubject|subject} on complete. Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
-	 * @param value The {@linkcode value} to multicast to all subscribers on complete.
+	 * Store a {@linkcode value} to be multicast to all dispatchers of this {@linkcode AsyncSubject|subject} on complete. Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * @param value The {@linkcode value} to multicast to all dispatchers on complete.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode AsyncSubject|subject} and multicast a complete notification to all subscribers. If a value was previously stored via `next()`, that value will be multicast to all subscribers before completing. Any future subscribers will receive the stored value (if any) and then complete (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * Abort this {@linkcode AsyncSubject|subject} and multicast a complete notification to all dispatchers. If a value was previously stored via `next()`, that value will be multicast to all dispatchers before completing. Any future dispatchers will receive the stored value (if any) and then complete (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode AsyncSubject|subject} and multicast an {@linkcode error} to all subscribers. Any future subscribers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all subscribers.
+	 * Abort this {@linkcode AsyncSubject|subject} and multicast an {@linkcode error} to all dispatchers. Any future dispatchers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all dispatchers.
 	 * @method
 	 * @public
 	 */
@@ -129,13 +129,13 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	#error: unknown = noError;
 
 	/** @internal */
-	readonly #output = new Observable((subscriber) => {
-		// Check if this subject has finalized so we can notify the subscriber immediately.
-		if (this.#error !== noError) subscriber.error(this.#error);
-		else if (this.signal.aborted) this.#complete(subscriber);
+	readonly #output = new Observable((dispatcher) => {
+		// Check if this subject has finalized so we can notify the dispatcher immediately.
+		if (this.#error !== noError) dispatcher.error(this.#error);
+		else if (this.signal.aborted) this.#complete(dispatcher);
 
 		// Always subscribe to the delegate subject.
-		this.#delegate.subscribe(subscriber);
+		this.#delegate.subscribe(dispatcher);
 	});
 
 	/** @internal */
@@ -184,7 +184,7 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		// Set the error state before pushing the error notification in-case of reentrant code.
 		this.#error = error;
 
-		// Push the error notification to all subscribers via the delegate subject.
+		// Push the error notification to all dispatchers via the delegate subject.
 		this.#delegate.error(error);
 	}
 

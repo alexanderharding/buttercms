@@ -12,16 +12,16 @@ export function throwIfEmpty<Input extends ObservableInput>(
 	factory: () => unknown = () => new EmptyError(),
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
 	return (source) =>
-		new Observable((subscriber) => {
+		new Observable((dispatcher) => {
 			let hasValue = false;
 			from(source).subscribe({
-				...subscriber,
+				...dispatcher,
 				next(value) {
 					hasValue = true;
-					subscriber.next(value);
+					dispatcher.next(value);
 				},
 				complete() {
-					if (!hasValue) subscriber.error(factory());
+					if (!hasValue) dispatcher.error(factory());
 				},
 			});
 		});

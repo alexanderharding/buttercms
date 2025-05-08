@@ -66,9 +66,9 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	readonly #output = new Observable((subscriber) => {
-		if (!this.signal.aborted) subscriber.next(this.#value);
-		this.#delegate.subscribe(subscriber);
+	readonly #output = new Observable((dispatcher) => {
+		if (!this.signal.aborted) dispatcher.next(this.#value);
+		this.#delegate.subscribe(dispatcher);
 	});
 
 	/**

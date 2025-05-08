@@ -5,8 +5,8 @@ export {
 	empty,
 	never,
 	type Observer,
-	Subscriber,
-	type SubscriberConstructor,
+	Dispatcher,
+	type DispatcherConstructor,
 
 	// Subjects
 	Subject,

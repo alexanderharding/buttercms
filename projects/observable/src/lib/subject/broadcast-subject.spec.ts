@@ -40,7 +40,7 @@ describe(BroadcastSubject.name, () => {
 		subject.complete();
 	});
 
-	it('should push values to multiple subscribers', (done: DoneFn) => {
+	it('should push values to multiple dispatchers', (done: DoneFn) => {
 		const subject = new BroadcastSubject<string>('test');
 		const expected = ['foo', 'bar'];
 
@@ -61,7 +61,7 @@ describe(BroadcastSubject.name, () => {
 		subject.complete();
 	});
 
-	it('should handle subscribers that arrive and leave at different times but subject does not complete', () => {
+	it('should handle dispatchers that arrive and leave at different times but subject does not complete', () => {
 		const subject = new BroadcastSubject<number>('test');
 		const results1: Array<string | number> = [];
 		const results2: Array<string | number> = [];
@@ -122,7 +122,7 @@ describe(BroadcastSubject.name, () => {
 		expect(results3).toEqual([11, 'F']);
 	});
 
-	it('should handle subscribers that arrive and leave at different times, subject completes', () => {
+	it('should handle dispatchers that arrive and leave at different times, subject completes', () => {
 		const subject = new BroadcastSubject<number>('test');
 		const results1: Array<string | number> = [];
 		const results2: Array<string | number> = [];
@@ -178,7 +178,7 @@ describe(BroadcastSubject.name, () => {
 		expect(results3).toEqual(['C', 'F']);
 	});
 
-	it('should handle subscribers that arrive and leave at different times, subject terminates with an error', () => {
+	it('should handle dispatchers that arrive and leave at different times, subject terminates with an error', () => {
 		const subject = new BroadcastSubject<number>('test');
 		const results1: Array<string | number> = [];
 		const results2: Array<string | number> = [];
@@ -234,7 +234,7 @@ describe(BroadcastSubject.name, () => {
 		expect(results3).toEqual(['E', 'F']);
 	});
 
-	it('should handle subscribers that arrive and leave at different times, subject completes before nexting any value', () => {
+	it('should handle dispatchers that arrive and leave at different times, subject completes before nexting any value', () => {
 		const subject = new BroadcastSubject<number>('test');
 		const results1: Array<string | number> = [];
 		const results2: Array<string | number> = [];
@@ -280,7 +280,7 @@ describe(BroadcastSubject.name, () => {
 		expect(results3).toEqual(['C', 'F']);
 	});
 
-	it('should disallow new subscriber once subject has been completed', () => {
+	it('should disallow new dispatcher once subject has been completed', () => {
 		const subject = new BroadcastSubject<number>('test');
 		const results1: Array<string | number> = [];
 		const results2: Array<string | number> = [];
@@ -549,13 +549,13 @@ describe(BroadcastSubject.name, () => {
 		});
 	});
 
-	describe('many subscribers', () => {
-		it('should be able to subscribe and abort huge amounts of subscribers', () => {
+	describe('many dispatchers', () => {
+		it('should be able to subscribe and abort huge amounts of dispatchers', () => {
 			let numResultsReceived = 0;
 			const controller = new AbortController();
 			const source = new BroadcastSubject<number>('test');
-			const numSubscribers = 100_000;
-			for (let index = 0; index !== numSubscribers; ++index) {
+			const numDispatchers = 100_000;
+			for (let index = 0; index !== numDispatchers; ++index) {
 				source.subscribe({
 					signal: controller.signal,
 					// eslint-disable-next-line @typescript-eslint/no-loop-func
@@ -564,16 +564,16 @@ describe(BroadcastSubject.name, () => {
 			}
 			expect(numResultsReceived).toEqual(0);
 			source.next(42);
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(numResultsReceived).toEqual(numDispatchers);
 			controller.abort();
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(numResultsReceived).toEqual(numDispatchers);
 			source.next(42);
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(numResultsReceived).toEqual(numDispatchers);
 		});
 	});
 
-	describe('reentrant subscribers', () => {
-		it('should handle reentrant subscribers', () => {
+	describe('reentrant dispatchers', () => {
+		it('should handle reentrant dispatchers', () => {
 			const seenValues: Array<number> = [];
 			const source = new BroadcastSubject<number>('test');
 			source.subscribe((value) => {

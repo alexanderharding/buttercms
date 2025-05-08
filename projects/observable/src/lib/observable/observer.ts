@@ -2,77 +2,65 @@ import { UnhandledError } from '../errors';
 import { UnaryFunction } from '../pipe';
 
 /**
- * An object interface that defines a set of callback functions a user can use to get notified of any set of {@linkcode Subscriber|subscriber} events.
+ * An object interface that defines a set of callbacks for receiving notifications from a producer.
  */
 export interface Observer<Value = unknown> {
 	/**
-	 * Aborting this {@linkcode Observer|observer} and no longer accept new notifications from a {@linkcode Subscriber|subscriber}.
-	 * @readonly
-	 * @public
+	 * Signals that this {@linkcode Observer} is no longer accepting notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Receiving notifications of type `next` from a {@linkcode Subscriber|subscriber}, with a {@linkcode value}.
-	 * @param value The {@linkcode value} received along with the `next` notification.
-	 * @public
+	 * A callback that receives `next` notifications with an attached value.
+	 * @param value The value received with the notification.
 	 */
 	next(value: Value): void;
 	/**
-	 * Receiving notifications of type `error`, with an attached {@linkcode error} indicating that a {@linkcode Subscriber|subscriber} has experienced an error condition and has finished sending push-based notifications. This is exclusive of the `complete` notification.
-	 * @param error The {@linkcode error} value received along with the `error` notification.
-	 * @public
+	 * A callback that receives an `error` notification with the error that caused the producer to stop. Mutually exclusive with {@linkcode complete}.
+	 * @param error The {@linkcode error|error value} received with the notification.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Receiving a notification of type `complete` from a {@linkcode Subscriber|subscriber} indicating that the {@linkcode Subscriber|subscriber} has finished sending push-based notifications. This is exclusive of the `error` notification.
-	 * @public
+	 * A callback that receives a `complete` notification indicating the producer has finished. Mutually exclusive with {@linkcode error}.
 	 */
 	complete(): void;
 	/**
-	 * Called when this {@linkcode Observer|observer} has finished receiving notifications from a {@linkcode Subscriber|subscriber} and/or is no longer accepting new notifications.
-	 * @public
+	 * A callback invoked when this {@linkcode Observer} stops accepting notifications, either by {@linkcode complete}, {@linkcode error}, or {@linkcode signal|abortion}.
 	 */
 	finally(): void;
 }
 
 /**
  * An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
- * @public
  */
-export interface Subscriber<Value = unknown> {
+export interface Dispatcher<Value = unknown> {
 	/**
-	 * Determining if/when this {@linkcode Subscriber|subscriber} has been aborted and is no longer pushing new notifications.
-	 * @readonly
-	 * @public
+	 * Determines if/when this {@linkcode Dispatcher|dispatcher} has been aborted and is no longer pushing new notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Pushing notifications of type `next` from this Subscriber, with a {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * Pushing notifications of type `next` with an attached {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
 	 * @param value The {@linkcode value} to send along with the `next` notification.
-	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Aborting this Subscriber and pushing a notification of type `error`, with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
+	 * Aborts this {@linkcode Dispatcher|dispatcher} and pushes a notification of type `error` with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
 	 * @param error The {@linkcode error} value to send along with the `error` notification.
-	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * Aborting this Subscriber and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this Subscriber has already been aborted.
-	 * @public
+	 * Aborts this {@linkcode Dispatcher|dispatcher} and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
 	 */
 	complete(): void;
 }
 
-export type SubscriberConstructor = new <Value = unknown>(
+export type DispatcherConstructor = new <Value = unknown>(
 	observerOrNext?:
 		| Partial<Observer<Value>>
 		| ((value: Value) => unknown)
 		| null,
-) => Subscriber<Value>;
+) => Dispatcher<Value>;
 
-export const Subscriber: SubscriberConstructor = class {
+export const Dispatcher: DispatcherConstructor = class {
 	/** @internal */
 	readonly #observer?: Partial<Observer> | null;
 
@@ -103,7 +91,7 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	next(value: unknown): void {
-		// If this subscriber has been aborted there is nothing to do.
+		// If this dispatcher has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
 		try {
@@ -115,10 +103,10 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	error(error: unknown): void {
-		// If this subscriber has been aborted there is nothing to do.
+		// If this dispatcher has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort this subscriber before pushing notifications to the
+		// Abort this dispatcher before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 
@@ -139,10 +127,10 @@ export const Subscriber: SubscriberConstructor = class {
 
 	/** @internal */
 	complete(): void {
-		// If this subscriber has been aborted there is nothing to do.
+		// If this dispatcher has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort this subscriber before pushing notifications to the
+		// Abort this dispatcher before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 
