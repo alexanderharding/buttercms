@@ -66,6 +66,11 @@ export interface BroadcastSubject<Value = void>
 	subscribe(
 		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => unknown),
 	): void;
+	/**
+	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
+	 * @public
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
 
 export interface BroadcastSubjectConstructor {
@@ -156,6 +161,15 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 */
 	[observable](): Subscribable<Value> {
 		return this;
+	}
+
+	/**
+	 * @internal
+	 * @readonly
+	 * @public
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void> {
+		return this.#delegate[Symbol.asyncIterator]();
 	}
 
 	/**

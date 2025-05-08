@@ -16,8 +16,8 @@ export interface Observable<Value = unknown>
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Invoking an execution of an {@linkcode Observable} and registers {@linkcode Observer} handlers for notifications it can but is not required to emit.
-	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
+	 * Invokes an execution of an {@linkcode Observable} and registers {@linkcode Observer} handlers for notifications it can but is not required to emit.
+	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
 	 * @public
 	 */
 	subscribe(
@@ -26,6 +26,10 @@ export interface Observable<Value = unknown>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
+	/**
+	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
+	 * @public
+	 */
 	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
 

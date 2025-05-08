@@ -61,6 +61,11 @@ export interface Subject<Value = void>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
+	/**
+	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
+	 * @public
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
 
 /**
@@ -172,6 +177,14 @@ export const Subject: SubjectConstructor = class<Value> {
 	 */
 	[observable](): Subscribable<Value> {
 		return this;
+	}
+
+	/**
+	 * @internal
+	 * @ignore
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void> {
+		return this.#delegate[Symbol.asyncIterator]();
 	}
 
 	/**

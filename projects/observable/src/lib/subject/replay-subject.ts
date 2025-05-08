@@ -98,6 +98,11 @@ export interface ReplaySubject<Value = unknown>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
+	/**
+	 * A method that returns the async iterator for this {@linkcode ReplaySubject|subject}. Called by the semantics of the for-await-of statement.
+	 * @public
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
 
 export interface ReplaySubjectConstructor {
@@ -157,6 +162,11 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 	/** @internal */
 	[observable](): Subscribable {
 		return this;
+	}
+
+	/** @internal */
+	[Symbol.asyncIterator](): AsyncIterableIterator<unknown, void, void> {
+		return this.#output[Symbol.asyncIterator]();
 	}
 
 	/** @internal */
