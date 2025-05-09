@@ -4,7 +4,7 @@ export {
 	type ObservableConstructor,
 	empty,
 	never,
-	type Observer,
+	type ConsumerObserver,
 	ProducerObserver,
 	type ProducerObserverConstructor,
 

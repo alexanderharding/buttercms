@@ -2,7 +2,7 @@ import { Subject } from './subject/subject';
 import { Observable } from './observable/observable';
 import { Pipeline } from './pipe/pipeline';
 import { UnaryFunction } from './pipe';
-import { Observer } from './observable';
+import { ConsumerObserver } from './observable';
 
 export type WebSocketSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
 	Pipeline<WebSocketSubject<Value>>;
@@ -83,7 +83,9 @@ export const WebSocketSubject: WebSocketSubjectConstructor = class<Value> {
 		this.#socket.binaryType = value;
 	}
 
-	subscribe(observerOrNext?: Partial<Observer> | UnaryFunction | null): void {
+	subscribe(
+		observerOrNext?: Partial<ConsumerObserver> | UnaryFunction | null,
+	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 

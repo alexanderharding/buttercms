@@ -1,4 +1,4 @@
-import type { Observer } from '../observable';
+import type { ConsumerObserver } from '../observable';
 
 /**
  * @public
@@ -6,7 +6,7 @@ import type { Observer } from '../observable';
 export interface Subscribable<Value = unknown> {
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;

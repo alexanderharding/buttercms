@@ -1,6 +1,6 @@
 import { InteropObservable, observable, Subscribable } from '../operators';
 import { Pipeline } from '../pipe';
-import { Observer, ProducerObserver } from './observer';
+import { ConsumerObserver, ProducerObserver } from './observer';
 
 /**
  * A representation of any set of values over any amount of time.
@@ -11,13 +11,13 @@ export interface Observable<Value = unknown>
 	/** @internal */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Invokes an execution of an {@linkcode Observable} and registers {@linkcode Observer} handlers for notifications it can but is not required to emit.
-	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
+	 * Invokes an execution of an {@linkcode Observable} and registers {@linkcode ConsumerObserver} handlers for notifications it can but is not required to emit.
+	 * @param observerOrNext If provided, either an {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
 	 * @public
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
@@ -182,7 +182,10 @@ export const Observable: ObservableConstructor = class {
 
 	/** @internal */
 	subscribe(
-		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
+		observerOrNext?:
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
+			| null,
 	): void {
 		const observer = ensureProducerObserver(observerOrNext);
 		try {
@@ -200,7 +203,10 @@ export const Observable: ObservableConstructor = class {
 
 /** @internal */
 function ensureProducerObserver(
-	observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
+	observerOrNext?:
+		| Partial<ConsumerObserver>
+		| ((value: unknown) => unknown)
+		| null,
 ): ProducerObserver {
 	return observerOrNext instanceof ProducerObserver
 		? observerOrNext

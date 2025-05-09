@@ -1,4 +1,4 @@
-import { Observable, Observer } from '../observable';
+import { Observable, ConsumerObserver } from '../observable';
 import { delay, of } from '../operators';
 import { noop } from '../noop';
 import { BroadcastSubject } from './broadcast-subject';
@@ -329,7 +329,7 @@ describe(BroadcastSubject.name, () => {
 		expect(results3).toEqual(['C', 'F']);
 	});
 
-	it('should be an Observer which can be given to Observable.subscribe', (done: DoneFn) => {
+	it('should be an ConsumerObserver which can be given to Observable.subscribe', (done: DoneFn) => {
 		const source = of(1, 2, 3, 4, 5);
 		const subject = new BroadcastSubject<number>('test');
 		const expected = [1, 2, 3, 4, 5];
@@ -343,7 +343,7 @@ describe(BroadcastSubject.name, () => {
 		source.subscribe(subject);
 	});
 
-	xit('should be usable as an Observer of a finite delayed Observable', (done: DoneFn) => {
+	xit('should be usable as an ConsumerObserver of a finite delayed Observable', (done: DoneFn) => {
 		const source = of(1, 2, 3).pipe(delay(50));
 		const subject = new BroadcastSubject<number>('test');
 
@@ -422,16 +422,14 @@ describe(BroadcastSubject.name, () => {
 		it('should multicast an error to all observers', () => {
 			// Arrange
 			const error = new Error('test');
-			const observer1 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
-			const observer2 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
+			const observer1 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
+			const observer2 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
 			const subject = new BroadcastSubject('test');
 
 			// Act
@@ -451,16 +449,14 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const abortSpy = jasmine.createSpy('abort');
 			const error = new Error('test');
-			const observer1 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
-			const observer2 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
+			const observer1 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
+			const observer2 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
 			const subject = new BroadcastSubject('test');
 			subject.signal.addEventListener('abort', abortSpy, { once: true });
 
@@ -477,16 +473,14 @@ describe(BroadcastSubject.name, () => {
 	describe(BroadcastSubject.prototype.complete.name, () => {
 		it('should multicast a complete notification to all observers', () => {
 			// Arrange
-			const observer1 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
-			const observer2 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
+			const observer1 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
+			const observer2 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
 			const subject = new BroadcastSubject('test');
 
 			// Act
@@ -505,16 +499,14 @@ describe(BroadcastSubject.name, () => {
 		it('should abort this subject before notifying observers', () => {
 			// Arrange
 			const abortSpy = jasmine.createSpy('abort');
-			const observer1 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
-			const observer2 = jasmine.createSpyObj<Observer>('Observer', [
-				'error',
-				'complete',
-				'next',
-			]);
+			const observer1 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
+			const observer2 = jasmine.createSpyObj<ConsumerObserver>(
+				'ConsumerObserver',
+				['error', 'complete', 'next'],
+			);
 			const subject = new BroadcastSubject('test');
 			subject.signal.addEventListener('abort', abortSpy, { once: true });
 

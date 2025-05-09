@@ -5,14 +5,14 @@ import { Observable } from './observable';
  * emitting any errors or values.
  *
  * You can prevent the `complete` notification from being pushed if you
- * provide an already aborted {@linkcode AbortSignal|signal} to the `Observer`.
+ * provide an already aborted {@linkcode AbortSignal|signal} to the `ConsumerObserver`.
  * For most use-cases this is not useful, but good to know. This is unnecessary to
  * prevent memory leaks, since the {@linkcode Observable} _never_ does any work.
  * Regardless of the state of the {@linkcode AbortSignal|signal}, the `finally`
  * notification will still be pushed.
  *
  * ```ts
- * // Without Observer signal
+ * // Without ConsumerObserver signal
  * import { empty } from '@xander/observable';
  *
  * empty.subscribe({
@@ -24,7 +24,7 @@ import { Observable } from './observable';
  * });
  * ```
  * ```ts
- * // With Observer signal
+ * // With ConsumerObserver signal
  * import { empty } from '@xander/observable';
  *
  * const controller = new AbortController();

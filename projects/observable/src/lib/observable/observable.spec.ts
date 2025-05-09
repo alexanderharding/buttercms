@@ -1,6 +1,6 @@
 import { UnaryFunction } from '../pipe';
 import { Observable } from './observable';
-import { Observer, ProducerObserver } from './observer';
+import { ConsumerObserver, ProducerObserver } from './observer';
 
 describe(Observable.name, () => {
 	describe(Observable.prototype.subscribe.name, () => {
@@ -24,7 +24,7 @@ describe(Observable.name, () => {
 
 		it('should create a new observer correctly when subscribe is called with a partial observer', () => {
 			// Arrange
-			const observer = jasmine.createSpyObj<Partial<Observer<number>>>(
+			const observer = jasmine.createSpyObj<Partial<ConsumerObserver<number>>>(
 				'observer',
 				['next', 'error'],
 			);
@@ -50,7 +50,7 @@ describe(Observable.name, () => {
 			const error = new Error('this should be handled');
 			const abortReason = Symbol('abort reason');
 			const controller = new AbortController();
-			const observer = jasmine.createSpyObj<Observer<number>>(
+			const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
 				'observer',
 				['next', 'error', 'complete', 'finally'],
 				{ signal: controller.signal },
@@ -115,7 +115,9 @@ describe(Observable.name, () => {
 				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(new Error('this should be handled'));
-			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
+			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+				'error',
+			]);
 
 			// Act / Assert
 			expect(observable.subscribe(observer)).not.toThrow();
@@ -128,7 +130,9 @@ describe(Observable.name, () => {
 				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(error);
-			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
+			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+				'error',
+			]);
 
 			// Act
 			observable.subscribe(observer);
@@ -140,7 +144,9 @@ describe(Observable.name, () => {
 		it('should not throw when internal subscribe is not provided', () => {
 			// Arrange
 			const observable = new Observable();
-			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
+			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+				'error',
+			]);
 
 			// Act / Assert
 			expect(observable.subscribe(observer)).not.toThrow();
@@ -149,7 +155,9 @@ describe(Observable.name, () => {
 		it('should not call error method on observer when internal subscribe is not provided', () => {
 			// Arrange;
 			const observable = new Observable();
-			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
+			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+				'error',
+			]);
 
 			// Act
 			observable.subscribe(observer);

@@ -1,8 +1,8 @@
-import { Observable, Observer } from '../../observable';
+import { Observable, ConsumerObserver } from '../../observable';
 import type { UnaryFunction } from '../../pipe';
 import { from, ObservableInput, ObservedValueOf } from '../creation';
 
-export interface TapObserver<T> extends Omit<Observer<T>, 'signal'> {
+export interface TapObserver<T> extends Omit<ConsumerObserver<T>, 'signal'> {
 	/**
 	 * The callback that `tap` operator invokes at the moment when the source Observable
 	 * gets subscribed to.
@@ -50,6 +50,6 @@ export function tap<T extends ObservableInput>(
 					if (isUnsubscribe) tapObserver.unsubscribe?.();
 					tapObserver.finally?.();
 				},
-			} satisfies Observer<ObservedValueOf<T>>);
+			} satisfies ConsumerObserver<ObservedValueOf<T>>);
 		});
 }

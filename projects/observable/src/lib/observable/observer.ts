@@ -1,12 +1,11 @@
 import { UnhandledError } from '../errors';
-import { UnaryFunction } from '../pipe';
 
 /**
  * An object interface that defines a set of callbacks for receiving notifications from a producer.
  */
-export interface Observer<Value = unknown> {
+export interface ConsumerObserver<Value = unknown> {
 	/**
-	 * Signals that this {@linkcode Observer} is no longer accepting notifications.
+	 * Signals that this {@linkcode ConsumerObserver} is no longer accepting notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
@@ -24,45 +23,45 @@ export interface Observer<Value = unknown> {
 	 */
 	complete(): void;
 	/**
-	 * A callback invoked when this {@linkcode Observer} stops accepting notifications, either by {@linkcode complete}, {@linkcode error}, or {@linkcode signal|abortion}.
+	 * A callback invoked when this {@linkcode ConsumerObserver} stops accepting notifications, either by {@linkcode complete}, {@linkcode error}, or {@linkcode signal|abortion}.
 	 */
 	finally(): void;
 }
 
 /**
- * An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
+ * An object interface that defines a set of functions a user can use to push notifications to a {@linkcode ConsumerObserver}.
  */
 export interface ProducerObserver<Value = unknown> {
 	/**
-	 * Determines if/when this {@linkcode ProducerObserver|observer} has been aborted and is no longer pushing new notifications.
+	 * Determines if/when this {@linkcode ProducerObserver} has been aborted and is no longer pushing new notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Pushing notifications of type `next` with an attached {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
+	 * Pushing notifications of type `next` with an attached {@linkcode value} to the {@linkcode ConsumerObserver}. This has no operation (noop) if this {@linkcode ProducerObserver} has already been aborted.
 	 * @param value The {@linkcode value} to send along with the `next` notification.
 	 */
 	next(value: Value): void;
 	/**
-	 * Aborts this {@linkcode ProducerObserver|observer} and pushes a notification of type `error` with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
+	 * Aborts this {@linkcode ProducerObserver} and pushes a notification of type `error` with an attached {@linkcode error} to an {@linkcode ConsumerObserver}. This has no operation (noop) if this {@linkcode ProducerObserver} has already been aborted.
 	 * @param error The {@linkcode error} value to send along with the `error` notification.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Aborts this {@linkcode ProducerObserver|observer} and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
+	 * Aborts this {@linkcode ProducerObserver} and pushes a notification of type `complete` to a {@linkcode ConsumerObserver}. This has no operation (noop) if this {@linkcode ProducerObserver} has already been aborted.
 	 */
 	complete(): void;
 }
 
 export type ProducerObserverConstructor = new <Value = unknown>(
 	observerOrNext?:
-		| Partial<Observer<Value>>
+		| Partial<ConsumerObserver<Value>>
 		| ((value: Value) => unknown)
 		| null,
 ) => ProducerObserver<Value>;
 
 export const ProducerObserver: ProducerObserverConstructor = class {
 	/** @internal */
-	readonly #observer?: Partial<Observer> | null;
+	readonly #consumerObserver?: Partial<ConsumerObserver> | null;
 
 	/** @internal */
 	readonly #controller = new AbortController();
@@ -71,16 +70,21 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 	readonly signal = this.#controller.signal;
 
 	/** @internal */
-	constructor(observerOrNext?: Partial<Observer> | UnaryFunction | null) {
+	constructor(
+		observerOrNext?:
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
+			| null,
+	) {
 		if (typeof observerOrNext === 'function') {
-			this.#observer = { next: observerOrNext };
-		} else this.#observer = observerOrNext;
+			this.#consumerObserver = { next: observerOrNext };
+		} else this.#consumerObserver = observerOrNext;
 
-		if (this.#observer?.signal) {
-			const { signal: observerSignal } = this.#observer;
+		if (this.#consumerObserver?.signal) {
+			const { signal: observerSignal } = this.#consumerObserver;
 			const finalizer = () => {
 				this.#controller.abort();
-				this.#observer?.finally?.();
+				this.#consumerObserver?.finally?.();
 			};
 			observerSignal.addEventListener('abort', finalizer, {
 				signal: this.signal,
@@ -95,7 +99,7 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 		if (this.signal.aborted) return;
 
 		try {
-			this.#observer?.next?.(value);
+			this.#consumerObserver?.next?.(value);
 		} catch (error) {
 			this.error(error);
 		}
@@ -111,8 +115,8 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 		this.#controller.abort();
 
 		try {
-			if (this.#observer?.error) {
-				this.#observer.error(error);
+			if (this.#consumerObserver?.error) {
+				this.#consumerObserver.error(error);
 			} else {
 				// Report directly instead of throwing to keep the stack trace
 				// as simple as possible.
@@ -135,7 +139,7 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 		this.#controller.abort();
 
 		try {
-			this.#observer?.complete?.();
+			this.#consumerObserver?.complete?.();
 		} catch (error) {
 			reportUnhandledError(error);
 		} finally {
@@ -146,7 +150,7 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 	/** @internal */
 	#finally(): void {
 		try {
-			this.#observer?.finally?.();
+			this.#consumerObserver?.finally?.();
 		} catch (error) {
 			reportUnhandledError(error);
 		}

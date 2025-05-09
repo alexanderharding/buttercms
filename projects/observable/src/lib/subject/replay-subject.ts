@@ -1,4 +1,4 @@
-import { Observable, type Observer } from '../observable';
+import { Observable, type ConsumerObserver } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, UnaryFunction } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
@@ -60,27 +60,27 @@ export interface ReplaySubject<Value = unknown>
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Update the replay buffer and multicast a `next` notification with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode ReplaySubject|subject}. This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * Update the replay buffer and multicast a `next` notification with the attached {@linkcode value} to all observers of this {@linkcode ReplaySubject|subject}. This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
 	 * @param value The {@linkcode value} to store in the buffer and attach to the multicast `next` notification.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode ReplaySubject|subject} and multicast a `complete` notification to all {@linkcode Observer|observers}. If a value was previously stored via `next()`, that value will be multicast to all {@linkcode Observer|observers} before completing. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then immediately be notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * Abort this {@linkcode ReplaySubject|subject} and multicast a `complete` notification to all observers. If a value was previously stored via `next()`, that value will be multicast to all observers before completing. Any future observers will receive replayed `next` notifications from the buffer, if any, and then immediately be notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode ReplaySubject|subject} and multicast an `error` notification with an attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will receive replayed `next` notifications from the buffer, if any, and then be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers}.
+	 * Abort this {@linkcode ReplaySubject|subject} and multicast an `error` notification with an attached {@linkcode error} to all observers. Any future observers will receive replayed `next` notifications from the buffer, if any, and then be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all observers.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable} with this {@linkcode ReplaySubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode ReplaySubject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode ReplaySubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode ReplaySubject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode ReplaySubject|subject} casts to.
 	 * @method
 	 * @public
@@ -88,13 +88,13 @@ export interface ReplaySubject<Value = unknown>
 	asObservable(): Observable<Value>;
 	/**
 	 * Observing notifications from this {@linkcode ReplaySubject|subject}.
-	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all options, the `next` handler (equivalent to `subscribe({ next })`).
+	 * @param observerOrNext If provided, either an {@linkcode ConsumerObserver} with some or all options, the `next` handler (equivalent to `subscribe({ next })`).
 	 * @method
 	 * @public
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
@@ -170,7 +170,7 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 	}
 
 	/** @internal */
-	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
+	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 

@@ -1,4 +1,4 @@
-import { Observable, type Observer } from '../observable';
+import { Observable, type ConsumerObserver } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, UnaryFunction } from '../pipe';
 import { observable, Subscribable } from '../operators';
@@ -112,7 +112,7 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	 * @readonly
 	 * @public
 	 */
-	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
+	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 

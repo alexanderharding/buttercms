@@ -1,6 +1,6 @@
 import { Subject } from './subject';
-import { Observable, type Observer } from '../observable';
-import { Pipeline, type UnaryFunction } from '../pipe';
+import { Observable, type ConsumerObserver } from '../observable';
+import { Pipeline } from '../pipe';
 import { observable, Subscribable, InteropObservable } from '../operators';
 
 /**
@@ -38,20 +38,20 @@ export interface BroadcastSubject<Value = void>
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Observer|observers} will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all observers of _this_ {@linkcode BroadcastSubject|subject}. Any future observers will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}. Any future {@linkcode Observer|observers} will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers} of _this_ {@linkcode BroadcastSubject|subject}.
+	 * Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all observers of _this_ {@linkcode BroadcastSubject|subject}. Any future observers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all observers of _this_ {@linkcode BroadcastSubject|subject}.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable|observable} with this {@linkcode BroadcastSubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode BroadcastSubject|subject} and conceal it from code that uses the {@linkcode Observable|observable}.
+	 * Access an{@linkcode Observable|observable} with this {@linkcode BroadcastSubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode BroadcastSubject|subject} and conceal it from code that uses the {@linkcode Observable|observable}.
 	 * @returns An {@linkcode Observable|observable} that this {@linkcode BroadcastSubject|subject} casts to.
 	 * @method
 	 * @public
@@ -59,12 +59,14 @@ export interface BroadcastSubject<Value = void>
 	asObservable(): Observable<Value>;
 	/**
 	 * Observing any notifications from _this_ {@linkcode BroadcastSubject|subject} except for `next`, which is only received from _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
-	 * @param observerOrNext Either an {@linkcode Observer} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode BroadcastSubject|subject}.
+	 * @param observerOrNext Either an {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode BroadcastSubject|subject}.
 	 * @method
 	 * @public
 	 */
 	subscribe(
-		observerOrNext?: Partial<Observer<Value>> | ((value: Value) => unknown),
+		observerOrNext?:
+			| Partial<ConsumerObserver<Value>>
+			| ((value: Value) => unknown),
 	): void;
 	/**
 	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
@@ -179,7 +181,7 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void {

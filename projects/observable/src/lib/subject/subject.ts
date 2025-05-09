@@ -1,9 +1,9 @@
-import { Observable, Observer, ProducerObserver } from '../observable';
+import { Observable, ConsumerObserver, ProducerObserver } from '../observable';
 import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * A special type of {@linkcode Observable|observable} that allows notifications to multicast to many {@linkcode Observer|observers}, similar to an event emitter. If the {@linkcode Subject|subject} has already pushed the notification of type `complete` or `error`, late {@linkcode Observer|observers} will be immediately pushed the same notification on `subscribe`.
+ * A special type of {@linkcode Observable|observable} that allows notifications to multicast to many observers, similar to an event emitter. If the {@linkcode Subject|subject} has already pushed the notification of type `complete` or `error`, late observers will be immediately pushed the same notification on `subscribe`.
  * @public
  */
 export interface Subject<Value = void>
@@ -23,27 +23,27 @@ export interface Subject<Value = void>
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Multicast a notification of type `next` with the attached {@linkcode value} to all {@linkcode Observer|observers} of this {@linkcode Subject|subject}. This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param value The {@linkcode value} to multicast to all {@linkcode Observer|observers}.
+	 * Multicast a notification of type `next` with the attached {@linkcode value} to all observers of this {@linkcode Subject|subject}. This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param value The {@linkcode value} to multicast to all observers.
 	 * @method
 	 * @public
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `complete` to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `complete` to all observers. Any future observers will be immediately notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
 	 * @method
 	 * @public
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `error` with the attached {@linkcode error} to all {@linkcode Observer|observers}. Any future {@linkcode Observer|observers} will be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all {@linkcode Observer|observers}.
+	 * Abort this {@linkcode Subject|subject} and multicast a notification of type `error` with the attached {@linkcode error} to all observers. Any future observers will be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode Subject|subject} is already aborted.
+	 * @param error The {@linkcode error} to multicast to all observers.
 	 * @method
 	 * @public
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode Subject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode Subject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode Subject|subject} casts to.
 	 * @method
 	 * @public
@@ -51,13 +51,13 @@ export interface Subject<Value = void>
 	asObservable(): Observable<Value>;
 	/**
 	 * Observing notifications from this {@linkcode Subject|subject}.
-	 * @param observerOrNext If provided, either an {@linkcode Observer} with some or all options or the `next` handler (equivalent of `subscribe({ next })`).
+	 * @param observerOrNext If provided, either an {@linkcode ConsumerObserver} with some or all options or the `next` handler (equivalent of `subscribe({ next })`).
 	 * @method
 	 * @public
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
@@ -193,7 +193,7 @@ export const Subject: SubjectConstructor = class<Value> {
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void {

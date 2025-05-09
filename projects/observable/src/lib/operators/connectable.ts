@@ -1,4 +1,4 @@
-import { Observable, Observer } from '../observable';
+import { Observable, ConsumerObserver } from '../observable';
 import { Subject } from '../subject';
 import { from, type ObservableInput, type ObservedValueOf } from './creation';
 import { Subscribable } from './subscribable';
@@ -8,7 +8,7 @@ export function connectable<Input extends ObservableInput>(
 	connector: (
 		source: Observable<ObservedValueOf<Input>>,
 	) => Subscribable<ObservedValueOf<Input>> &
-		Partial<Observer<ObservedValueOf<Input>>> = () => new Subject(),
+		Partial<ConsumerObserver<ObservedValueOf<Input>>> = () => new Subject(),
 ): Observable<ObservedValueOf<Input>> {
 	return new Observable((observer) => {
 		if (observer.signal.aborted) return;

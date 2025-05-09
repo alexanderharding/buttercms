@@ -1,4 +1,4 @@
-import { Observable, type Observer } from '../observable';
+import { Observable, type ConsumerObserver } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, type UnaryFunction } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
@@ -67,7 +67,7 @@ export interface AsyncSubject<Value = unknown>
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable} with this {@linkcode AsyncSubject|subject} as the source. You can do this to create custom Observer-side logic of this {@linkcode AsyncSubject|subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * Create a new {@linkcode Observable} with this {@linkcode AsyncSubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode AsyncSubject|subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode AsyncSubject|subject} casts to.
 	 * @method
 	 * @public
@@ -75,13 +75,13 @@ export interface AsyncSubject<Value = unknown>
 	asObservable(): Observable<Value>;
 	/**
 	 * Observing notifications from this {@linkcode AsyncSubject|subject}.
-	 * @param observerOrNext Either an {@linkcode Observer} with some or all options, or the `next` handler that is called for each value emitted from the subscribed {@linkcode AsyncSubject|subject}.
+	 * @param observerOrNext Either an {@linkcode ConsumerObserver} with some or all options, or the `next` handler that is called for each value emitted from the subscribed {@linkcode AsyncSubject|subject}.
 	 * @method
 	 * @public
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<Observer<Value>>
+			| Partial<ConsumerObserver<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;
@@ -154,7 +154,7 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	}
 
 	/** @internal */
-	subscribe(observerOrNext: Partial<Observer> | UnaryFunction): void {
+	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
@@ -195,7 +195,7 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 
 	/** @internal */
 	#complete(
-		observer: Pick<Observer, 'next' | 'complete'> = this.#delegate,
+		observer: Pick<ConsumerObserver, 'next' | 'complete'> = this.#delegate,
 	): void {
 		// If this subject has a value then we need to push it to the observer before
 		// pushing the complete notification.

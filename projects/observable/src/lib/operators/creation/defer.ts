@@ -3,7 +3,7 @@ import { from, type ObservableInput, type ObservedValueOf } from './from';
 
 /**
  * Creates an {@linkcode Observable} that lazily (on subscribe) calls a {@linkcode factory|ObservableInput factory}
- * to make an {@linkcode Observable} for each new Observer.
+ * to make an {@linkcode Observable} for each new {@linkcode ConsumerObserver|observer}.
  *
  * The {@linkcode factory|ObservableInput factory} function is called each time the Observable is subscribed to,
  *  allowing for deferred execution and fresh values for each observer.

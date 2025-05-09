@@ -4,12 +4,12 @@ import { Observable } from './observable';
  * An {@linkcode Observable} that does no work so it _never_ pushes any `next`, `error`, or `complete` notifications.
  *
  * Like any other {@linkcode Observable}, you can get it to push the `finally`
- * notification by providing an {@linkcode AbortSignal|signal} to the Observer and
+ * notification by providing an {@linkcode AbortSignal|signal} to the ConsumerObserver and
  * aborting it before or after `subscribe`. For most use-cases this is not
  * useful, but good to know. Keep in mind that this is unnecessary to prevent
  * memory leaks, since the {@linkcode Observable} _never_ does any work.
  *
- * @example <caption>Without Observer signal</caption>
+ * @example <caption>Without ConsumerObserver signal</caption>
  *
  * import { never } from '@xander/observable';
  *
@@ -20,7 +20,7 @@ import { Observable } from './observable';
  * 	complete: () => console.log('Complete'), // Never called
  * 	finally: () => console.log('finally'), // Never called
  * });
- * @example <caption>With Observer signal</caption>
+ * @example <caption>With ConsumerObserver signal</caption>
  *
  * import { never } from '@xander/observable';
  *
