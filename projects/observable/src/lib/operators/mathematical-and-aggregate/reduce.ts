@@ -23,19 +23,19 @@ export function reduce(
 	seed?: unknown,
 ): UnaryFunction<ObservableInput, Observable> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let value: unknown;
 			let hasValue = false;
 			const output = from(source).pipe(scan(accumulator, seed));
 			output.subscribe({
-				...dispatcher,
+				...observer,
 				next: (v) => {
 					hasValue = true;
 					value = v;
 				},
 				complete: () => {
-					if (hasValue) dispatcher.next(value);
-					dispatcher.complete();
+					if (hasValue) observer.next(value);
+					observer.complete();
 				},
 			});
 		});

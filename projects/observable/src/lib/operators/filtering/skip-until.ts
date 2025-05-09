@@ -9,21 +9,21 @@ export function skipUntil<Input extends ObservableInput>(
 	notifier: ObservableInput,
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let skip = true;
 
 			from(notifier)
 				.pipe(take(1))
 				.subscribe({
-					...dispatcher,
+					...observer,
 					next: () => (skip = false),
-					error: (error) => dispatcher.error(error),
+					error: (error) => observer.error(error),
 					// Ignore complete notifications from the notifier.
 					complete: noop,
 				});
 
 			from(source)
 				.pipe(filter(() => !skip))
-				.subscribe(dispatcher);
+				.subscribe(observer);
 		});
 }

@@ -61,11 +61,11 @@ export function range(start: number, count?: number): Observable<number> {
 	// Where the range should stop.
 	const end = count + start;
 
-	return new Observable((dispatcher) => {
+	return new Observable((observer) => {
 		let n = start;
-		while (n < end && !dispatcher.signal.aborted) {
-			dispatcher.next(n++);
+		while (n < end && !observer.signal.aborted) {
+			observer.next(n++);
 		}
-		dispatcher.complete();
+		observer.complete();
 	});
 }

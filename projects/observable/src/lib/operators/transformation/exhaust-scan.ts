@@ -16,7 +16,7 @@ export function exhaustScan<
 	seed: ObservedValueOf<Out>,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let accumulated = seed;
 
 			const value = new Pipeline(source).pipe(
@@ -24,8 +24,8 @@ export function exhaustScan<
 			);
 
 			value.subscribe({
-				...dispatcher,
-				next: (value) => dispatcher.next((accumulated = value)),
+				...observer,
+				next: (value) => observer.next((accumulated = value)),
 				finally: () => (accumulated = null!),
 			});
 		});

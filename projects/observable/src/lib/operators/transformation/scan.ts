@@ -24,7 +24,7 @@ export function scan(
 	]
 ): UnaryFunction<ObservableInput, Observable> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			const [accumulator, seed] = args;
 			// Whether or not we have state yet. This will only be
 			// false before the first value arrives if we didn't get
@@ -38,7 +38,7 @@ export function scan(
 			let index = 0;
 
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: (value) => {
 					// Set the state.
 					if (hasState) {
@@ -53,7 +53,7 @@ export function scan(
 					}
 
 					// Send it to the consumer.
-					dispatcher.next(accumulated);
+					observer.next(accumulated);
 				},
 			});
 		});

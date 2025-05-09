@@ -4,16 +4,16 @@ export function fromFetch(
 	input: RequestInfo | URL,
 	init?: Omit<RequestInit, 'signal'>,
 ): Observable<Response> {
-	return new Observable<Response>(async (dispatcher) => {
+	return new Observable<Response>(async (observer) => {
 		try {
 			const response = await globalThis.fetch(input, {
 				...init,
-				signal: dispatcher.signal,
+				signal: observer.signal,
 			});
-			dispatcher.next(response);
-			dispatcher.complete();
+			observer.next(response);
+			observer.complete();
 		} catch (error) {
-			dispatcher.error(error);
+			observer.error(error);
 		}
 	});
 }

@@ -32,35 +32,35 @@ export interface Observer<Value = unknown> {
 /**
  * An object interface that defines a set of functions a user can use to push notifications to an {@linkcode Observer|observer}.
  */
-export interface Dispatcher<Value = unknown> {
+export interface ProducerObserver<Value = unknown> {
 	/**
-	 * Determines if/when this {@linkcode Dispatcher|dispatcher} has been aborted and is no longer pushing new notifications.
+	 * Determines if/when this {@linkcode ProducerObserver|observer} has been aborted and is no longer pushing new notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Pushing notifications of type `next` with an attached {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
+	 * Pushing notifications of type `next` with an attached {@linkcode value} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
 	 * @param value The {@linkcode value} to send along with the `next` notification.
 	 */
 	next(value: Value): void;
 	/**
-	 * Aborts this {@linkcode Dispatcher|dispatcher} and pushes a notification of type `error` with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
+	 * Aborts this {@linkcode ProducerObserver|observer} and pushes a notification of type `error` with an attached {@linkcode error} to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
 	 * @param error The {@linkcode error} value to send along with the `error` notification.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Aborts this {@linkcode Dispatcher|dispatcher} and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode Dispatcher|dispatcher} has already been aborted.
+	 * Aborts this {@linkcode ProducerObserver|observer} and push a notification of type `complete` to an {@linkcode Observer}. This has no operation (noop) if this {@linkcode ProducerObserver|observer} has already been aborted.
 	 */
 	complete(): void;
 }
 
-export type DispatcherConstructor = new <Value = unknown>(
+export type ProducerObserverConstructor = new <Value = unknown>(
 	observerOrNext?:
 		| Partial<Observer<Value>>
 		| ((value: Value) => unknown)
 		| null,
-) => Dispatcher<Value>;
+) => ProducerObserver<Value>;
 
-export const Dispatcher: DispatcherConstructor = class {
+export const ProducerObserver: ProducerObserverConstructor = class {
 	/** @internal */
 	readonly #observer?: Partial<Observer> | null;
 
@@ -91,7 +91,7 @@ export const Dispatcher: DispatcherConstructor = class {
 
 	/** @internal */
 	next(value: unknown): void {
-		// If this dispatcher has been aborted there is nothing to do.
+		// If this observer has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
 		try {
@@ -103,10 +103,10 @@ export const Dispatcher: DispatcherConstructor = class {
 
 	/** @internal */
 	error(error: unknown): void {
-		// If this dispatcher has been aborted there is nothing to do.
+		// If this observer has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort this dispatcher before pushing notifications to the
+		// Abort this observer before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 
@@ -127,10 +127,10 @@ export const Dispatcher: DispatcherConstructor = class {
 
 	/** @internal */
 	complete(): void {
-		// If this dispatcher has been aborted there is nothing to do.
+		// If this observer has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Abort this dispatcher before pushing notifications to the
+		// Abort this observer before pushing notifications to the
 		// observer to handle reentrant code.
 		this.#controller.abort();
 

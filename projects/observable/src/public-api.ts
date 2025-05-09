@@ -5,8 +5,8 @@ export {
 	empty,
 	never,
 	type Observer,
-	Dispatcher,
-	type DispatcherConstructor,
+	ProducerObserver,
+	type ProducerObserverConstructor,
 
 	// Subjects
 	Subject,

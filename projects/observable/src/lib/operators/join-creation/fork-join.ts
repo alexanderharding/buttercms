@@ -137,7 +137,7 @@ export function forkJoin(
 		return empty;
 	}
 
-	return new Observable((dispatcher) => {
+	return new Observable((observer) => {
 		const { length } = normalizedInputs;
 		// A store for the values each observable has emitted so far. We match observable to value on index.
 		const values = new Array<unknown>(length);
@@ -153,7 +153,7 @@ export function forkJoin(
 		// in to the slot in the output array or the key in the array of keys in the output dictionary.
 		normalizedInputs.forEach((input, index) => {
 			from(input).subscribe({
-				...dispatcher,
+				...observer,
 				next(value) {
 					const hasValue = index in values;
 					// When we get a value, record it in our set of values.
@@ -167,12 +167,12 @@ export function forkJoin(
 					if (remainingCompletions && hasValue) return;
 
 					if (remainingEmissions === 0) {
-						dispatcher.next(keys ? createObject(keys, values) : values);
-						dispatcher.complete();
+						observer.next(keys ? createObject(keys, values) : values);
+						observer.complete();
 						return;
 					}
 
-					dispatcher.error(new Error('No elements in sequence'));
+					observer.error(new Error('No elements in sequence'));
 				},
 			});
 		});

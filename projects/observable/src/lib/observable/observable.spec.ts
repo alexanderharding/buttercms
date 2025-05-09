@@ -1,51 +1,51 @@
 import { UnaryFunction } from '../pipe';
 import { Observable } from './observable';
-import { Observer, Dispatcher } from './dispatcher';
+import { Observer, ProducerObserver } from './observer';
 
 describe(Observable.name, () => {
 	describe(Observable.prototype.subscribe.name, () => {
-		it('should create a new dispatcher correctly when subscribe is called with a next function', () => {
+		it('should create a new observer correctly when subscribe is called with a next function', () => {
 			// Arrange
 			const next = jasmine.createSpy<UnaryFunction<number>>('next');
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher<number>>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 
 			// Act
 			observable.subscribe(next);
-			const dispatcher = subscribeSpy.calls.argsFor(0)[0];
-			dispatcher.next(1);
+			const observer = subscribeSpy.calls.argsFor(0)[0];
+			observer.next(1);
 
 			// Assert
-			expect(dispatcher).toBeInstanceOf(Dispatcher);
-			expect(dispatcher.signal.aborted).toBeFalse();
+			expect(observer).toBeInstanceOf(ProducerObserver);
+			expect(observer.signal.aborted).toBeFalse();
 			expect(next).toHaveBeenCalledOnceWith(1);
 		});
 
-		it('should create a new dispatcher correctly when subscribe is called with a partial observer', () => {
+		it('should create a new observer correctly when subscribe is called with a partial observer', () => {
 			// Arrange
 			const observer = jasmine.createSpyObj<Partial<Observer<number>>>(
 				'observer',
 				['next', 'error'],
 			);
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher<number>>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 
 			// Act
 			observable.subscribe(observer);
-			const dispatcher = subscribeSpy.calls.argsFor(0)[0];
-			dispatcher.next(1);
-			dispatcher.complete();
+			const observer = subscribeSpy.calls.argsFor(0)[0];
+			observer.next(1);
+			observer.complete();
 
 			// Assert
-			expect(dispatcher).toBeInstanceOf(Dispatcher);
-			expect(dispatcher.signal.aborted).toBeFalse();
+			expect(observer).toBeInstanceOf(ProducerObserver);
+			expect(observer.signal.aborted).toBeFalse();
 			expect(observer.next).toHaveBeenCalledOnceWith(1);
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 		});
 
-		it('should create a new dispatcher correctly when subscribe is called with a full observer', () => {
+		it('should create a new observer correctly when subscribe is called with a full observer', () => {
 			// Arrange
 			const error = new Error('this should be handled');
 			const abortReason = Symbol('abort reason');
@@ -56,61 +56,63 @@ describe(Observable.name, () => {
 				{ signal: controller.signal },
 			);
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher<number>>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 
 			// Act
 			observable.subscribe(observer);
-			const dispatcher = subscribeSpy.calls.argsFor(0)[0];
+			const observer = subscribeSpy.calls.argsFor(0)[0];
 			controller.abort(abortReason);
-			dispatcher.next(1);
-			dispatcher.error(error);
-			dispatcher.complete();
+			observer.next(1);
+			observer.error(error);
+			observer.complete();
 
 			// Assert
-			expect(dispatcher).toBeInstanceOf(Dispatcher);
-			expect(dispatcher.signal.aborted).toBeTrue();
-			expect(dispatcher.signal.reason).toBe(abortReason);
+			expect(observer).toBeInstanceOf(ProducerObserver);
+			expect(observer.signal.aborted).toBeTrue();
+			expect(observer.signal.reason).toBe(abortReason);
 			expect(observer.next).toHaveBeenCalledOnceWith(1);
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 			expect(observer.finally).toHaveBeenCalledOnceWith();
 		});
 
-		it('should not create a new dispatcher when subscribe is called with an existing open dispatcher', () => {
+		it('should not create a new observer when subscribe is called with an existing open observer', () => {
 			// Arrange
-			const dispatcher = new Dispatcher({});
+			const observer = new ProducerObserver({});
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 
 			// Act
-			observable.subscribe(dispatcher);
+			observable.subscribe(observer);
 
 			// Assert
-			expect(subscribeSpy.calls.argsFor(0)[0]).toBe(dispatcher);
+			expect(subscribeSpy.calls.argsFor(0)[0]).toBe(observer);
 		});
 
-		it('should not create a new dispatcher when subscribe is called with an existing open dispatcher', () => {
+		it('should not create a new observer when subscribe is called with an existing open observer', () => {
 			// Arrange
 			const controller = new AbortController();
-			const dispatcher = new Dispatcher({ signal: controller.signal });
+			const observer = new ProducerObserver({
+				signal: controller.signal,
+			});
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 			controller.abort();
 
 			// Act
-			observable.subscribe(dispatcher);
+			observable.subscribe(observer);
 
 			// Assert
-			expect(subscribeSpy.calls.argsFor(0)[0]).toBe(dispatcher);
+			expect(subscribeSpy.calls.argsFor(0)[0]).toBe(observer);
 		});
 
 		it('should not throw when internal subscribe throws', () => {
 			// Arrange
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(new Error('this should be handled'));
 			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
@@ -123,7 +125,7 @@ describe(Observable.name, () => {
 			// Arrange
 			const error = new Error('this should be handled');
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(error);
 			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
@@ -159,7 +161,7 @@ describe(Observable.name, () => {
 		it('should call internal subscribe again on resubscribe', () => {
 			// Arrange;
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<Dispatcher>>('subscribe');
+				jasmine.createSpy<UnaryFunction<ProducerObserver>>('subscribe');
 			const observable = new Observable(subscribeSpy);
 
 			// Act

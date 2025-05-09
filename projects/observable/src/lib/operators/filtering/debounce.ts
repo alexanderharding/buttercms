@@ -12,23 +12,23 @@ export function debounce<T extends ObservableInput>(
 	) => ObservableInput,
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
-			if (dispatcher.signal.aborted) return;
+		new Observable((observer) => {
+			if (observer.signal.aborted) return;
 
 			let lastValue: ObservedValueOf<T> | typeof noValue = noValue;
 			let controller: AbortController | null;
 			let index = 0;
 
 			// Unsubscribe from duration notifier as soon as possible.
-			dispatcher.signal.addEventListener('abort', () => setController(null), {
+			observer.signal.addEventListener('abort', () => setController(null), {
 				once: true,
 			});
 
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: (value) =>
 					from(durationSelector((lastValue = value), index++)).subscribe({
-						...dispatcher,
+						...observer,
 						signal: setController(new AbortController()).signal,
 						complete: noop,
 						next: emit,
@@ -37,7 +37,7 @@ export function debounce<T extends ObservableInput>(
 					// Source completed.
 					// Emit any pending debounced values then complete
 					emit();
-					dispatcher.complete();
+					observer.complete();
 				},
 				finally: () => (lastValue = noValue),
 			});
@@ -59,7 +59,7 @@ export function debounce<T extends ObservableInput>(
 				// We have a value! Free up memory first, then emit the value.
 				const value = lastValue;
 				lastValue = noValue;
-				dispatcher.next(value);
+				observer.next(value);
 			}
 		});
 }
@@ -68,16 +68,16 @@ export function debounce2<T extends ObservableInput>(
 	notifier: ObservableInput,
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let lastValue: ObservedValueOf<T> | typeof noValue = noValue;
 			let controller: AbortController | null;
 
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: (value) => {
 					lastValue = value;
 					from(notifier).subscribe({
-						...dispatcher,
+						...observer,
 						signal: setController(new AbortController()).signal,
 						complete: noop,
 						next: emit,
@@ -87,7 +87,7 @@ export function debounce2<T extends ObservableInput>(
 					// Source completed.
 					// Emit any pending debounced values then complete
 					emit();
-					dispatcher.complete();
+					observer.complete();
 				},
 				finally() {
 					lastValue = noValue;
@@ -112,7 +112,7 @@ export function debounce2<T extends ObservableInput>(
 				// We have a value! Free up memory first, then emit the value.
 				const value = lastValue;
 				lastValue = noValue;
-				dispatcher.next(value);
+				observer.next(value);
 			}
 		});
 }

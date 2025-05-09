@@ -6,10 +6,10 @@ export function map<In extends ObservableInput, Out>(
 	mapFn: (value: ObservedValueOf<In>) => Out,
 ): UnaryFunction<In, Observable<Out>> {
 	return (source) =>
-		new Observable((dispatcher) =>
+		new Observable((observer) =>
 			from(source).subscribe({
-				...dispatcher,
-				next: (value) => dispatcher.next(mapFn(value)),
+				...observer,
+				next: (value) => observer.next(mapFn(value)),
 			}),
 		);
 }

@@ -131,22 +131,22 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 	readonly #pipeline = new Pipeline(this);
 
 	/** @internal */
-	readonly #output = new Observable((dispatcher) => {
+	readonly #output = new Observable((observer) => {
 		// We use a copy here, so reentrant code does not mutate our array while we're
-		// emitting it to a new dispatcher.
+		// emitting it to a new observer.
 		const copy = this.#buffer.slice();
 
 		// 'forEach' and 'every' are generally considered faster than traditional 'for' loops.
-		// We use 'every' here so we can exit early if the dispatcher is aborted.
+		// We use 'every' here so we can exit early if the observer is aborted.
 		copy.every((value) => {
-			if (dispatcher.signal.aborted) return false;
-			dispatcher.next(value);
+			if (observer.signal.aborted) return false;
+			observer.next(value);
 			return true;
 		});
 
 		// After all buffered values, if any, are emitted, subscribe to the delegate.
 		// This allows the delegate Subject to handle from here on out.
-		this.#delegate.subscribe(dispatcher);
+		this.#delegate.subscribe(observer);
 	});
 
 	/** @internal */

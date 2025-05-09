@@ -18,7 +18,7 @@ export function expand<T extends ObservableInput>(
 		: Infinity,
 ): UnaryFunction<T, Observable<ObservedValueOf<T>>> {
 	// return (source) =>
-	// 	new Observable((dispatcher) => {
+	// 	new Observable((observer) => {
 	// 		const project =
 	// 			typeof projectOrConcurrent === 'function'
 	// 				? projectOrConcurrent
@@ -26,14 +26,14 @@ export function expand<T extends ObservableInput>(
 	// 		from(source)
 	// 			.pipe(
 	// 				mergeMap((value, index) => {
-	// 					dispatcher.next(value);
+	// 					observer.next(value);
 	// 					return project(value, index++);
 	// 				}),
 	// 			)
-	// 			.subscribe(dispatcher);
+	// 			.subscribe(observer);
 	// 	});
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			// The number of active inner subscriptions.
 			let active = 0;
 			// An index to pass to our accumulator function
@@ -46,7 +46,7 @@ export function expand<T extends ObservableInput>(
 			concurrent = Math.max(concurrent, 1);
 
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: outerNext,
 				complete: outerComplete,
 				finally: outerFinally,
@@ -56,7 +56,7 @@ export function expand<T extends ObservableInput>(
 				// We need to emit the outer values and the inner values
 				// as the inners will "become outers" in a way as they are recursively fed
 				// back to the projection mechanism.
-				dispatcher.next(value);
+				observer.next(value);
 
 				// Increment the number of active subscriptions so we can track it
 				// against our concurrency limit later.
@@ -68,7 +68,7 @@ export function expand<T extends ObservableInput>(
 				let isInnerComplete = false;
 
 				from(project(value, index++)).subscribe({
-					...dispatcher,
+					...observer,
 					next: outerNext,
 					complete: innerComplete,
 					finally: innerFinally,
@@ -88,7 +88,7 @@ export function expand<T extends ObservableInput>(
 					// We have to wrap this in a try/catch because it happens during
 					// finalization, possibly asynchronously, and we want to pass
 					// any errors that happen (like in a projection function) to
-					// the outer Dispatcher.
+					// the outer ProducerObserver.
 					try {
 						// Decrement the active count to ensure that the next time
 						// we try to call `doInnerSub`, the number is accurate.
@@ -101,7 +101,7 @@ export function expand<T extends ObservableInput>(
 						// Check to see if we can complete, and complete if so.
 						checkComplete();
 					} catch (err) {
-						dispatcher.error(err);
+						observer.error(err);
 					}
 				}
 			}
@@ -120,7 +120,7 @@ export function expand<T extends ObservableInput>(
 			}
 
 			function checkComplete(): void {
-				if (isOuterComplete && !buffer.length && !active) dispatcher.complete();
+				if (isOuterComplete && !buffer.length && !active) observer.complete();
 			}
 
 			function checkBuffer(): void {

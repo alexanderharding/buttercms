@@ -127,15 +127,15 @@ export function repeat<T extends ObservableInput>(
 			: { count: countOrConfig };
 	return (source) => {
 		if (count <= 0) return empty;
-		return new Observable((dispatcher) => {
-			if (dispatcher.signal.aborted) return;
+		return new Observable((observer) => {
+			if (observer.signal.aborted) return;
 
 			let soFar = 0;
 			let sourceController: AbortController | null;
 
-			dispatcher.signal.addEventListener(
+			observer.signal.addEventListener(
 				'abort',
-				() => unsubscribeSource(dispatcher.signal.reason),
+				() => unsubscribeSource(observer.signal.reason),
 				{ once: true },
 			);
 
@@ -143,10 +143,10 @@ export function repeat<T extends ObservableInput>(
 
 			function subscribeToSource(): void {
 				from(source).subscribe({
-					...dispatcher,
+					...observer,
 					signal: (sourceController = new AbortController()).signal,
 					complete: () =>
-						++soFar < count ? resubscribe() : dispatcher.complete(),
+						++soFar < count ? resubscribe() : observer.complete(),
 				});
 			}
 
@@ -156,7 +156,7 @@ export function repeat<T extends ObservableInput>(
 				const notifier =
 					typeof delay === 'number' ? timer(delay) : from(delay(soFar));
 				notifier.pipe(take(1)).subscribe({
-					...dispatcher,
+					...observer,
 					next: subscribeToSource,
 				});
 			}

@@ -15,7 +15,7 @@ export function switchScan<
 	seed: ObservedValueOf<Out>,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let accumulated = seed;
 
 			from(source)
@@ -23,8 +23,8 @@ export function switchScan<
 					switchMap((value, index) => accumulator(accumulated, value, index++)),
 				)
 				.subscribe({
-					...dispatcher,
-					next: (value) => dispatcher.next((accumulated = value)),
+					...observer,
+					next: (value) => observer.next((accumulated = value)),
 					finally: () => (accumulated = null!),
 				});
 		});

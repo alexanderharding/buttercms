@@ -10,12 +10,12 @@ export function connectable<Input extends ObservableInput>(
 	) => Subscribable<ObservedValueOf<Input>> &
 		Partial<Observer<ObservedValueOf<Input>>> = () => new Subject(),
 ): Observable<ObservedValueOf<Input>> {
-	return new Observable((dispatcher) => {
-		if (dispatcher.signal.aborted) return;
+	return new Observable((observer) => {
+		if (observer.signal.aborted) return;
 		const source = from(input);
 		const subject = connector(source);
-		subject.subscribe(dispatcher);
-		if (dispatcher.signal.aborted) return;
+		subject.subscribe(observer);
+		if (observer.signal.aborted) return;
 		source.subscribe(subject);
 	});
 }

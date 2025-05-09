@@ -43,6 +43,6 @@ import { Observable } from './observable';
  * @constant
  * @public
  */
-export const empty: Observable<never> = new Observable((dispatcher) =>
-	dispatcher.complete(),
+export const empty: Observable<never> = new Observable((observer) =>
+	observer.complete(),
 );

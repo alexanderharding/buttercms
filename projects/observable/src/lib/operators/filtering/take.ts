@@ -13,20 +13,20 @@ export function take<Value>(
 		// If we are taking no values, that's empty.
 		if (count <= 0) return empty;
 
-		return new Observable((dispatcher) => {
+		return new Observable((observer) => {
 			let seen = 0;
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: (value) => {
 					// Increment the number of values we have seen,
 					// then check it against the allowed count to see
 					// if we are still letting values through.
 					if (++seen > count) return;
-					dispatcher.next(value);
+					observer.next(value);
 					// If we have met or passed our allowed count,
 					// we need to complete. We have to do <= here,
 					// because reentrant code will increment `seen` twice.
-					if (count <= seen) dispatcher.complete();
+					if (count <= seen) observer.complete();
 				},
 			});
 		});

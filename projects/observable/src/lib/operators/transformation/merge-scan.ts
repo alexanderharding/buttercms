@@ -16,7 +16,7 @@ export function mergeScan<
 	concurrent?: number,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let accumulated = seed;
 
 			const value = from(source).pipe(
@@ -27,8 +27,8 @@ export function mergeScan<
 			);
 
 			value.subscribe({
-				...dispatcher,
-				next: (value) => dispatcher.next((accumulated = value)),
+				...observer,
+				next: (value) => observer.next((accumulated = value)),
 				finally: () => (accumulated = null!),
 			});
 		});

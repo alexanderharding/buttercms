@@ -9,14 +9,14 @@ export function switchMap<
 	project: (value: ObservedValueOf<In>, index: number) => Out,
 ): UnaryFunction<In, Observable<ObservedValueOf<Out>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let controller: AbortController | null;
 			let index = 0;
 			let isOuterComplete = false;
 			let hasInnerSubscription = false;
 
 			from(source).subscribe({
-				...dispatcher,
+				...observer,
 				next: outerNext,
 				complete: outerComplete,
 				finally: () => setController(null),
@@ -26,7 +26,7 @@ export function switchMap<
 				const { signal } = setController(new AbortController());
 				hasInnerSubscription = true;
 				from(project(value, index++)).subscribe({
-					...dispatcher,
+					...observer,
 					signal,
 					complete() {
 						hasInnerSubscription = false;
@@ -51,7 +51,7 @@ export function switchMap<
 			// We only complete the result if the source is complete AND we don't have an active inner subscription.
 			// This is called both when the source completes and when the inners complete.
 			function checkComplete(): void {
-				if (isOuterComplete && !hasInnerSubscription) dispatcher.complete();
+				if (isOuterComplete && !hasInnerSubscription) observer.complete();
 			}
 		});
 }

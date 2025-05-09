@@ -6,15 +6,15 @@ export function filter<Input extends ObservableInput>(
 	predicate: (value: ObservedValueOf<Input>, index: number) => boolean,
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			// An index passed to our predicate function on each call.
 			let index = 0;
 
 			// Subscribe to the source, all errors and completions are
 			// forwarded to the consumer.
 			from(source).subscribe({
-				...dispatcher,
-				next: (value) => predicate(value, index++) && dispatcher.next(value),
+				...observer,
+				next: (value) => predicate(value, index++) && observer.next(value),
 			});
 		});
 }

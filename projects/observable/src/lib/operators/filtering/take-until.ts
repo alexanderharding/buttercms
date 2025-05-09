@@ -13,21 +13,21 @@ export function takeUntil<Input extends ObservableInput>(
 	notifier: ObservableInput,
 ): UnaryFunction<Input, Observable<ObservedValueOf<Input>>> {
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			// Subscribe to the notifier and complete the source when it
 			// pushes the next notification.
 			from(notifier).subscribe({
-				...dispatcher,
-				next: () => dispatcher.complete(),
+				...observer,
+				next: () => observer.complete(),
 				// Ignore complete notifications from the notifier.
 				complete: noop,
 			});
 
-			// If the dispatcher has already been aborted,
+			// If the observer has already been aborted,
 			// there's nothing to do.
-			if (dispatcher.signal.aborted) return;
+			if (observer.signal.aborted) return;
 
 			// Subscribe to the source and pass through notifications.
-			from(source).subscribe(dispatcher);
+			from(source).subscribe(observer);
 		});
 }

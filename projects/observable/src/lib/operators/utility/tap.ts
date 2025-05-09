@@ -27,24 +27,24 @@ export function tap<T extends ObservableInput>(
 			: observerOrNext;
 
 	return (source) =>
-		new Observable((dispatcher) => {
+		new Observable((observer) => {
 			let isUnsubscribe = true;
 			tapObserver.subscribe?.();
 			from(source).subscribe({
-				signal: dispatcher.signal,
+				signal: observer.signal,
 				next(value) {
 					tapObserver.next?.(value);
-					dispatcher.next(value);
+					observer.next(value);
 				},
 				error(error) {
 					isUnsubscribe = false;
 					tapObserver.error?.(error);
-					dispatcher.error(error);
+					observer.error(error);
 				},
 				complete() {
 					isUnsubscribe = false;
 					tapObserver.complete?.();
-					dispatcher.complete();
+					observer.complete();
 				},
 				finally() {
 					if (isUnsubscribe) tapObserver.unsubscribe?.();
