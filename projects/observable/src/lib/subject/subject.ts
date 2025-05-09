@@ -137,7 +137,7 @@ export const Subject: SubjectConstructor = class<Value> {
 
 		// Use a unique symbol to identify the observer since it is allowed for the same
 		// observer to be added multiple times.
-		const key = Symbol('Subject observer');
+		const key = Symbol('Subject producer observer');
 
 		// Add the observer to the observers Map so it can begin to receive push notifications.
 		this.#observers.set(key, observer);

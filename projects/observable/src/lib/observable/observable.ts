@@ -1,6 +1,7 @@
 import { InteropObservable, observable, Subscribable } from '../operators';
 import { Pipeline } from '../pipe';
-import { ConsumerObserver, ProducerObserver } from './observer';
+import { ConsumerObserver } from './consumer-observer';
+import { ProducerObserver } from './producer-observer';
 
 /**
  * A representation of any set of values over any amount of time.

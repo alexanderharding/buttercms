@@ -1,4 +1,5 @@
 export * from './observable';
 export * from './never';
 export * from './empty';
-export * from './observer';
+export * from './producer-observer';
+export * from './consumer-observer';

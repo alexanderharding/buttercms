@@ -1,6 +1,6 @@
 import { UnaryFunction } from '../pipe';
 import { Observable } from './observable';
-import { ConsumerObserver, ProducerObserver } from './observer';
+import { ConsumerObserver, ProducerObserver } from './producer-observer';
 
 describe(Observable.name, () => {
 	describe(Observable.prototype.subscribe.name, () => {
