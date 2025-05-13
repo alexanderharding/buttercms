@@ -2,11 +2,11 @@ import { UnhandledError } from '../errors';
 import { ConsumerObserver } from './consumer-observer';
 
 /**
- * An object interface that defines a set of callbacks for pushing notifications to a `consumer`.
+ * An object interface that defines a set of callbacks for pushing notifications to a consumer.
  */
 export interface ProducerObserver<Value = unknown> {
 	/**
-	 * Notify the `consumer` that this {@linkcode ProducerObserver|observer} will not push any more notifications.
+	 * Indicates that the `producer` cannot push any more notifications.
 	 */
 	readonly signal: AbortSignal;
 	/**
@@ -15,12 +15,12 @@ export interface ProducerObserver<Value = unknown> {
 	 */
 	next(value: Value): void;
 	/**
-	 * Notify the `consumer` that the `producer` has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete}.
+	 * Abort {@linkcode signal} and notify the `consumer` that the `producer` has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete}.
 	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Notify the `consumer` that the `producer` has finished successfully. This is mutually exclusive with {@linkcode error}.
+	 * Abort {@linkcode signal} and notify the `consumer` that the `producer` has finished successfully. This is mutually exclusive with {@linkcode error}.
 	 */
 	complete(): void;
 }
