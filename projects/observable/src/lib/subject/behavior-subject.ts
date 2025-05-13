@@ -1,24 +1,75 @@
 import { Observable, type ConsumerObserver } from '../observable';
 import { Subject } from './subject';
 import { Pipeline, UnaryFunction } from '../pipe';
-import { observable, Subscribable } from '../operators';
+import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
  * A variant of {@linkcode Subject} that requires an initial value and
- * emits its current value whenever it is subscribed to.
+ * notifies new `consumers` of the {@linkcode BehaviorSubject}'s current value whenever
+ * it is observed.
+ * ```ts
+ * import { BehaviorSubject } from '@xander/observable';
  *
- * @template Value - The type of values emitted by the subject.
- * @example
  * const subject = new BehaviorSubject(0);
- * subject.subscribe((value) => console.log(value)); // 0
+ *
+ * subject.subscribe((value) => console.log(value));
+ *
  * subject.next(1);
  *
- * @see {@linkcode Subject}
- * @public
+ * // console output:
+ * // 0
+ * // 1
+ * ```
  */
-export type BehaviorSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
-	Readonly<{ value: Value }> &
-	Pipeline<BehaviorSubject<Value>>;
+export interface BehaviorSubject<Value = unknown>
+	extends InteropObservable<Value>,
+		Pipeline<BehaviorSubject<Value>> {
+	/**
+	 * A `String` value that is used in the creation of the string description of an object. Called by the built-in method Object.prototype.toString.
+	 */
+	readonly [Symbol.toStringTag]: string;
+	/**
+	 * Indicates that the `producer` cannot push any more notifications through this {@linkcode BehaviorSubject}.
+	 */
+	readonly signal: AbortSignal;
+	/**
+	 * Store {@linkcode value} as the current value and notify all `consumers` of this {@linkcode BehaviorSubject} that a {@linkcode value} has been produced.
+	 * This has no-operation if this {@linkcode BehaviorSubject} is already {@linkcode signal|aborted}.
+	 * @param value The {@linkcode value} that has been produced.
+	 */
+	next(value: Value): void;
+	/**
+	 * Abort this {@linkcode BehaviorSubject} and notify all `consumers` of this {@linkcode BehaviorSubject} that the `producer` has finished successfully.
+	 * This is mutually exclusive with {@linkcode error} and has no-operation if this {@linkcode BehaviorSubject} is already {@linkcode signal|aborted}.
+	 */
+	complete(): void;
+	/**
+	 * Abort this {@linkcode BehaviorSubject} and notify all `consumers` of this {@linkcode BehaviorSubject} that the `producer` has finished because an {@linkcode error} occurred.
+	 * This is mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode BehaviorSubject} is already {@linkcode signal|aborted}.
+	 * @param error The {@linkcode error} that occurred.
+	 */
+	error(error: unknown): void;
+	/**
+	 * Access an {@linkcode Observable|observable} with this {@linkcode BehaviorSubject} as the source. You can do this to create custom ConsumerObserver-side logic
+	 * of this {@linkcode BehaviorSubject} and conceal it from code that uses the {@linkcode Observable|observable}.
+	 * @returns An {@linkcode Observable|observable} that this {@linkcode BehaviorSubject} casts to.
+	 */
+	asObservable(): Observable<Value>;
+	/**
+	 * Observe notifications from this {@linkcode BehaviorSubject}.
+	 * @param observerOrNext If provided, either a {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each produced value.
+	 */
+	subscribe(
+		observerOrNext?:
+			| Partial<ConsumerObserver<Value>>
+			| ((value: Value) => unknown)
+			| null,
+	): void;
+	/**
+	 * A method that returns the async iterator for this {@linkcode BehaviorSubject}. Called by the semantics of the for-await-of statement.
+	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
+}
 
 export interface BehaviorSubjectConstructor {
 	new <Value>(initialValue: Value): BehaviorSubject<Value>;
@@ -26,47 +77,12 @@ export interface BehaviorSubjectConstructor {
 }
 
 export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	#value: Value;
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly #delegate = new Subject<Value>();
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly signal = this.#delegate.signal;
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly #pipeline = new Pipeline(this);
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
-	readonly #output = new Observable((observer) => {
+	readonly #output = new Observable<Value>((observer) => {
 		if (!this.signal.aborted) observer.next(this.#value);
 		this.#delegate.subscribe(observer);
 	});
@@ -80,77 +96,41 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 		this.#value = initialValue;
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	get value(): Value {
 		return this.#value;
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	[observable](): Subscribable {
 		return this;
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
+	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void> {
+		return this.#delegate[Symbol.asyncIterator]();
+	}
+
 	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	next(value: Value): void {
 		this.#delegate.next(
 			this.signal.aborted ? this.#value : (this.#value = value),
 		);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
-	asObservable(): Observable {
+	asObservable(): Observable<Value> {
 		return this.#output;
 	}
 };

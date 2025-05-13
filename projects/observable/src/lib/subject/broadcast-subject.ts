@@ -4,73 +4,80 @@ import { Pipeline } from '../pipe';
 import { observable, Subscribable, InteropObservable } from '../operators';
 
 /**
- * A variant of {@linkcode Subject} where the `next` notification will exclusively multicast {@linkcode structuredClone|structured cloneable} values to _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
- * @public
+ * A variant of {@linkcode Subject} where when values are produced, they are {@linkcode structuredClone|structured cloned} and
+ * sent only to `consumers` of _other_ {@linkcode BroadcastSubject}'s with the same name, including those defined in
+ * different browsing contexts (e.g. other browser tabs).
+ * ```ts
+ * import { BroadcastSubject } from '@xander/observable';
+ *
+ * const subject1 = new BroadcastSubject('test');
+ * const subject2 = new BroadcastSubject('test');
+ *
+ * subject1.subscribe((value) => console.log('first', value));
+ * subject2.subscribe((value) => console.log('second', value));
+ *
+ * subject1.next(1);
+ * subject2.next(2);
+ *
+ * // console output:
+ * // first: 1
+ * // second: 2
+ * ```
  */
 export interface BroadcastSubject<Value = void>
 	extends InteropObservable<Value>,
 		Pipeline<BroadcastSubject<Value>> {
 	/**
-	 * Getting the name of this {@linkcode BroadcastSubject|subject}.
-	 * @property
-	 * @readonly
-	 * @public
+	 * The provided name of this {@linkcode BroadcastSubject}.
 	 */
 	readonly name: string;
 	/**
-	 * Determining if/when this {@linkcode BroadcastSubject|subject} has been aborted and is no longer accepting new notifications.
-	 * @readonly
-	 * @property
-	 * @public
+	 * Indicates that the `producer` cannot push any more notifications through this {@linkcode BroadcastSubject}.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * @property
-	 * @readonly
-	 * @public
+	 * A `String` value that is used in the creation of the string description of this {@linkcode BroadcastSubject}. Called by the built-in method Object.prototype.toString.
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Multicast a {@linkcode structuredClone|structured clone} of the {@linkcode value} to all _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab). Observers of this {@linkcode BroadcastSubject|subject} will not receive this value unless it is received from another {@linkcode BroadcastSubject|subject} of the same name. Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
-	 * @param value The {@linkcode value} to multicast to all _other_ {@linkcode BroadcastSubject|subjects} of the same name.
-	 * @method
-	 * @public
+	 * Notify all `consumers` of _other_ {@linkcode BroadcastSubject}'s of the same `name` that a {@linkcode structuredClone|structured clone} of
+	 * {@linkcode value} has been produced, even if the {@linkcode BroadcastSubject}'s are defined in another browsing context (ie. another browser tab).
+	 * This has no-operation if this {@linkcode BroadcastSubject} is already {@linkcode signal|aborted}.
+	 * @param value The {@linkcode value} that has been produced which will be {@linkcode structuredClone|structured cloned}.
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast a complete notification to all observers of _this_ {@linkcode BroadcastSubject|subject}. Any future observers will be immediately completed (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
-	 * @method
-	 * @public
+	 * Abort _this_ {@linkcode BroadcastSubject} and notify all `consumers` of _this_ {@linkcode BroadcastSubject} that the `producer`
+	 * has finished successfully. This is mutually exclusive with {@linkcode error}. This has no-operation if this {@linkcode BroadcastSubject} is already
+	 * {@linkcode signal|aborted}.
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode BroadcastSubject|subject} and multicast an {@linkcode error} to all observers of _this_ {@linkcode BroadcastSubject|subject}. Any future observers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode BroadcastSubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all observers of _this_ {@linkcode BroadcastSubject|subject}.
-	 * @method
-	 * @public
+	 * Abort _this_ {@linkcode BroadcastSubject} and notify all `consumers` of _this_ {@linkcode BroadcastSubject} that the `producer`
+	 * has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete}. This has no-operation if this {@linkcode BroadcastSubject} is already
+	 * {@linkcode signal|aborted}.
+	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Access an{@linkcode Observable|observable} with this {@linkcode BroadcastSubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode BroadcastSubject|subject} and conceal it from code that uses the {@linkcode Observable|observable}.
-	 * @returns An {@linkcode Observable|observable} that this {@linkcode BroadcastSubject|subject} casts to.
-	 * @method
-	 * @public
+	 * Access an {@linkcode Observable} with this {@linkcode BroadcastSubject} as the source. You can do this to create custom
+	 * `producer`-side logic of this {@linkcode BroadcastSubject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode BroadcastSubject} casts to.
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * Observing any notifications from _this_ {@linkcode BroadcastSubject|subject} except for `next`, which is only received from _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
-	 * @param observerOrNext Either an {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode BroadcastSubject|subject}.
-	 * @method
-	 * @public
+	 * Observe any notifications from _this_ {@linkcode BroadcastSubject} except for `next`, which is only received from
+	 * _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
+	 * @param observerOrNext If provided, either a {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each produced value.
 	 */
 	subscribe(
 		observerOrNext?:
 			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown),
+			| ((value: Value) => unknown)
+			| null,
 	): void;
 	/**
-	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
-	 * @public
+	 * A method that returns the async iterator for an this {@linkcode BroadcastSubject}. Called by the semantics of the for-await-of statement.
 	 */
 	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
@@ -82,46 +89,16 @@ export interface BroadcastSubjectConstructor {
 }
 
 /**
- * A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our {@linkcode BroadcastSubject|subjects} only communicate with other {@linkcode BroadcastSubject|subjects} from this library.
- * @constant
- * @internal
+ * A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our
+ * {@linkcode BroadcastSubject|subjects} only communicate with other {@linkcode BroadcastSubject|subjects} from this library.
  */
 const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
 
 export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly name: string;
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	readonly [Symbol.toStringTag] = 'BroadcastSubject';
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @private
-	 */
 	readonly #channel: BroadcastChannel;
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @private
-	 */
 	readonly #delegate = new Subject<Value>();
-
-	/**
-	 * @internal
-	 * @readonly
-	 * @private
-	 */
 	readonly #pipeline = new Pipeline(this);
 
 	constructor(name: string) {
@@ -138,47 +115,22 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		});
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	get signal(): AbortSignal {
 		return this.#delegate.signal;
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	[observable](): Subscribable<Value> {
 		return this;
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void> {
 		return this.#delegate[Symbol.asyncIterator]();
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	subscribe(
 		observerOrNext?:
 			| Partial<ConsumerObserver<Value>>
@@ -188,11 +140,6 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		this.#delegate.subscribe(observerOrNext!);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	next(value: Value): void {
 		try {
 			if (!this.signal.aborted) this.#channel.postMessage(value);
@@ -201,29 +148,14 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		}
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
-	/**
-	 * @internal
-	 * @readonly
-	 * @public
-	 */
 	asObservable(): Observable<Value> {
 		return this.#delegate.asObservable();
 	}

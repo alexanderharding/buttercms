@@ -21,7 +21,7 @@ export interface ConsumerObserver<Value = unknown> {
 	 */
 	complete(): void;
 	/**
-	 * The `producer` has finished because of {@linkcode error}, {@linkcode complete}, or {@linkcode signal}.
+	 * The `producer` has finished because of {@linkcode error}, {@linkcode complete}, or this {@linkcode ConsumerObserver|observer} has signaled an abort.
 	 */
 	finally(): void;
 }
