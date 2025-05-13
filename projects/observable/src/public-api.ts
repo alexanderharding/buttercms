@@ -5,8 +5,7 @@ export {
 	empty,
 	never,
 	type ConsumerObserver,
-	ProducerObserver,
-	type ProducerObserverConstructor,
+	type ProducerObserver,
 
 	// Subjects
 	Subject,
