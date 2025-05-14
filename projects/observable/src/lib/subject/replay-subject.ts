@@ -1,6 +1,6 @@
 import { Observable, type ConsumerObserver } from '../observable';
 import { Subject } from './subject';
-import { Pipeline, UnaryFunction } from '../pipe';
+import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
@@ -10,6 +10,7 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * 1 will be used instead.
  *
  * @example
+ * ```ts
  * import { ReplaySubject } from "@xander/observable";
  *
  * const subject = new ReplaySubject<number>(3);
@@ -39,58 +40,45 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * // 3
  * // 4
  * // 5
- *
- * @class
- * @public
+ * ```
  */
 export interface ReplaySubject<Value = unknown>
 	extends InteropObservable<Value>,
 		Pipeline<ReplaySubject<Value>> {
 	/**
-	 * A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
-	 * @readonly
-	 * @public
+	 * A `String` value that is used in the creation of the string description of this {@linkcode ReplaySubject}. Called by the built-in method `Object.prototype.toString`.
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Determining if/when this {@linkcode ReplaySubject|subject} has been aborted and is no longer accepting new notifications.
-	 * @readonly
-	 * @property
-	 * @public
+	 * Indicates that the `producer` cannot push any more notifications through this {@linkcode Subject}.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Update the replay buffer and multicast a `next` notification with the attached {@linkcode value} to all observers of this {@linkcode ReplaySubject|subject}. This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
-	 * @param value The {@linkcode value} to store in the buffer and attach to the multicast `next` notification.
-	 * @method
-	 * @public
+	 * Update the replay buffer and notify all `consumers` of this {@linkcode ReplaySubject} that a {@linkcode value} has been produced.
+	 * This has no-operation if this {@linkcode ReplaySubject} is already {@linkcode signal|aborted}.
+	 * @param value The {@linkcode value} that has been produced and stored in the buffer.
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode ReplaySubject|subject} and multicast a `complete` notification to all observers. If a value was previously stored via `next()`, that value will be multicast to all observers before completing. Any future observers will receive replayed `next` notifications from the buffer, if any, and then immediately be notified of the `complete` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
-	 * @method
-	 * @public
+	 * Abort this {@linkcode ReplaySubject} and notify all `consumers` of this {@linkcode ReplaySubject} that the `producer` has finished successfully. This is mutually exclusive
+	 * with {@linkcode error} and has no-operation if this {@linkcode ReplaySubject} is already {@linkcode signal|aborted}.
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode ReplaySubject|subject} and multicast an `error` notification with an attached {@linkcode error} to all observers. Any future observers will receive replayed `next` notifications from the buffer, if any, and then be immediately notified of the `error` (unless they are already aborted). This has no operation (noop) if this {@linkcode ReplaySubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all observers.
-	 * @method
-	 * @public
+	 * Abort this {@linkcode ReplaySubject} and notify all `consumers` of this {@linkcode ReplaySubject} that the `producer` has finished because an {@linkcode error} occurred. This is
+	 * mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode ReplaySubject} is already {@linkcode signal|aborted}.
+	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable} with this {@linkcode ReplaySubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode ReplaySubject|subject} and conceal it from code that uses the {@linkcode Observable}.
-	 * @returns An {@linkcode Observable} that this {@linkcode ReplaySubject|subject} casts to.
-	 * @method
-	 * @public
+	 * Access an {@linkcode Observable} with this {@linkcode ReplaySubject} as the source. You can do this to create custom `producer`-side logic of
+	 * this {@linkcode ReplaySubject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode ReplaySubject} casts to.
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * Observing notifications from this {@linkcode ReplaySubject|subject}.
-	 * @param observerOrNext If provided, either an {@linkcode ConsumerObserver} with some or all options, the `next` handler (equivalent to `subscribe({ next })`).
-	 * @method
-	 * @public
+	 * Observe notifications from this {@linkcode ReplaySubject}.
+	 * @param observerOrNext If provided, either a {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each produced value.
 	 */
 	subscribe(
 		observerOrNext?:
@@ -99,8 +87,7 @@ export interface ReplaySubject<Value = unknown>
 			| null,
 	): void;
 	/**
-	 * A method that returns the async iterator for this {@linkcode ReplaySubject|subject}. Called by the semantics of the for-await-of statement.
-	 * @public
+	 * A method that returns the async iterator for this {@linkcode ReplaySubject}. Called by the semantics of the for-await-of statement.
 	 */
 	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
@@ -112,25 +99,12 @@ export interface ReplaySubjectConstructor {
 }
 
 export const ReplaySubject: ReplaySubjectConstructor = class {
-	/** @internal */
 	readonly [Symbol.toStringTag] = 'ReplaySubject';
-
-	/** @internal */
 	readonly #bufferSize: number;
-
-	/** @internal */
 	readonly #buffer: Array<unknown> = [];
-
-	/** @internal */
 	readonly #delegate = new Subject<unknown>();
-
-	/** @internal */
 	readonly signal = this.#delegate.signal;
-
-	/** @internal */
 	readonly #pipeline = new Pipeline(this);
-
-	/** @internal */
 	readonly #output = new Observable((observer) => {
 		// We use a copy here, so reentrant code does not mutate our array while we're
 		// emitting it to a new observer.
@@ -149,32 +123,31 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 		this.#delegate.subscribe(observer);
 	});
 
-	/** @internal */
 	constructor(bufferSize = Infinity) {
 		this.#bufferSize = Math.max(1, bufferSize);
 	}
 
-	/** @internal */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/** @internal */
 	[observable](): Subscribable {
 		return this;
 	}
 
-	/** @internal */
 	[Symbol.asyncIterator](): AsyncIterableIterator<unknown, void, void> {
 		return this.#output[Symbol.asyncIterator]();
 	}
 
-	/** @internal */
-	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
+	subscribe(
+		observerOrNext?:
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
+			| null,
+	): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
-	/** @internal */
 	next(value: unknown): void {
 		// If this subject has been aborted, there is nothing to do.
 		if (this.signal.aborted) return;
@@ -192,17 +165,14 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 		this.#delegate.next(value);
 	}
 
-	/** @internal */
 	complete(): void {
 		this.#delegate.complete();
 	}
 
-	/** @internal */
 	error(error: unknown): void {
 		this.#delegate.error(error);
 	}
 
-	/** @internal */
 	asObservable(): Observable {
 		return this.#output;
 	}

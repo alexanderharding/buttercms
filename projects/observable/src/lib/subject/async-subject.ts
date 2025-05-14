@@ -1,13 +1,19 @@
-import { Observable, type ConsumerObserver } from '../observable';
+import {
+	Observable,
+	type ProducerObserver,
+	type ConsumerObserver,
+} from '../observable';
 import { Subject } from './subject';
-import { Pipeline, type UnaryFunction } from '../pipe';
+import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * A variant of {@linkcode Subject} that only multicast it's latest value, if any, on completion.
- * Late observers will receive the latest value, if any, from the subject and then complete.
+ * A variant of {@linkcode Subject}. When values are produced, the latest value is buffered. If/when the {@linkcode AsyncSubject} completes
+ * all `consumers` will receive the latest value, if any, and then `complete`. Late `consumers` of the `complete` notification will receive
+ * the latest value, if any, and then `complete`.
  *
  * @example
+ * ```ts
  * import { AsyncSubject } from "@xander/observable";
  *
  * const subject = new AsyncSubject<number>();
@@ -19,65 +25,50 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  *
  * subject.next(3);
  *
- * subject.complete();
+ * subject.complete(); // Console output: 3
  *
- * // Console output:
- * // 3
- *
- * subject.subscribe((value) => console.log(value));
- *
- * // Console output:
- * // 3
- *
+ * subject.subscribe((value) => console.log(value)); // Console output: 3
+ * ```
  */
 export interface AsyncSubject<Value = unknown>
 	extends InteropObservable<Value>,
 		Pipeline<AsyncSubject<Value>> {
 	/**
-	 * A String value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
-	 * @readonly
-	 * @public
+	 * A `String` value that is used in the creation of the string description of this {@linkcode AsyncSubject}. Called by the built-in method
+	 * `Object.prototype.toString`.
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
-	 * Determining if/when this {@linkcode AsyncSubject|subject} has been aborted and is no longer accepting new notifications.
-	 * @readonly
-	 * @property
-	 * @public
+	 * Indicates that the `producer` cannot push any more notifications through this {@linkcode AsyncSubject}.
 	 */
 	readonly signal: AbortSignal;
 	/**
-	 * Store a {@linkcode value} to be multicast to all observers of this {@linkcode AsyncSubject|subject} on complete. Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
-	 * @param value The {@linkcode value} to multicast to all observers on complete.
-	 * @method
-	 * @public
+	 * Store a {@linkcode value} to and notify all `consumers` of this {@linkcode AsyncSubject} that a {@linkcode value} has been produced on completion.
+	 * This has no-operation if this {@linkcode AsyncSubject} is already {@linkcode signal|aborted}.
+	 * @param value The {@linkcode value} that has been produced.
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode AsyncSubject|subject} and multicast a complete notification to all observers. If a value was previously stored via `next()`, that value will be multicast to all observers before completing. Any future observers will receive the stored value (if any) and then complete (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
-	 * @method
-	 * @public
+	 * Abort this {@linkcode AsyncSubject} and notify all `consumers` of that the `producer` has finished successfully.
+	 * If a value was previously produced, the consumers will be notified before completing. This is mutually exclusive
+	 * with {@linkcode error} and has no-operation if this {@linkcode AsyncSubject} is already {@linkcode signal|aborted}.
 	 */
 	complete(): void;
 	/**
-	 * Abort this {@linkcode AsyncSubject|subject} and multicast an {@linkcode error} to all observers. Any future observers will be immediately notified of the {@linkcode error} (unless they are already aborted). Has no operation (noop) if this {@linkcode AsyncSubject|subject} is already aborted.
-	 * @param error The {@linkcode error} to multicast to all observers.
-	 * @method
-	 * @public
+	 * Abort this {@linkcode AsyncSubject} and notify all `consumers` of that the `producer` has finished because an {@linkcode error} occurred.
+	 * This is mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode AsyncSubject} is already {@linkcode signal|aborted}.
+	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Create a new {@linkcode Observable} with this {@linkcode AsyncSubject|subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode AsyncSubject|subject} and conceal it from code that uses the {@linkcode Observable}.
-	 * @returns An {@linkcode Observable} that this {@linkcode AsyncSubject|subject} casts to.
-	 * @method
-	 * @public
+	 * Access an {@linkcode Observable} with this {@linkcode AsyncSubject} as the source. You can do this to create custom `producer`-side logic of this
+	 * {@linkcode AsyncSubject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode AsyncSubject} casts to.
 	 */
 	asObservable(): Observable<Value>;
 	/**
-	 * Observing notifications from this {@linkcode AsyncSubject|subject}.
-	 * @param observerOrNext Either an {@linkcode ConsumerObserver} with some or all options, or the `next` handler that is called for each value emitted from the subscribed {@linkcode AsyncSubject|subject}.
-	 * @method
-	 * @public
+	 * Observing notifications from this {@linkcode AsyncSubject}.
+	 * @param observerOrNext Either an {@linkcode ConsumerObserver} with some or all options, or the `next` handler that is called for each value emitted from the subscribed {@linkcode AsyncSubject}.
 	 */
 	subscribe(
 		observerOrNext?:
@@ -87,7 +78,6 @@ export interface AsyncSubject<Value = unknown>
 	): void;
 	/**
 	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
-	 * @public
 	 */
 	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
@@ -99,36 +89,21 @@ export interface AsyncSubjectConstructor {
 
 /**
  * Flag indicating that a value is not set.
- * @internal
  */
 const noValue = Symbol('noValue');
 
 /**
  * Flag indicating that an error is not set.
- * @internal
  */
 const noError = Symbol('noError');
 
 export const AsyncSubject: AsyncSubjectConstructor = class {
-	/** @internal */
 	readonly [Symbol.toStringTag] = this.constructor.name;
-
-	/** @internal */
 	readonly #delegate = new Subject<unknown>();
-
-	/** @internal */
 	readonly signal = this.#delegate.signal;
-
-	/** @internal */
 	readonly #pipeline = new Pipeline(this);
-
-	/** @internal */
 	#value: unknown = noValue;
-
-	/** @internal */
 	#error: unknown = noError;
-
-	/** @internal */
 	readonly #output = new Observable((observer) => {
 		// Check if this subject has finalized so we can notify the observer immediately.
 		if (this.#error !== noError) observer.error(this.#error);
@@ -138,27 +113,27 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		this.#delegate.subscribe(observer);
 	});
 
-	/** @internal */
 	pipe(...operations: []): this {
 		return this.#pipeline.pipe(...operations);
 	}
 
-	/** @internal */
 	[observable](): Subscribable {
 		return this;
 	}
 
-	/** @internal */
 	[Symbol.asyncIterator](): AsyncIterableIterator<unknown, void, void> {
 		return this.#output[Symbol.asyncIterator]();
 	}
 
-	/** @internal */
-	subscribe(observerOrNext: Partial<ConsumerObserver> | UnaryFunction): void {
+	subscribe(
+		observerOrNext?:
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
+			| null,
+	): void {
 		this.#output.subscribe(observerOrNext);
 	}
 
-	/** @internal */
 	next(value: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -167,12 +142,10 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		this.#value = value;
 	}
 
-	/** @internal */
 	complete(): void {
 		this.#complete();
 	}
 
-	/** @internal */
 	error(error: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -188,14 +161,12 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		this.#delegate.error(error);
 	}
 
-	/** @internal */
 	asObservable(): Observable {
 		return this.#output;
 	}
 
-	/** @internal */
 	#complete(
-		observer: Pick<ConsumerObserver, 'next' | 'complete'> = this.#delegate,
+		observer: Pick<ProducerObserver, 'next' | 'complete'> = this.#delegate,
 	): void {
 		// If this subject has a value then we need to push it to the observer before
 		// pushing the complete notification.

@@ -15,12 +15,14 @@ export interface ProducerObserver<Value = unknown> {
 	 */
 	next(value: Value): void;
 	/**
-	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete}.
+	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished because an {@linkcode error} occurred.
+	 * This is mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode ProducerObserver} is already {@linkcode signal|aborted}.
 	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
 	/**
-	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished successfully. This is mutually exclusive with {@linkcode error}.
+	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished successfully.
+	 * This is mutually exclusive with {@linkcode error} and has no-operation if this {@linkcode ProducerObserver} is already {@linkcode signal|aborted}.
 	 */
 	complete(): void;
 }

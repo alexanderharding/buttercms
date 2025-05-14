@@ -3,9 +3,10 @@ import { Pipeline } from '../pipe';
 import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * A special type of `observable` that multicast `producer` notifications to many `consumers`, similar to an event emitter.
- * If the {@linkcode Subject} has already pushed the notification of type `complete` or `error`, late `consumers` will be
- * immediately pushed the same notification on `subscribe`.
+ * A special type of `observable` (not to be confused with the {@linkcode Observable} class) that multicast `producer` notifications to many
+ * `consumers`, similar to an event emitter. If the {@linkcode Subject} has already pushed the notification of type `complete` or `error`,
+ * late `consumers` will be immediately pushed the same notification on `subscribe`.
+ * @example
  * ```ts
  * import { Subject } from '@xander/observable';
  *
@@ -31,7 +32,7 @@ export interface Subject<Value = void>
 	extends InteropObservable<Value>,
 		Pipeline<Subject<Value>> {
 	/**
-	 * A `String` value that is used in the creation of the default string description of an object. Called by the built-in method Object.prototype.toString.
+	 * A `String` value that is used in the creation of the string description of this {@linkcode Subject}. Called by the built-in method `Object.prototype.toString`.
 	 */
 	readonly [Symbol.toStringTag]: string;
 	/**
@@ -55,8 +56,9 @@ export interface Subject<Value = void>
 	 */
 	error(error: unknown): void;
 	/**
-	 * Access an {@linkcode Observable|observable} with this {@linkcode Subject} as the source. You can do this to create custom ConsumerObserver-side logic of this {@linkcode Subject} and conceal it from code that uses the {@linkcode Observable|observable}.
-	 * @returns An {@linkcode Observable|observable} that this {@linkcode Subject} casts to.
+	 * Access an {@linkcode Observable} with this {@linkcode Subject} as the source. You can do this to create custom `producer`-side logic of this
+	 * {@linkcode Subject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode Subject} casts to.
 	 */
 	asObservable(): Observable<Value>;
 	/**
@@ -104,7 +106,7 @@ export const Subject: SubjectConstructor = class<Value> {
 
 		// If the observer is already aborted then there's nothing to do.
 		// This could be because the observer was aborted before it passed to this subject
-		// or from this subject being in a finalized state (this.#checkFinalizers(observer)).
+		// or from this subject being in a finalized state.
 		if (observer.signal.aborted) return;
 
 		// Use a unique symbol to identify the observer since it is allowed for the same
@@ -160,9 +162,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		if (this.signal.aborted) return;
 
 		// Multicast this notification.
-		this.#ensureProducerObserversSnapshot().forEach((observer) =>
-			observer.next(value),
-		);
+		this.#ensureObserversSnapshot().forEach((observer) => observer.next(value));
 	}
 
 	complete(): void {
@@ -170,7 +170,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		if (this.signal.aborted) return;
 
 		// Get the observers snapshot before aborting because it will be cleared.
-		const observers = this.#ensureProducerObserversSnapshot();
+		const observers = this.#ensureObserversSnapshot();
 
 		// Abort this subject before pushing this notification in-case of reentrant code.
 		this.#controller.abort();
@@ -187,7 +187,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		this.#error = error;
 
 		// Get the observers snapshot before aborting because it will be cleared.
-		const observers = this.#ensureProducerObserversSnapshot();
+		const observers = this.#ensureObserversSnapshot();
 
 		// Abort this subject before pushing the error notification in-case of reentrant code.
 		this.#controller.abort();
@@ -204,11 +204,11 @@ export const Subject: SubjectConstructor = class<Value> {
 		return this.#delegate;
 	}
 
-	#ensureProducerObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
-		return (this.#observersSnapshot ??= this.#takeProducerObserversSnapshot());
+	#ensureObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
+		return (this.#observersSnapshot ??= this.#takeObserversSnapshot());
 	}
 
-	#takeProducerObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
+	#takeObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
 		return Array.from(this.#observers.values());
 	}
 };

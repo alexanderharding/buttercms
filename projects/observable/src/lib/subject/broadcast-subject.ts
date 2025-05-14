@@ -4,24 +4,26 @@ import { Pipeline } from '../pipe';
 import { observable, Subscribable, InteropObservable } from '../operators';
 
 /**
- * A variant of {@linkcode Subject} where when values are produced, they are {@linkcode structuredClone|structured cloned} and
+ * A variant of {@linkcode Subject}. When values are produced, they are {@linkcode structuredClone|structured cloned} and
  * sent only to `consumers` of _other_ {@linkcode BroadcastSubject}'s with the same name, including those defined in
  * different browsing contexts (e.g. other browser tabs).
+ * @example
  * ```ts
  * import { BroadcastSubject } from '@xander/observable';
  *
- * const subject1 = new BroadcastSubject('test');
- * const subject2 = new BroadcastSubject('test');
+ * // Setup subjects
+ * const name = 'test';
+ * const subject1 = new BroadcastSubject(name);
+ * const subject2 = new BroadcastSubject(name);
  *
- * subject1.subscribe((value) => console.log('first', value));
- * subject2.subscribe((value) => console.log('second', value));
+ * // Subscribe to subjects
+ * subject1.subscribe((value) => console.log('subject1 received', value, 'from subject1'));
+ * subject2.subscribe((value) => console.log('subject2 received', value, 'from subject2'));
  *
- * subject1.next(1);
- * subject2.next(2);
- *
- * // console output:
- * // first: 1
- * // second: 2
+ * subject1.next(1); // subject2 received 1 from subject1
+ * subject2.next(2); // subject1 received 2 from subject2
+ * subject2.complete(); // subject1 received 2 from subject2
+ * subject1.next(3); // No console output since subject2 is already completed
  * ```
  */
 export interface BroadcastSubject<Value = void>
@@ -48,14 +50,14 @@ export interface BroadcastSubject<Value = void>
 	next(value: Value): void;
 	/**
 	 * Abort _this_ {@linkcode BroadcastSubject} and notify all `consumers` of _this_ {@linkcode BroadcastSubject} that the `producer`
-	 * has finished successfully. This is mutually exclusive with {@linkcode error}. This has no-operation if this {@linkcode BroadcastSubject} is already
+	 * has finished successfully. This is mutually exclusive with {@linkcode error} and has no-operation if this {@linkcode BroadcastSubject} is already
 	 * {@linkcode signal|aborted}.
 	 */
 	complete(): void;
 	/**
 	 * Abort _this_ {@linkcode BroadcastSubject} and notify all `consumers` of _this_ {@linkcode BroadcastSubject} that the `producer`
-	 * has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete}. This has no-operation if this {@linkcode BroadcastSubject} is already
-	 * {@linkcode signal|aborted}.
+	 * has finished because an {@linkcode error} occurred. This is mutually exclusive with {@linkcode complete} and has no-operation if this
+	 * {@linkcode BroadcastSubject} is already {@linkcode signal|aborted}.
 	 * @param error The {@linkcode error} that occurred.
 	 */
 	error(error: unknown): void;
@@ -67,7 +69,7 @@ export interface BroadcastSubject<Value = void>
 	asObservable(): Observable<Value>;
 	/**
 	 * Observe any notifications from _this_ {@linkcode BroadcastSubject} except for `next`, which is only received from
-	 * _other_ {@linkcode BroadcastSubject|subjects} of the same name, even if they are defined in another browsing context (ie. another browser tab).
+	 * _other_ {@linkcode BroadcastSubject} of the same name, even if they are defined in another browsing context (ie. another browser tab).
 	 * @param observerOrNext If provided, either a {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each produced value.
 	 */
 	subscribe(

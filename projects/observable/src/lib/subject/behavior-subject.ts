@@ -7,6 +7,7 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * A variant of {@linkcode Subject} that requires an initial value and
  * notifies new `consumers` of the {@linkcode BehaviorSubject}'s current value whenever
  * it is observed.
+ * @example
  * ```ts
  * import { BehaviorSubject } from '@xander/observable';
  *
@@ -50,9 +51,9 @@ export interface BehaviorSubject<Value = unknown>
 	 */
 	error(error: unknown): void;
 	/**
-	 * Access an {@linkcode Observable|observable} with this {@linkcode BehaviorSubject} as the source. You can do this to create custom ConsumerObserver-side logic
-	 * of this {@linkcode BehaviorSubject} and conceal it from code that uses the {@linkcode Observable|observable}.
-	 * @returns An {@linkcode Observable|observable} that this {@linkcode BehaviorSubject} casts to.
+	 * Access an {@linkcode Observable} with this {@linkcode BehaviorSubject} as the source. You can do this to create custom `producer`-side logic
+	 * of this {@linkcode BehaviorSubject} and conceal it from code that uses the {@linkcode Observable}.
+	 * @returns An {@linkcode Observable} that this {@linkcode BehaviorSubject} casts to.
 	 */
 	asObservable(): Observable<Value>;
 	/**
