@@ -1,3 +1,6 @@
+/**
+ * [Glossary](https://jsr.io/@xander/observable#notification)
+ */
 export interface Notifiable<Value> {
 	/**
 	 * [Glossary](https://jsr.io/@xander/observable#next)
