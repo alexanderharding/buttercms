@@ -169,7 +169,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Get the observers snapshot before aborting because it will be cleared.
+		// Get the observers snapshot before aborting because they will be cleared.
 		const observers = this.#ensureObserversSnapshot();
 
 		// Abort this subject before pushing this notification in-case of reentrant code.
@@ -186,7 +186,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		// Set the finalization state before aborting in-case of reentrant code.
 		this.#error = error;
 
-		// Get the observers snapshot before aborting because it will be cleared.
+		// Get the observers snapshot before aborting because they will be cleared.
 		const observers = this.#ensureObserversSnapshot();
 
 		// Abort this subject before pushing the error notification in-case of reentrant code.
