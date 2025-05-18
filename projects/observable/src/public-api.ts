@@ -6,6 +6,9 @@ export {
 	never,
 	type ConsumerObserver,
 	type ProducerObserver,
+	type Notifiable,
+	type Unsubscribable,
+	type Subscribable,
 
 	// Subjects
 	Subject,

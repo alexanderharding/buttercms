@@ -30,7 +30,7 @@ The code that is subscribing to the observable. This is whoever is being _notifi
 
 ### Producer
 
-Any system or thing that is the source of values that are being pushed out of the observable subscription to the consumer. This can be a wide variety of things, from a `Promise` to a simple iteration over an `Array`. The producer is most often created during the [subscribe](#subscribe) action, and therefor "owned" by a [subscription](#subscription) in a 1:1 way, but that is not always the case. A producer may be shared between many subscriptions, if it is created outside of the [subscribe](#subscribe) action, in which case it is one-to-many, resulting in a [multicast](#multicast). This manifested as a [producer observer](#producerobserver)
+Any system or thing that is the source of values that are being pushed out of the observable subscription to the consumer. This can be a wide variety of things, from a `Promise` to a simple iteration over an `Array`. The producer is most often created during the [subscribe](#subscribe) action, and therefor "owned" by a [subscription](#subscription) in a one-to-one way resulting in a [unicast](#unicast), but that is not always the case. A producer may be shared between many subscriptions, if it is created outside of the [subscribe](#subscribe) action, in which case it is one-to-many, resulting in a [multicast](#multicast). This manifested as a [producer observer](#producerobserver)
 
 ### Subscription
 
@@ -38,15 +38,35 @@ A contract where a [consumer](#consumer) is [observing](#observation) values pus
 
 ### Observable
 
-The primary type in this library. At its highest level, an observable represents a template for connecting an [Observer](#observer), as a [consumer](#consumer), to a [producer](#producer), via a [subscribe](#subscribe) action, resulting in a [subscription](#subscription).
+At it's highest level, an observable represents a template for connecting an observer, as a [consumer](#consumer), to a [producer](#producer), via a [subscribe](#subscribe) action, resulting in a [subscription](#subscription).
+
+### Subject
+
+A special type of [observable](#observable) that can [multicast](#multicast) [notifications](#notification) to many [consumers](#consumer). Unlike a regular [observable](#observable) which creates a new [producer](#producer) for each [subscription](#subscription), a subject shares a single [producer](#producer) across all [subscriptions](#subscription). The subject itself acts as both a [producer observer](#producerobserver) and an [observable](#observable), allowing values to be pushed through it directly via [next](#next), [error](#error), and [complete](#complete) methods. If the subject has already pushed a terminal [notification](#notification) ([error](#error) or [complete](#complete)), any new [consumers](#consumer) will immediately receive that same terminal [notification](#notification) upon [subscription](#subscription).
+
+### BehaviorSubject
+
+A variant of [subject](#subject) that requires an initial value and notifies new [consumers](#consumer) of its current value upon [subscription](#subscription). When a new value is [nexted](#next), it is stored as the current value and pushed to all existing [consumers](#consumer). Any new [consumers](#consumer) will immediately receive the current value upon [subscription](#subscription), followed by any subsequent values that are [nexted](#next).
+
+### AsyncSubject
+
+A variant of [subject](#subject) that buffers only the latest value. When the [subject](#subject) [completes](#complete), it pushes the latest value (if any) followed by a [complete](#complete) [notification](#notification) to all [consumers](#consumer). Any new [consumers](#consumer) that [subscribe](#subscribe) after [completion](#complete) will also receive the latest value followed by the [complete](#complete) [notification](#notification). If the [subject](#subject) terminates with an [error](#error), the buffered value is discarded and only the [error](#error) [notification](#notification) is sent.
+
+### ReplaySubject
+
+A variant of [subject](#subject) that buffers a specified number of values (defaulting to all values if unspecified) and replays them to new [consumers](#consumer) upon [subscription](#subscription). When new values are [nexted](#next), they are added to the buffer and older values are removed if the buffer exceeds its size limit. Any new [consumers](#consumer) will immediately receive all buffered values upon [subscription](#subscription), followed by any subsequent values that are [nexted](#next).
+
+### BroadcastSubject
+
+A variant of [subject](#subject) that [multicasts](#multicast) [notifications](#notification) across different browsing contexts (e.g. browser tabs). When values are [nexted](#next), they are [structured cloned](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone) and sent only to [consumers](#consumer) of other [BroadcastSubject](#broadcastsubject)s with the same name. The [subject](#subject) itself does not receive its own [nexted](#next) values. If a [BroadcastSubject](#broadcastsubject) has been terminated with an [error](#error) or [complete](#complete) [notification](#notification), any new [consumers](#consumer) will immediately receive that same terminal [notification](#notification).
 
 ### ConsumerObserver
 
-The manifestation of a [consumer](#consumer). A type that may have some (or all) handlers for each type of [notification](#notification).
+The manifestation of a [consumer](#observation-chainconsumer). A type that may have some (or all) handlers for each type of [notification](#notification).
 
 ### ProducerObserver
 
-The manifestation of a [producer](#producer) enabling the pushing of [notifications](#notification) to a [consumer](#consumer).
+The manifestation of a [producer](#producer) enabling the pushing of [notifications](#notification) to one ([unicast](#unicast)) or more ([multicast](#multicast)) [consumers](#consumer).
 
 ## Major Actions
 
@@ -54,7 +74,7 @@ There are specific actions and events that occur between major entities in the l
 
 ### Subscribe
 
-The act of a [consumer](#consumer) requesting from an Observable to set up a [subscription](#subscription) so that it may [observe](#observation) a [producer](#producer). A subscribe action can occur with an observable via many different mechanisms. The primary mechanism is the `subscribe` method on observable-like classes.
+The act of a [consumer](#consumer) requesting from an [Observable](#observable) to set up a [subscription](#subscription) so that it may [observe](#observation) a [producer](#producer). A subscribe action can occur with an observable via many different mechanisms. The primary mechanism is the `subscribe` method on observable-like classes.
 
 ### Unsubscription
 

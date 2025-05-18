@@ -1,32 +1,30 @@
-import { InteropObservable, observable, Subscribable } from '../operators';
-import { Pipeline } from '../pipe';
 import { ConsumerObserver } from './consumer-observer';
 import { ProducerObserver } from './producer-observer';
+import { Subscribable } from './subscribable';
 
 /**
- * An object interface that defines a `producer`/`consumer` pair factory within the semantics of the [Observer pattern](https://en.wikipedia.org/wiki/Observer_pattern).
+ * [Glossary](https://jsr.io/@xander/observable#observable)
  * @example
  * Creating an observable with a synchronous producer.
  * ```ts
  * import { Observable } from '@xander/observable';
  *
- * const observable = new Observable<number>((producerObserver) => {
- *   // Note that this logic is invoked for every new call to Observable.prototype.subscribe.
+ * const observable = new Observable<number>((observer) => {
+ *   // Note that this logic is invoked for every new subscribe action.
  *   const producer = [1, 2, 3];
  *   for (const value of producer) {
  *     // If the observer has been aborted, there's no more work to do.
- *     if (producerObserver.signal.aborted) return;
- *     // A value has been produced, notify the observer.
- *     producerObserver.next(value);
+ *     if (observer.signal.aborted) return;
+ *     // Next the value to the observer
+ *     observer.next(value);
  *   }
- *   // The producer done, notify the observer.
- *   producerObserver.complete();
+ *   // The producer is done, notify complete
+ *   observer.complete();
  * });
  *
- * // Optionally create a controller to unsubscribe from the observable if needed.
+ * // Optionally create a controller to trigger unsubscription if needed.
  * const controller = new AbortController();
  *
- * // The remaining logic encapsulates the consumer.
  * observable.subscribe({
  *   signal: controller.signal,
  *   next: (value) => console.log(value),
@@ -48,29 +46,28 @@ import { ProducerObserver } from './producer-observer';
  * ```ts
  * import { Observable } from '@xander/observable';
  *
- * const observable = new Observable<0>((producerObserver) => {
- *   // Note that this logic is invoked for every new call to Observable.prototype.subscribe.
+ * const observable = new Observable<0>((observer) => {
+ *   // Note that this logic is invoked for every new subscribe action.
  *
  *   // If the observer is already aborted, there's no work to do.
- *   if (producerObserver.signal.aborted) return;
+ *   if (observer.signal.aborted) return;
  *
- *   // Create a timeout to produce a value after 1 second.
+ *   // Create a timeout as our producer to next a value after 1 second.
  *   const producer = setTimeout(() => {
- *     // A value has been produced, notify the observer.
- *     producerObserver.next(0);
- *     // The producer is done, notify the observer.
- *     producerObserver.complete();
+ *     // Next the value to the observer
+ *     observer.next(0);
+ *     // The producer is done, notify complete
+ *     observer.complete();
  *   }, 1000);
  *
- *   // Add an abort listener to the observer's signal to cancel the producer if necessary.
- *   producerObserver.signal.addEventListener(
+ *   // Add an abort listener to handle unsubscription by canceling the producer
+ *   observer.signal.addEventListener(
  *     'abort',
  *     () => clearTimeout(producer),
  *     { once: true },
  *   );
  * });
  *
- * // The remaining logic encapsulates the consumer.
  * observable.subscribe({
  *   next: (value) => console.log(value),
  *   complete: () => console.log('complete'),
@@ -84,56 +81,35 @@ import { ProducerObserver } from './producer-observer';
  * // finally
  * ```
  */
-export interface Observable<Value = unknown>
-	extends Pipeline<Observable<Value>>,
-		InteropObservable<Value> {
-	/** @internal */
-	readonly [Symbol.toStringTag]: string;
-	/**
-	 * Invokes an execution of an {@linkcode Observable} and optionally registers {@linkcode ConsumerObserver} handlers for notifications it can but is not required to emit.
-	 * @param observerOrNext If provided, either an {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each value emitted from the subscribed {@linkcode Observable}.
-	 */
-	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown)
-			| null,
-	): void;
-	/**
-	 * A method that returns the default async iterator for an object. Called by the semantics of the for-await-of statement.
-	 * @internal
-	 */
-	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
-}
+export type Observable<Value = unknown> = Subscribable<Value>;
 
 export interface ObservableConstructor {
 	new (): Observable<never>;
 	new (subscribe: undefined | null): Observable<never>;
 	/**
-	 * An object interface that defines a `producer`/`consumer` pair factory within the semantics of the [Observer pattern](https://en.wikipedia.org/wiki/Observer_pattern).
-	 * @param subscribe The function that is called for every new call to `Observable.prototype.subscribe`. This function is given a {@linkcode ProducerObserver} that can be used to push notifications from the `producer` to the `consumer`.
+	 * Creates a template for connecting a producer to a consumer via a subscribe action.
+	 * @param subscribe The function called for each subscribe action that sets up the producer. This function receives a ProducerObserver that enables pushing notifications to the observer.
 	 * @example
 	 * Creating an observable with a synchronous producer.
 	 * ```ts
 	 * import { Observable } from '@xander/observable';
 	 *
 	 * const observable = new Observable<number>((observer) => {
-	 *   // Note that this logic is invoked for every new call to Observable.prototype.subscribe.
+	 *   // Note that this logic is invoked for every new subscribe action.
 	 *   const producer = [1, 2, 3];
 	 *   for (const value of producer) {
 	 *     // If the observer has been aborted, there's no more work to do.
 	 *     if (observer.signal.aborted) return;
-	 *     // A value has been produced, notify the observer.
+	 *     // Next the value to the observer
 	 *     observer.next(value);
 	 *   }
-	 *   // The producer done, notify the observer.
+	 *   // The producer is done, notify complete
 	 *   observer.complete();
 	 * });
 	 *
-	 * // Optionally create a controller to unsubscribe from the observable if needed.
+	 * // Optionally create a controller to trigger unsubscription if needed.
 	 * const controller = new AbortController();
 	 *
-	 * // The remaining logic encapsulates the consumer.
 	 * observable.subscribe({
 	 *   signal: controller.signal,
 	 *   next: (value) => console.log(value),
@@ -155,29 +131,28 @@ export interface ObservableConstructor {
 	 * ```ts
 	 * import { Observable } from '@xander/observable';
 	 *
-	 * const observable = new Observable<0>((producerObserver) => {
-	 *   // Note that this logic is invoked for every new call to Observable.prototype.subscribe.
+	 * const observable = new Observable<0>((observer) => {
+	 *   // Note that this logic is invoked for every new subscribe action.
 	 *
 	 *   // If the observer is already aborted, there's no work to do.
-	 *   if (producerObserver.signal.aborted) return;
+	 *   if (observer.signal.aborted) return;
 	 *
-	 *   // Create a timeout to produce a value after 1 second.
+	 *   // Create a timeout as our producer to next a value after 1 second.
 	 *   const producer = setTimeout(() => {
-	 *     // A value has been produced, notify the observer.
-	 *     producerObserver.next(0);
-	 *     // The producer is done, notify the observer.
-	 *     producerObserver.complete();
+	 *     // Next the value to the observer
+	 *     observer.next(0);
+	 *     // The producer is done, notify complete
+	 *     observer.complete();
 	 *   }, 1000);
 	 *
-	 *   // Add an abort listener to the observer's signal to cancel the producer if necessary.
-	 *   producerObserver.signal.addEventListener(
+	 *   // Add an abort listener to handle unsubscription by canceling the producer
+	 *   observer.signal.addEventListener(
 	 *     'abort',
 	 *     () => clearTimeout(producer),
 	 *     { once: true },
 	 *   );
 	 * });
 	 *
-	 * // The remaining logic encapsulates the consumer.
 	 * observable.subscribe({
 	 *   next: (value) => console.log(value),
 	 *   complete: () => console.log('complete'),
@@ -192,13 +167,12 @@ export interface ObservableConstructor {
 	 * ```
 	 *
 	 * @example
-	 * Creating an observable that does nothing.
+	 * Creating an observable with no producer.
 	 * ```ts
 	 * import { Observable } from '@xander/observable';
 	 *
 	 * const observable = new Observable<never>();
 	 *
-	 * // The remaining logic encapsulates the consumer.
 	 * observable.subscribe({
 	 *   next: (value) => console.log(value),
 	 *   complete: () => console.log('Done'),
@@ -223,16 +197,16 @@ export interface ObservableConstructor {
 	// ): Observable<ObservedValueOf<Input>>;
 }
 
-export type ObservableInput<Value = unknown> =
-	| InteropObservable<Value>
-	| Subscribable<Value>;
+// export type ObservableInput<Value = unknown> =
+// 	| InteropObservable<Value>
+// 	| Subscribable<Value>;
 
-export type ObservedValueOf<Input extends ObservableInput> =
-	Input extends InteropObservable<infer Value>
-		? Value
-		: Input extends Subscribable<infer Value>
-			? Value
-			: never;
+// export type ObservedValueOf<Input extends ObservableInput> =
+// 	Input extends InteropObservable<infer Value>
+// 		? Value
+// 		: Input extends Subscribable<infer Value>
+// 			? Value
+// 			: never;
 
 interface Deferred<Value = unknown> {
 	resolve(value: IteratorResult<Value>): void;
@@ -242,7 +216,6 @@ interface Deferred<Value = unknown> {
 export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
 	readonly #subscribe?: ((observer: ProducerObserver) => unknown) | null;
-	readonly #pipeline = new Pipeline(this);
 
 	constructor(subscribe?: ((observer: ProducerObserver) => unknown) | null) {
 		this.#subscribe = subscribe;
@@ -342,10 +315,6 @@ export const Observable: ObservableConstructor = class {
 		}
 	}
 
-	[observable](): Subscribable {
-		return this;
-	}
-
 	subscribe(
 		observerOrNext?:
 			| Partial<ConsumerObserver>
@@ -359,13 +328,8 @@ export const Observable: ObservableConstructor = class {
 			observer.error(error);
 		}
 	}
-
-	pipe(...operations: []): this {
-		return this.#pipeline.pipe(...operations);
-	}
 };
 
-/** @internal */
 function ensureProducerObserver(
 	observerOrNext?:
 		| Partial<ConsumerObserver>

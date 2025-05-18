@@ -1,31 +1,16 @@
 import { UnhandledError } from '../errors';
 import { ConsumerObserver } from './consumer-observer';
+import { Notifiable } from './notifiable';
+import { Unsubscribable } from './unsubscribable';
 
 /**
- * An object interface that defines a set of callbacks for pushing notifications to a `consumer`.
+ * [Glossary](https://jsr.io/@xander/observable#producerobserver)
  */
-export interface ProducerObserver<Value = unknown> {
-	/**
-	 * Indicates that the `producer` cannot push any more notifications.
-	 */
-	readonly signal: AbortSignal;
-	/**
-	 * Notify the `consumer` that a {@linkcode value} has been produced.
-	 * @param value The {@linkcode value} that has been produced.
-	 */
-	next(value: Value): void;
-	/**
-	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished because an {@linkcode error} occurred.
-	 * This is mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode ProducerObserver} is already {@linkcode signal|aborted}.
-	 * @param error The {@linkcode error} that occurred.
-	 */
-	error(error: unknown): void;
-	/**
-	 * Abort this {@linkcode ProducerObserver} and notify the `consumer` that the `producer` has finished successfully.
-	 * This is mutually exclusive with {@linkcode error} and has no-operation if this {@linkcode ProducerObserver} is already {@linkcode signal|aborted}.
-	 */
-	complete(): void;
-}
+export type ProducerObserver<Value = unknown> = Omit<
+	Notifiable<Value>,
+	'finally'
+> &
+	Unsubscribable;
 
 export interface ProducerObserverConstructor {
 	new <Value>(

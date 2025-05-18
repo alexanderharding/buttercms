@@ -1,11 +1,7 @@
 import { Observable, ConsumerObserver, ProducerObserver } from '../observable';
-import { Pipeline } from '../pipe';
-import { InteropObservable, observable, Subscribable } from '../operators';
 
 /**
- * A special type of `observable` (not to be confused with the {@linkcode Observable} class) that multicast `producer` notifications to many
- * `consumers`, similar to an event emitter. If the {@linkcode Subject} has already pushed the notification of type `complete` or `error`,
- * late `consumers` will be immediately pushed the same notification on `subscribe`.
+ * [Glossary](https://jsr.io/@xander/observable#subject)
  * @example
  * ```ts
  * import { Subject } from '@xander/observable';
@@ -29,52 +25,14 @@ import { InteropObservable, observable, Subscribable } from '../operators';
  * ```
  */
 export interface Subject<Value = void>
-	extends InteropObservable<Value>,
-		Pipeline<Subject<Value>> {
-	/**
-	 * A `String` value that is used in the creation of the string description of this {@linkcode Subject}. Called by the built-in method `Object.prototype.toString`.
-	 */
-	readonly [Symbol.toStringTag]: string;
-	/**
-	 * Indicates that the `producer` cannot push any more notifications through this {@linkcode Subject}.
-	 */
-	readonly signal: AbortSignal;
-	/**
-	 * Notify all `consumers` of this {@linkcode Subject} that a {@linkcode value} has been produced. This has no-operation if this {@linkcode Subject} is already {@linkcode signal|aborted}.
-	 * @param value The {@linkcode value} that has been produced.
-	 */
-	next(value: Value): void;
-	/**
-	 * Abort this {@linkcode Subject} and notify all `consumers` of this {@linkcode Subject} that the `producer` has finished successfully. This is mutually exclusive
-	 * with {@linkcode error} and has no-operation if this {@linkcode Subject} is already {@linkcode signal|aborted}.
-	 */
-	complete(): void;
-	/**
-	 * Abort this {@linkcode Subject} and notify all `consumers` of this {@linkcode Subject} that the `producer` has finished because an {@linkcode error} occurred. This is
-	 * mutually exclusive with {@linkcode complete} and has no-operation if this {@linkcode Subject} is already {@linkcode signal|aborted}.
-	 * @param error The {@linkcode error} that occurred.
-	 */
-	error(error: unknown): void;
+	extends Observable<Value>,
+		ProducerObserver<Value> {
 	/**
 	 * Access an {@linkcode Observable} with this {@linkcode Subject} as the source. You can do this to create custom `producer`-side logic of this
 	 * {@linkcode Subject} and conceal it from code that uses the {@linkcode Observable}.
 	 * @returns An {@linkcode Observable} that this {@linkcode Subject} casts to.
 	 */
 	asObservable(): Observable<Value>;
-	/**
-	 * Observe notifications from this {@linkcode Subject}.
-	 * @param observerOrNext If provided, either a {@linkcode ConsumerObserver} with some or all callback methods, or the `next` handler that is called for each produced value.
-	 */
-	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown)
-			| null,
-	): void;
-	/**
-	 * A method that returns the async iterator for this {@linkcode Subject}. Called by the semantics of the for-await-of statement.
-	 */
-	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void>;
 }
 
 export interface SubjectConstructor {
@@ -126,7 +84,6 @@ export const Subject: SubjectConstructor = class<Value> {
 			{ signal: observer.signal },
 		);
 	});
-	readonly #pipeline = new Pipeline(this);
 
 	constructor() {
 		// Free up memory whenever this subject is at the end of it's lifecycle.
@@ -138,23 +95,6 @@ export const Subject: SubjectConstructor = class<Value> {
 			},
 			{ signal: this.signal },
 		);
-	}
-
-	[observable](): Subscribable<Value> {
-		return this;
-	}
-
-	[Symbol.asyncIterator](): AsyncIterableIterator<Value, void, void> {
-		return this.#delegate[Symbol.asyncIterator]();
-	}
-
-	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown)
-			| null,
-	): void {
-		this.#delegate.subscribe(observerOrNext);
 	}
 
 	next(value: Value): void {
@@ -196,8 +136,13 @@ export const Subject: SubjectConstructor = class<Value> {
 		observers.forEach((observer) => observer.error(error));
 	}
 
-	pipe(...operations: []): this {
-		return this.#pipeline.pipe(...operations);
+	subscribe(
+		observerOrNext?:
+			| Partial<ConsumerObserver<Value>>
+			| ((value: Value) => unknown)
+			| null,
+	): void {
+		this.#delegate.subscribe(observerOrNext);
 	}
 
 	asObservable(): Observable<Value> {
