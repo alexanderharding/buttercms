@@ -35,6 +35,9 @@ export interface Subject<Value = void>
 	asObservable(): Observable<Value>;
 }
 
+/**
+ * Object interface for a {@linkcode Subject} factory.
+ */
 export interface SubjectConstructor {
 	new (): Subject;
 	new <Value>(): Subject<Value>;

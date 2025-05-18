@@ -27,6 +27,9 @@ import { Subject } from './subject';
  */
 export type AsyncSubject<Value = unknown> = Subject<Value>;
 
+/**
+ * Object interface for an {@linkcode AsyncSubject} factory.
+ */
 export interface AsyncSubjectConstructor {
 	new (): AsyncSubject;
 	new <Value>(): AsyncSubject<Value>;

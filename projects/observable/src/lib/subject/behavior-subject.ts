@@ -24,6 +24,9 @@ export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
 	readonly value: Value;
 }
 
+/**
+ * Object interface for a {@linkcode BehaviorSubject} factory.
+ */
 export interface BehaviorSubjectConstructor {
 	new <Value>(initialValue: Value): BehaviorSubject<Value>;
 	readonly prototype: BehaviorSubject;

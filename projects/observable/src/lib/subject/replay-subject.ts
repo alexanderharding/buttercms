@@ -38,6 +38,9 @@ import { Subject } from './subject';
  */
 export type ReplaySubject<Value = unknown> = Subject<Value>;
 
+/**
+ * Object interface for a {@linkcode BehaviorSubject} factory.
+ */
 export interface ReplaySubjectConstructor {
 	new (bufferSize?: number): ReplaySubject;
 	new <Value>(bufferSize?: number): ReplaySubject<Value>;
