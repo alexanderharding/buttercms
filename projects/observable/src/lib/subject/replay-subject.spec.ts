@@ -1,11 +1,13 @@
 import { ReplaySubject } from './replay-subject';
 import { ConsumerObserver, Observable } from '../observable';
-import { of } from '../operators/creation';
 
 describe(ReplaySubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
 		// Arrange
-		const source = of(1, 2, 3, 4, 5);
+		const source = new Observable<number>((observer) => {
+			[1, 2, 3, 4, 5].forEach((value) => observer.next(value));
+			observer.complete();
+		});
 		const subject = new ReplaySubject<number>(3);
 		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
 			'observer',
@@ -20,6 +22,31 @@ describe(ReplaySubject.name, () => {
 		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3], [4], [5]]);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.finally).toHaveBeenCalledOnceWith();
+	});
+
+	it('should be an InteropObservable that can be past to Observable.from', () => {
+		// Arrange
+		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
+			'observer',
+			['next', 'complete', 'error', 'finally'],
+		);
+		const subject = new ReplaySubject<number>();
+
+		// Act
+		const observable = Observable.from(subject);
+		subject.next(1);
+		subject.next(2);
+		subject.next(3);
+		subject.complete();
+		observable.subscribe(observer);
+
+		// Assert
+		expect(observable).toBeInstanceOf(Observable);
+		expect(observable).not.toBeInstanceOf(ReplaySubject);
+		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3]]);
+		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.finally).toHaveBeenCalledOnceWith();
 	});
 
@@ -201,26 +228,14 @@ describe(ReplaySubject.name, () => {
 		});
 	});
 
-	describe('asObservable', () => {
-		it('should hide subject', () => {
-			// Arrange
-			const subject = new ReplaySubject<string>();
-
-			// Act
-			const observable = subject.asObservable();
-
-			// Assert
-			expect(observable instanceof Observable).toBeTrue();
-			expect(observable instanceof ReplaySubject).toBeFalse();
-		});
-
+	describe('Observable.from', () => {
 		it('should not create a new observable multiple times for the same subject', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>();
 
 			// Act
-			const observable1 = subject.asObservable();
-			const observable2 = subject.asObservable();
+			const observable1 = Observable.from(subject);
+			const observable2 = Observable.from(subject);
 
 			// Assert
 			expect(observable1).toBe(observable2);
@@ -232,8 +247,8 @@ describe(ReplaySubject.name, () => {
 			const subject2 = new ReplaySubject<string>();
 
 			// Act
-			const observable1 = subject1.asObservable();
-			const observable2 = subject2.asObservable();
+			const observable1 = Observable.from(subject1);
+			const observable2 = Observable.from(subject2);
 
 			// Assert
 			expect(observable1).not.toBe(observable2);

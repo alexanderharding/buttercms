@@ -1,4 +1,5 @@
 import { Observable, type ConsumerObserver } from '../observable';
+import { observable } from '../interop';
 import { Subject } from './subject';
 
 /**
@@ -50,6 +51,10 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 		return this.#value;
 	}
 
+	[observable](): Observable<Value> {
+		return this.#output;
+	}
+
 	next(value: Value): void {
 		this.#delegate.next(
 			this.signal.aborted ? this.#value : (this.#value = value),
@@ -71,9 +76,5 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 			| null,
 	): void {
 		this.#output.subscribe(observerOrNext);
-	}
-
-	asObservable(): Observable<Value> {
-		return this.#output;
 	}
 };

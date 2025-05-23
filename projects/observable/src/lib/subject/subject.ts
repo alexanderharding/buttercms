@@ -1,8 +1,10 @@
 import { Observable, ConsumerObserver, ProducerObserver } from '../observable';
+import { observable } from '../interop';
 
 /**
  * [Glossary](https://jsr.io/@xander/observable#subject)
  * @example
+ * Basic usage
  * ```ts
  * import { Subject } from '@xander/observable';
  *
@@ -23,17 +25,22 @@ import { Observable, ConsumerObserver, ProducerObserver } from '../observable';
  * // 2
  * // 2
  * ```
+ * @example
+ * Create custom `producer`-side logic of the `Subject` and conceal it from code that uses the `Observable`.
+ * ```ts
+ * import { Subject, Observable } from '@xander/observable';
+ *
+ * class AuthenticationService {
+ *   readonly #loggedInNotifier = new Subject<void>();
+ *   readonly loggedInNotifier = Observable.from(this.#loggedInNotifier);
+ *
+ *   login(): void {
+ *     this.#loggedInNotifier.next();
+ *   }
+ * }
+ * ```
  */
-export interface Subject<Value = void>
-	extends Observable<Value>,
-		ProducerObserver<Value> {
-	/**
-	 * Access an {@linkcode Observable} with this {@linkcode Subject} as the source. You can do this to create custom `producer`-side logic of this
-	 * {@linkcode Subject} and conceal it from code that uses the {@linkcode Observable}.
-	 * @returns An {@linkcode Observable} that this {@linkcode Subject} casts to.
-	 */
-	asObservable(): Observable<Value>;
-}
+export type Subject<Value = void> = Observable<Value> & ProducerObserver<Value>;
 
 /**
  * Object interface for a {@linkcode Subject} factory.
@@ -100,6 +107,10 @@ export const Subject: SubjectConstructor = class<Value> {
 		);
 	}
 
+	[observable](): Observable {
+		return this.#delegate;
+	}
+
 	next(value: Value): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -146,10 +157,6 @@ export const Subject: SubjectConstructor = class<Value> {
 			| null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
-	}
-
-	asObservable(): Observable<Value> {
-		return this.#delegate;
 	}
 
 	#ensureObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {

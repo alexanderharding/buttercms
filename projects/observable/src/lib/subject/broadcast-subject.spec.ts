@@ -35,6 +35,50 @@ describe(BroadcastSubject.name, () => {
 		otherSubject.next(value);
 	});
 
+	it('should be an Observer which can be given to Observable.subscribe', () => {
+		// Arrange
+		const source = new Observable<number>((observer) => observer.complete());
+		const subject = new BroadcastSubject<number>('test');
+		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
+			'observer',
+			['next', 'complete', 'error', 'finally'],
+		);
+
+		// Act
+		subject.subscribe(observer);
+		source.subscribe(subject);
+
+		// Assert
+		expect(observer.next).not.toHaveBeenCalled();
+		expect(observer.complete).toHaveBeenCalledOnceWith();
+		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.finally).toHaveBeenCalledOnceWith();
+	});
+
+	it('should be an InteropObservable that can be past to Observable.from', () => {
+		// Arrange
+		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
+		const subject = new BroadcastSubject('test');
+
+		// Act
+		const observable = Observable.from(subject);
+		subject.complete();
+		observable.subscribe(observer);
+
+		// Assert
+		expect(observable).toBeInstanceOf(Observable);
+		expect(observable).not.toBeInstanceOf(BroadcastSubject);
+		expect(observer.next).not.toHaveBeenCalled();
+		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.complete).toHaveBeenCalledOnceWith();
+		expect(observer.finally).toHaveBeenCalledOnceWith();
+	});
+
 	describe('next', () => {
 		it('should call postMessage method on BroadcastChannel', () => {
 			// Arrange
@@ -267,26 +311,14 @@ describe(BroadcastSubject.name, () => {
 		});
 	});
 
-	describe('asObservable', () => {
-		it('should hide subject', () => {
-			// Arrange
-			const subject = new BroadcastSubject('test');
-
-			// Act
-			const observable = subject.asObservable();
-
-			// Assert
-			expect(observable instanceof Observable).toBeTrue();
-			expect(observable instanceof BroadcastSubject).toBeFalse();
-		});
-
+	describe('Observable.from', () => {
 		it('should not create a new observable multiple times for the same subject', () => {
 			// Arrange
 			const subject = new BroadcastSubject('test');
 
 			// Act
-			const observable1 = subject.asObservable();
-			const observable2 = subject.asObservable();
+			const observable1 = Observable.from(subject);
+			const observable2 = Observable.from(subject);
 
 			// Assert
 			expect(observable1).toBe(observable2);
@@ -298,8 +330,8 @@ describe(BroadcastSubject.name, () => {
 			const subject2 = new BroadcastSubject('test2');
 
 			// Act
-			const observable1 = subject1.asObservable();
-			const observable2 = subject2.asObservable();
+			const observable1 = Observable.from(subject1);
+			const observable2 = Observable.from(subject2);
 
 			// Assert
 			expect(observable1).not.toBe(observable2);

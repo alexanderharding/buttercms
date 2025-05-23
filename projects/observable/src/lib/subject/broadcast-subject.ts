@@ -1,5 +1,6 @@
 import { Subject } from './subject';
 import { Observable, type ConsumerObserver } from '../observable';
+import { observable } from '../interop';
 
 /**
  * [Glossary](https://jsr.io/@xander/observable#broadcastsubject)
@@ -63,6 +64,10 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		return this.#delegate.signal;
 	}
 
+	[observable](): Observable<Value> {
+		return Observable.from(this.#delegate);
+	}
+
 	next(value: Value): void {
 		try {
 			if (!this.signal.aborted) this.#channel.postMessage(value);
@@ -86,9 +91,5 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 			| null,
 	): void {
 		this.#delegate.subscribe(observerOrNext!);
-	}
-
-	asObservable(): Observable<Value> {
-		return this.#delegate.asObservable();
 	}
 };

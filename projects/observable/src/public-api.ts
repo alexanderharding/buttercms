@@ -15,6 +15,12 @@ export {
 	type Subscribable,
 	UnhandledError,
 	type UnhandledErrorConstructor,
+	type ObservableInput,
+	type ObservedValueOf,
+
+	// Interop
+	observable,
+	type InteropObservable,
 
 	// Subjects
 	Subject,

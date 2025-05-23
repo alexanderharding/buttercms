@@ -1,9 +1,147 @@
+import { InteropObservable, observable } from '../interop';
 import { UnaryFunction } from '../pipe';
 import { ConsumerObserver } from './consumer-observer';
 import { Observable } from './observable';
 import { ProducerObserver } from './producer-observer';
+import { Subscribable } from './subscribable';
 
 describe(Observable.name, () => {
+	it('should be an InteropObservable that can be past to Observable.from', () => {
+		// Arrange
+		const source = new Observable();
+
+		// Act
+		const observable = Observable.from(source);
+
+		// Assert
+		expect(observable).toBeInstanceOf(Observable);
+		expect(observable).toBe(source);
+	});
+
+	describe('Observable.from', () => {
+		it('should return a new Observable wrapping a subscribable', () => {
+			// Arrange
+			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
+			const subscribable = jasmine.createSpyObj<Subscribable<number>>(
+				'subscribable',
+				['subscribe'],
+			);
+			subscribable.subscribe.and.callFake((observerOrNext) => {
+				const observable = new Observable((observer) => {
+					observer.next(1);
+					observer.complete();
+				});
+				observable.subscribe(observerOrNext);
+			});
+
+			// Act
+			const observable = Observable.from(subscribable);
+			observable.subscribe(observer);
+
+			// Assert
+			expect(observable).toBeInstanceOf(Observable);
+			expect(observer.next).toHaveBeenCalledOnceWith(1);
+			expect(observer.complete).toHaveBeenCalledOnceWith();
+			expect(subscribable.subscribe).toHaveBeenCalledOnceWith(
+				jasmine.any(ProducerObserver),
+			);
+		});
+
+		it('should return a new Observable wrapping an interop observable', () => {
+			// Arrange
+			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
+			const observableSpy =
+				jasmine.createSpy<() => Subscribable<number>>('observable');
+			const subscribeSpy =
+				jasmine.createSpy<
+					(
+						observerOrNext?:
+							| Partial<ConsumerObserver<number>>
+							| ((value: number) => unknown)
+							| null,
+					) => unknown
+				>('subscribe');
+			const interop: InteropObservable<number> & Subscribable<number> = {
+				[observable]: observableSpy,
+				subscribe: subscribeSpy,
+			};
+			observableSpy.and.returnValue(
+				new Observable((observer) => {
+					observer.next(1);
+					observer.complete();
+				}),
+			);
+
+			// Act
+			const source = Observable.from(interop);
+			source.subscribe(observer);
+
+			// Assert
+			expect(source).toBeInstanceOf(Observable);
+			expect(observableSpy).toHaveBeenCalledOnceWith();
+			expect(subscribeSpy).not.toHaveBeenCalled();
+			expect(observer.next).toHaveBeenCalledOnceWith(1);
+			expect(observer.complete).toHaveBeenCalledOnceWith();
+		});
+
+		it('should return the same Observable if input is already an Observable', () => {
+			// Arrange
+			const source = new Observable();
+
+			// Act
+			const result = Observable.from(source);
+
+			// Assert
+			expect(result).toBe(source);
+		});
+
+		it('should error if input is not an object', () => {
+			// Arrange
+			const observer = jasmine.createSpyObj('observer', ['error']);
+
+			// Act
+			const observable = Observable.from(1 as any);
+			observable.subscribe(observer);
+
+			// Assert
+			expect(observer.error).toHaveBeenCalledOnceWith(
+				new TypeError('Observable.from called on non-object'),
+			);
+		});
+
+		it('should error if input is null', () => {
+			// Arrange
+			const observer = jasmine.createSpyObj('observer', ['error']);
+
+			// Act
+			const observable = Observable.from(null as any);
+			observable.subscribe(observer);
+
+			// Assert
+			expect(observer.error).toHaveBeenCalledOnceWith(
+				new TypeError('Observable.from called on non-object'),
+			);
+		});
+
+		it('should error if interop observable throws', () => {
+			// Arrange
+			const error = new Error('Interop error');
+			const observer = jasmine.createSpyObj('observer', ['error']);
+			const interop: InteropObservable = {
+				[observable]() {
+					throw error;
+				},
+			};
+
+			// Act
+			const source = Observable.from(interop);
+			source.subscribe(observer);
+
+			// Assert
+			expect(observer.error).toHaveBeenCalledOnceWith(error);
+		});
+	});
+
 	describe(Observable.prototype.subscribe.name, () => {
 		it('should create a new producer observer correctly when subscribe is called with a next function', () => {
 			// Arrange
@@ -154,38 +292,4 @@ describe(Observable.name, () => {
 			expect(subscribeSpy).toHaveBeenCalledTimes(2);
 		});
 	});
-
-	// describe(Observable.prototype.pipe.name, () => {
-	// 	it('should return this observable when called with no arguments', () => {
-	// 		// Arrange
-	// 		const observable = new Observable();
-
-	// 		// Act
-	// 		const result = observable.pipe();
-
-	// 		// Assert
-	// 		expect(result).toBe(observable);
-	// 	});
-
-	// 	it('should be pipeable', () => {
-	// 		// Arrange
-	// 		const symbol1 = Symbol('symbol');
-	// 		const symbol2 = Symbol('symbol');
-	// 		const op1Spy =
-	// 			jasmine.createSpy<UnaryFunction<Observable, typeof symbol1>>('op1');
-	// 		const op2Spy =
-	// 			jasmine.createSpy<UnaryFunction<typeof symbol1, typeof symbol2>>('op2');
-	// 		const observable = new Observable();
-	// 		op1Spy.and.returnValue(symbol1);
-	// 		op2Spy.and.returnValue(symbol2);
-
-	// 		// Act
-	// 		const piped = observable.pipe(op1Spy, op2Spy);
-
-	// 		// Assert
-	// 		expect(op1Spy).toHaveBeenCalledOnceWith(observable);
-	// 		expect(op2Spy).toHaveBeenCalledOnceWith(symbol1);
-	// 		expect(piped).toBe(symbol2);
-	// 	});
-	// });
 });

@@ -1,3 +1,4 @@
+import { InteropObservable, observable } from '../interop';
 import { ConsumerObserver } from './consumer-observer';
 import { ProducerObserver } from './producer-observer';
 import { Subscribable } from './subscribable';
@@ -81,7 +82,8 @@ import { Subscribable } from './subscribable';
  * // finally
  * ```
  */
-export type Observable<Value = unknown> = Subscribable<Value>;
+export type Observable<Value = unknown> = Subscribable<Value> &
+	InteropObservable<Value>;
 
 /**
  * Object interface for an {@linkcode Observable} factory.
@@ -190,26 +192,25 @@ export interface ObservableConstructor {
 		subscribe: (observer: ProducerObserver<Value>) => unknown,
 	): Observable<Value>;
 	readonly prototype: Observable;
-	// /**
-	//  * Converting custom observables, probably exported by libraries, to proper observables.
-	//  * @returns If input is an interop observable, it's `[observable]()` method is called to obtain the subscribable. Otherwise, input is assumed to be a subscribable. If the input is already instanceof Observable (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new Observable object is created that wraps the original input.
-	//  * @throws If input is not an object or is null.
-	//  */
-	// from<Input extends ObservableInput>(
-	// 	input: Input,
-	// ): Observable<ObservedValueOf<Input>>;
+	/**
+	 * Converting custom observables, probably exported by libraries, to proper observables.
+	 * @returns If input is an interop observable, it's `[observable]()` method is called to obtain the subscribable. Otherwise, input is assumed to be a subscribable. If the input is already instanceof Observable (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new Observable object is created that wraps the original input.
+	 */
+	from<Input extends ObservableInput>(
+		input: Input,
+	): Observable<ObservedValueOf<Input>>;
 }
 
-// export type ObservableInput<Value = unknown> =
-// 	| InteropObservable<Value>
-// 	| Subscribable<Value>;
+export type ObservableInput<Value = unknown> =
+	| InteropObservable<Value>
+	| Subscribable<Value>;
 
-// export type ObservedValueOf<Input extends ObservableInput> =
-// 	Input extends InteropObservable<infer Value>
-// 		? Value
-// 		: Input extends Subscribable<infer Value>
-// 			? Value
-// 			: never;
+export type ObservedValueOf<Input extends ObservableInput> =
+	Input extends InteropObservable<infer Value>
+		? Value
+		: Input extends Subscribable<infer Value>
+			? Value
+			: never;
 
 interface Deferred<Value = unknown> {
 	resolve(value: IteratorResult<Value>): void;
@@ -224,22 +225,32 @@ export const Observable: ObservableConstructor = class {
 		this.#subscribe = subscribe;
 	}
 
-	// static from<Input extends ObservableInput>(
-	// 	input: Input,
-	// ): Observable<ObservedValueOf<Input>>;
-	// static from(input: ObservableInput): Observable {
-	// 	if (input instanceof Observable) return input;
+	static from<Input extends ObservableInput>(
+		input: Input,
+	): Observable<ObservedValueOf<Input>> {
+		if (input instanceof Observable) return input;
 
-	// 	if (typeof input !== 'object' || input === null) {
-	// 		throw new TypeError('Observable.from called on non-object');
-	// 	}
+		if (typeof input !== 'object' || input === null) {
+			const error = new TypeError('Observable.from called on non-object');
+			return new Observable((observer) => observer.error(error));
+		}
 
-	// 	return new Observable((observer) =>
-	// 		observable in input
-	// 			? input[observable]().subscribe(observer)
-	// 			: input.subscribe(observer),
-	// 	);
-	// }
+		if (observable in input) {
+			try {
+				const interop = input[observable]();
+				if (interop instanceof Observable) return interop;
+				return new Observable((observer) => interop.subscribe(observer));
+			} catch (error) {
+				return new Observable((observer) => observer.error(error));
+			}
+		}
+
+		return new Observable((observer) => input.subscribe(observer));
+	}
+
+	[observable](): this {
+		return this;
+	}
 
 	[Symbol.asyncIterator](): AsyncIterableIterator<never, void, void> {
 		let controller: AbortController | null;

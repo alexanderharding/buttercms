@@ -3,6 +3,7 @@ import {
 	type ProducerObserver,
 	type ConsumerObserver,
 } from '../observable';
+import { observable } from '../interop';
 import { Subject } from './subject';
 
 /**
@@ -61,6 +62,10 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		this.#delegate.subscribe(observer);
 	});
 
+	[observable](): Observable {
+		return this.#output;
+	}
+
 	next(value: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
@@ -95,10 +100,6 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 			| null,
 	): void {
 		this.#output.subscribe(observerOrNext);
-	}
-
-	asObservable(): Observable {
-		return this.#output;
 	}
 
 	#complete(

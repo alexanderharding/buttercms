@@ -1,5 +1,5 @@
 import { Subject } from './subject';
-import { Observable } from '../observable';
+import { ConsumerObserver, Observable } from '../observable';
 
 describe(Subject.name, () => {
 	it('should allow next with undefined when created with no type', () => {
@@ -398,7 +398,7 @@ describe(Subject.name, () => {
 		expect(observer3.error).not.toHaveBeenCalled();
 	});
 
-	it('should be an Observer which can be given to Observable.subscribe', () => {
+	it('should be an ConsumerObserver which can be given to Observable.subscribe', () => {
 		// Arrange
 		const source = new Observable((observer) => {
 			[1, 2, 3, 4, 5].forEach((value) => observer.next(value));
@@ -419,6 +419,31 @@ describe(Subject.name, () => {
 		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3], [4], [5]]);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.error).not.toHaveBeenCalled();
+	});
+
+	it('should be an InteropObservable that can be past to Observable.from', () => {
+		// Arrange
+		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
+			'observer',
+			['next', 'complete', 'error', 'finally'],
+		);
+		const subject = new Subject<number>();
+
+		// Act
+		const observable = Observable.from(subject);
+		observable.subscribe(observer);
+		subject.next(1);
+		subject.next(2);
+		subject.next(3);
+		subject.complete();
+
+		// Assert
+		expect(observable).toBeInstanceOf(Observable);
+		expect(observable).not.toBeInstanceOf(Subject);
+		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3]]);
+		expect(observer.complete).toHaveBeenCalledOnceWith();
+		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.finally).toHaveBeenCalledOnceWith();
 	});
 
 	it('should be aborted after error', () => {
@@ -476,26 +501,14 @@ describe(Subject.name, () => {
 		expect(observer.error).toHaveBeenCalledOnceWith(error);
 	});
 
-	describe('asObservable', () => {
-		it('should hide subject', () => {
-			// Arrange
-			const subject = new Subject();
-
-			// Act
-			const observable = subject.asObservable();
-
-			// Assert
-			expect(observable instanceof Observable).toBeTrue();
-			expect(observable instanceof Subject).toBeFalse();
-		});
-
+	describe('Observable.from', () => {
 		it('should not create a new observable multiple times for the same subject', () => {
 			// Arrange
 			const subject = new Subject();
 
 			// Act
-			const observable1 = subject.asObservable();
-			const observable2 = subject.asObservable();
+			const observable1 = Observable.from(subject);
+			const observable2 = Observable.from(subject);
 
 			// Assert
 			expect(observable1).toBe(observable2);
@@ -507,8 +520,8 @@ describe(Subject.name, () => {
 			const subject2 = new Subject();
 
 			// Act
-			const observable1 = subject1.asObservable();
-			const observable2 = subject2.asObservable();
+			const observable1 = Observable.from(subject1);
+			const observable2 = Observable.from(subject2);
 
 			// Assert
 			expect(observable1).not.toBe(observable2);

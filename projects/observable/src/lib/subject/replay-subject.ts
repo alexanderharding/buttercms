@@ -1,4 +1,5 @@
 import { Observable, type ConsumerObserver } from '../observable';
+import { observable } from '../interop';
 import { Subject } from './subject';
 
 /**
@@ -75,6 +76,10 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 		this.#bufferSize = Math.max(1, bufferSize);
 	}
 
+	[observable](): Observable {
+		return this.#output;
+	}
+
 	next(value: unknown): void {
 		// If this subject has been aborted, there is nothing to do.
 		if (this.signal.aborted) return;
@@ -107,9 +112,5 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 			| null,
 	): void {
 		this.#output.subscribe(observerOrNext);
-	}
-
-	asObservable(): Observable {
-		return this.#output;
 	}
 };
