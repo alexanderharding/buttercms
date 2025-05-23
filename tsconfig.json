@@ -15,8 +15,7 @@
       ],
       "ngx-campaigns": ["./dist/ngx-campaigns"],
       "ngx-buttercms": ["./dist/ngx-buttercms"],
-      "observable": ["./dist/observable"],
-      "rx-broadcast-channel": ["./dist/rx-broadcast-channel"]
+      "observable": ["./dist/observable"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,

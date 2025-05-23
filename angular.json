@@ -123,42 +123,6 @@
         }
       }
     },
-    "rx-broadcast-channel": {
-      "projectType": "library",
-      "root": "projects/rx-broadcast-channel",
-      "sourceRoot": "projects/rx-broadcast-channel/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/rx-broadcast-channel/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/rx-broadcast-channel/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/rx-broadcast-channel/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/rx-broadcast-channel/tsconfig.spec.json"
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": ["projects/rx-broadcast-channel/**/*.ts"],
-            "eslintConfig": "projects/rx-broadcast-channel/eslint.config.js"
-          }
-        }
-      }
-    },
     "observable": {
       "projectType": "library",
       "root": "projects/observable",
