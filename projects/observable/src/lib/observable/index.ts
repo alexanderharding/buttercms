@@ -6,3 +6,7 @@ export * from './consumer-observer';
 export * from './subscribable';
 export * from './notifiable';
 export * from './unsubscribable';
+export * from './nextable';
+export * from './errorable';
+export * from './completable';
+export * from './finalizable';

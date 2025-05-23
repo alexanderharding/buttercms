@@ -1,21 +1,12 @@
+import { Completable } from './completable';
+import { Errorable } from './errorable';
+import { Finalizable } from './finalizable';
+import { Nextable } from './nextable';
+
 /**
  * [Glossary](https://jsr.io/@xander/observable#notification)
  */
-export interface Notifiable<Value> {
-	/**
-	 * [Glossary](https://jsr.io/@xander/observable#next)
-	 */
-	next(value: Value): void;
-	/**
-	 * [Glossary](https://jsr.io/@xander/observable#error)
-	 */
-	error(error: unknown): void;
-	/**
-	 * [Glossary](https://jsr.io/@xander/observable#complete)
-	 */
-	complete(): void;
-	/**
-	 * [Glossary](https://jsr.io/@xander/observable#finally)
-	 */
-	finally(): void;
-}
+export type Notifiable<Value> = Nextable<Value> &
+	Errorable &
+	Completable &
+	Finalizable;

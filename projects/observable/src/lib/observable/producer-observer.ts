@@ -1,15 +1,16 @@
 import { UnhandledError } from '../errors';
+import { Completable } from './completable';
 import { ConsumerObserver } from './consumer-observer';
-import { Notifiable } from './notifiable';
+import { Errorable } from './errorable';
+import { Nextable } from './nextable';
 import { Unsubscribable } from './unsubscribable';
 
 /**
  * [Glossary](https://jsr.io/@xander/observable#producerobserver)
  */
-export type ProducerObserver<Value = unknown> = Omit<
-	Notifiable<Value>,
-	'finally'
-> &
+export type ProducerObserver<Value = unknown> = Nextable<Value> &
+	Errorable &
+	Completable &
 	Unsubscribable;
 
 export interface ProducerObserverConstructor {
