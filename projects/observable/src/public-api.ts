@@ -9,6 +9,8 @@ export {
 	type Notifiable,
 	type Unsubscribable,
 	type Subscribable,
+	UnhandledError,
+	type UnhandledErrorConstructor,
 
 	// Subjects
 	Subject,

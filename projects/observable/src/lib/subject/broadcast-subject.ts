@@ -24,6 +24,9 @@ import { Observable, type ConsumerObserver } from '../observable';
  */
 export type BroadcastSubject<Value = void> = Subject<Value>;
 
+/**
+ * Object interface for a {@linkcode BroadcastSubject} factory.
+ */
 export interface BroadcastSubjectConstructor {
 	new (name: string): BroadcastSubject;
 	new <Value>(name: string): BroadcastSubject<Value>;

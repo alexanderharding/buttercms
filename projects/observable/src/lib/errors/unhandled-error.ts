@@ -1,10 +1,11 @@
 /**
  * An error that is not handled by the implementation of the library.
- * @public
  */
 export type UnhandledError = Error;
 
-/** @public */
+/**
+ * Object interface for a {@linkcode UnhandledError} factory.
+ */
 export type UnhandledErrorConstructor = new (
 	options: ErrorOptions,
 ) => UnhandledError;

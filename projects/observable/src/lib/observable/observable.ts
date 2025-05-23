@@ -83,6 +83,9 @@ import { Subscribable } from './subscribable';
  */
 export type Observable<Value = unknown> = Subscribable<Value>;
 
+/**
+ * Object interface for an {@linkcode Observable} factory.
+ */
 export interface ObservableConstructor {
 	new (): Observable<never>;
 	new (subscribe: undefined | null): Observable<never>;
