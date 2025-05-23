@@ -38,15 +38,10 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	readonly #delegate = new Subject<Value>();
 	readonly signal = this.#delegate.signal;
 	readonly #output = new Observable<Value>((observer) => {
-		if (!this.signal.aborted) observer.next(this.#value);
+		observer.next(this.#value);
 		this.#delegate.subscribe(observer);
 	});
 
-	/**
-	 * @internal
-	 * @constructor
-	 * @public
-	 */
 	constructor(initialValue: Value) {
 		this.#value = initialValue;
 	}
