@@ -14,6 +14,32 @@ Go to the project folder `cd .\projects\observable\` and run `npx jsr publish`.
 
 Run `ng test observable` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
+## Example
+
+```ts
+import { Observable } from '@xander/observable';
+
+const observable = new Observable<0>((observer) => {
+	// Note that this logic is invoked for every new subscribe action.
+
+	// If the observer is already aborted, there's no work to do.
+	if (observer.signal.aborted) return;
+
+	// Create a timeout as our producer to next a value after 1 second.
+	const producer = setTimeout(() => {
+		// Next the value to the observer
+		observer.next(0);
+		// The producer is done, notify complete
+		observer.complete();
+	}, 1000);
+
+	// Add an abort listener to handle unsubscription by canceling the producer
+	observer.signal.addEventListener('abort', () => clearTimeout(producer), {
+		once: true,
+	});
+});
+```
+
 # Glossary And Semantics
 
 When discussing and documenting observables, it's important to have a common language and a known set of rules around what is going on. This document is an attempt to standardize these things so we can try to control the language in our docs, and hopefully other publications about this library, so we can discuss reactive programming with this library on consistent terms.
