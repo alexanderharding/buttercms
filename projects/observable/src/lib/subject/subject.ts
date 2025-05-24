@@ -92,21 +92,9 @@ export const Subject: SubjectConstructor = class {
 		observer.signal.addEventListener(
 			'abort',
 			() => this.#observers.delete(key),
-			{ signal: observer.signal },
+			{ once: true },
 		);
 	});
-
-	constructor() {
-		// Free up memory whenever this subject is at the end of it's lifecycle.
-		this.signal.addEventListener(
-			'abort',
-			() => {
-				this.#observers.clear();
-				this.#observersSnapshot = undefined;
-			},
-			{ signal: this.signal },
-		);
-	}
 
 	[observable](): Observable {
 		return this.#delegate;
@@ -124,14 +112,14 @@ export const Subject: SubjectConstructor = class {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
-		// Get the observers snapshot before aborting because they will be cleared.
-		const observers = this.#ensureObserversSnapshot();
-
 		// Abort this subject before pushing this notification in-case of reentrant code.
 		this.#controller.abort();
 
 		// Multicast this notification.
-		observers.forEach((observer) => observer.complete());
+		this.#ensureObserversSnapshot().forEach((observer) => observer.complete());
+
+		// Run finalization logic.
+		this.#finally();
 	}
 
 	error(error: unknown): void {
@@ -141,14 +129,16 @@ export const Subject: SubjectConstructor = class {
 		// Set the finalization state before aborting in-case of reentrant code.
 		this.#error = error;
 
-		// Get the observers snapshot before aborting because they will be cleared.
-		const observers = this.#ensureObserversSnapshot();
-
 		// Abort this subject before pushing the error notification in-case of reentrant code.
 		this.#controller.abort();
 
 		// Multicast this notification.
-		observers.forEach((observer) => observer.error(error));
+		this.#ensureObserversSnapshot().forEach((observer) =>
+			observer.error(error),
+		);
+
+		// Run finalization logic.
+		this.#finally();
 	}
 
 	subscribe(
@@ -166,5 +156,10 @@ export const Subject: SubjectConstructor = class {
 
 	#takeObserversSnapshot(): ReadonlyArray<ProducerObserver> {
 		return Array.from(this.#observers.values());
+	}
+
+	#finally(): void {
+		this.#observers.clear();
+		this.#observersSnapshot = undefined;
 	}
 };
