@@ -1,5 +1,4 @@
 import { InteropObservable, observable } from '../interop';
-import { UnaryFunction } from '../pipe';
 import { ConsumerObserver } from './consumer-observer';
 import { Observable } from './observable';
 import { ProducerObserver } from './producer-observer';
@@ -147,7 +146,9 @@ describe(Observable.name, () => {
 			// Arrange
 			const next = jasmine.createSpy<(value: number) => unknown>('next');
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
+				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 
 			// Act
@@ -167,7 +168,9 @@ describe(Observable.name, () => {
 				Partial<ConsumerObserver<number>>
 			>('observer', ['next', 'error', 'complete', 'finally']);
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
+				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 
 			// Act
@@ -194,7 +197,9 @@ describe(Observable.name, () => {
 				{ signal: controller.signal },
 			);
 			const subscribeSpy =
-				jasmine.createSpy<UnaryFunction<ProducerObserver<number>>>('subscribe');
+				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 
 			// Act

@@ -10,8 +10,8 @@ import { observable } from '../interop';
  *
  * // Setup subjects
  * const name = 'test';
- * const subject1 = new BroadcastSubject(name);
- * const subject2 = new BroadcastSubject(name);
+ * const subject1 = new BroadcastSubject<number>(name);
+ * const subject2 = new BroadcastSubject<number>(name);
  *
  * // Subscribe to subjects
  * subject1.subscribe((value) => console.log('subject1 received', value, 'from subject1'));
@@ -23,7 +23,9 @@ import { observable } from '../interop';
  * subject1.next(3); // No console output since subject2 is already completed
  * ```
  */
-export type BroadcastSubject<Value = void> = Subject<Value>;
+export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
+	readonly name: string;
+}
 
 /**
  * Object interface for a {@linkcode BroadcastSubject} factory.
@@ -36,15 +38,15 @@ export interface BroadcastSubjectConstructor {
 
 /**
  * A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our
- * {@linkcode BroadcastSubject} only communicate with other {@linkcode BroadcastSubject} from this library.
+ * {@linkcode BroadcastSubject}'s only communicate with other {@linkcode BroadcastSubject}'s from this library.
  */
 const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
 
-export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
+export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	readonly name: string;
 	readonly [Symbol.toStringTag] = 'BroadcastSubject';
 	readonly #channel: BroadcastChannel;
-	readonly #delegate = new Subject<Value>();
+	readonly #delegate = new Subject();
 
 	constructor(name: string) {
 		// Initialization
@@ -64,11 +66,11 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 		return this.#delegate.signal;
 	}
 
-	[observable](): Observable<Value> {
+	[observable](): Observable {
 		return Observable.from(this.#delegate);
 	}
 
-	next(value: Value): void {
+	next(value: unknown): void {
 		try {
 			if (!this.signal.aborted) this.#channel.postMessage(value);
 		} catch (error) {
@@ -86,8 +88,8 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class<Value> {
 
 	subscribe(
 		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown)
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
 			| null,
 	): void {
 		this.#delegate.subscribe(observerOrNext!);

@@ -40,7 +40,8 @@ import { observable } from '../interop';
  * }
  * ```
  */
-export type Subject<Value = void> = Observable<Value> & ProducerObserver<Value>;
+export type Subject<Value = unknown> = Observable<Value> &
+	ProducerObserver<Value>;
 
 /**
  * Object interface for a {@linkcode Subject} factory.
@@ -54,9 +55,9 @@ export interface SubjectConstructor {
 /**
  * Flag indicating that an error is not set.
  */
-const noError = Symbol('noError');
+const noError = Symbol('Flag indicating that an error is not set.');
 
-export const Subject: SubjectConstructor = class<Value> {
+export const Subject: SubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'Subject';
 	readonly #controller = new AbortController();
 	readonly signal = this.#controller.signal;
@@ -65,9 +66,9 @@ export const Subject: SubjectConstructor = class<Value> {
 	 * Tracking a known array of observers, so we don't have to clone them while iterating to prevent reentrant
 	 * behaviors. (for example, what if this {@linkcode Subject} is subscribed to when nexting to an observer)
 	 */
-	#observersSnapshot?: ReadonlyArray<ProducerObserver<Value>>;
-	readonly #observers = new Map<symbol, ProducerObserver<Value>>();
-	readonly #delegate = new Observable<Value>((observer) => {
+	#observersSnapshot?: ReadonlyArray<ProducerObserver>;
+	readonly #observers = new Map<symbol, ProducerObserver>();
+	readonly #delegate = new Observable((observer) => {
 		// Check if this subject has finalized so we can notify the observer immediately.
 		if (this.#error !== noError) observer.error(this.#error);
 		else if (this.signal.aborted) observer.complete();
@@ -111,7 +112,7 @@ export const Subject: SubjectConstructor = class<Value> {
 		return this.#delegate;
 	}
 
-	next(value: Value): void {
+	next(value: unknown): void {
 		// If this subject has been aborted there is nothing to do.
 		if (this.signal.aborted) return;
 
@@ -152,18 +153,18 @@ export const Subject: SubjectConstructor = class<Value> {
 
 	subscribe(
 		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
-			| ((value: Value) => unknown)
+			| Partial<ConsumerObserver>
+			| ((value: unknown) => unknown)
 			| null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
-	#ensureObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
+	#ensureObserversSnapshot(): ReadonlyArray<ProducerObserver> {
 		return (this.#observersSnapshot ??= this.#takeObserversSnapshot());
 	}
 
-	#takeObserversSnapshot(): ReadonlyArray<ProducerObserver<Value>> {
+	#takeObserversSnapshot(): ReadonlyArray<ProducerObserver> {
 		return Array.from(this.#observers.values());
 	}
 };

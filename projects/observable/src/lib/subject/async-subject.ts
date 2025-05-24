@@ -48,7 +48,7 @@ const noValue = Symbol('noValue');
 const noError = Symbol('noError');
 
 export const AsyncSubject: AsyncSubjectConstructor = class {
-	readonly [Symbol.toStringTag] = this.constructor.name;
+	readonly [Symbol.toStringTag] = 'AsyncSubject';
 	readonly #delegate = new Subject<unknown>();
 	readonly signal = this.#delegate.signal;
 	#value: unknown = noValue;
