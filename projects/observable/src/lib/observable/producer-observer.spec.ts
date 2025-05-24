@@ -80,7 +80,6 @@ describe(ProducerObserver.name, () => {
 			// Arrange
 			const throwError = new Error('finally handler threw');
 			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-			queueMicrotaskSpy.and.callThrough();
 			const controller = new AbortController();
 			const consumerObserver = jasmine.createSpyObj<ConsumerObserver<number>>(
 				'observer',
@@ -205,14 +204,13 @@ describe(ProducerObserver.name, () => {
 			consumerObserver.error.and.throwError(throwError);
 			const producerObserver = new ProducerObserver(consumerObserver);
 			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-			queueMicrotaskSpy.and.callThrough();
 
 			// Act
 			producerObserver.error(error);
 
 			// Assert
 			expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-			const throwFn = queueMicrotaskSpy.calls.argsFor(0)[0] as () => void;
+			const throwFn = queueMicrotaskSpy.calls.argsFor(0)[0];
 			expect(throwFn).toThrow(new UnhandledError({ cause: throwError }));
 		});
 
@@ -227,14 +225,13 @@ describe(ProducerObserver.name, () => {
 			consumerObserver.finally.and.throwError(throwError);
 			const producerObserver = new ProducerObserver(consumerObserver);
 			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-			queueMicrotaskSpy.and.callThrough();
 
 			// Act
 			producerObserver.error(error);
 
 			// Assert
 			expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-			const throwFn = queueMicrotaskSpy.calls.argsFor(0)[0] as () => void;
+			const throwFn = queueMicrotaskSpy.calls.argsFor(0)[0];
 			expect(throwFn).toThrow(new UnhandledError({ cause: throwError }));
 		});
 	});
@@ -297,7 +294,6 @@ describe(ProducerObserver.name, () => {
 			consumerObserver.complete.and.throwError(throwError);
 			const producerObserver = new ProducerObserver(consumerObserver);
 			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-			queueMicrotaskSpy.and.callThrough();
 
 			// Act
 			producerObserver.complete();
@@ -318,7 +314,6 @@ describe(ProducerObserver.name, () => {
 			consumerObserver.finally.and.throwError(throwError);
 			const producerObserver = new ProducerObserver(consumerObserver);
 			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-			queueMicrotaskSpy.and.callThrough();
 
 			// Act
 			producerObserver.complete();
