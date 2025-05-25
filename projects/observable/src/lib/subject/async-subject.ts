@@ -1,8 +1,4 @@
-import {
-	Observable,
-	type ProducerObserver,
-	type ConsumerObserver,
-} from '../observable';
+import { Observable, type ConsumerObserver } from '../observable';
 import { observable } from '../interop';
 import { Subject } from './subject';
 
@@ -40,27 +36,27 @@ export interface AsyncSubjectConstructor {
 /**
  * Flag indicating that a value is not set.
  */
-const noValue = Symbol('noValue');
-
-/**
- * Flag indicating that an error is not set.
- */
-const noError = Symbol('noError');
+const noValue = Symbol('Flag indicating that a value is not set.');
 
 export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'AsyncSubject';
 	readonly #delegate = new Subject<unknown>();
 	readonly signal = this.#delegate.signal;
 	#value: unknown = noValue;
-	#error: unknown = noError;
-	readonly #output = new Observable((observer) => {
-		// Check if this subject has finalized so we can notify the observer immediately.
-		if (this.#error !== noError) observer.error(this.#error);
-		else if (this.signal.aborted) this.#complete(observer);
+	readonly #output = new Observable((observer) =>
+		this.#delegate.subscribe({
+			signal: observer.signal,
+			error: (error) => observer.error(error),
+			complete: () => {
+				// If this subject has a value then we need to push it to the observer before
+				// pushing the complete notification.
+				if (this.#value !== noValue) observer.next(this.#value);
 
-		// Always subscribe to the delegate subject.
-		this.#delegate.subscribe(observer);
-	});
+				// Push the complete notification to the observer.
+				observer.complete();
+			},
+		}),
+	);
 
 	[observable](): Observable {
 		return this.#output;
@@ -75,7 +71,8 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	}
 
 	complete(): void {
-		this.#complete();
+		// Push the error notification to all observers via the delegate subject.
+		this.#delegate.complete();
 	}
 
 	error(error: unknown): void {
@@ -85,9 +82,6 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 		// We have entered the error flow so we need to reset the value state
 		// since it is no longer relevant and should be garbage collected.
 		this.#value = noValue;
-
-		// Set the error state before pushing the error notification in-case of reentrant code.
-		this.#error = error;
 
 		// Push the error notification to all observers via the delegate subject.
 		this.#delegate.error(error);
@@ -100,16 +94,5 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 			| null,
 	): void {
 		this.#output.subscribe(observerOrNext);
-	}
-
-	#complete(
-		observer: Pick<ProducerObserver, 'next' | 'complete'> = this.#delegate,
-	): void {
-		// If this subject has a value then we need to push it to the observer before
-		// pushing the complete notification.
-		if (this.#value !== noValue) observer.next(this.#value);
-
-		// Push the completion notification to the observer.
-		observer.complete();
 	}
 };
