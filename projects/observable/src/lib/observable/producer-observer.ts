@@ -41,7 +41,7 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 		this.#consumerObserver?.signal?.addEventListener(
 			'abort',
 			() => this.#finally(),
-			{ signal: this.signal },
+			{ once: true, signal: this.signal },
 		);
 		if (this.#consumerObserver?.signal?.aborted) this.#finally();
 	}
@@ -66,7 +66,10 @@ export const ProducerObserver: ProducerObserverConstructor = class {
 		this.#controller.abort();
 
 		try {
-			this.#consumerObserver?.error?.(error);
+			// Try to delegate the error to the consumer observer first,
+			// otherwise report it as an unhandled error.
+			if (this.#consumerObserver?.error) this.#consumerObserver.error(error);
+			else reportUnhandledError(error);
 		} catch (error) {
 			reportUnhandledError(error);
 		} finally {

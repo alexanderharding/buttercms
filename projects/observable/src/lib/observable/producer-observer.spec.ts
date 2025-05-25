@@ -167,30 +167,41 @@ describe(ProducerObserver.name, () => {
 			expect(consumerObserver.next).not.toHaveBeenCalled();
 		});
 
-		it('should call handlers correctly when producer observer is not aborted', () => {
+		it('should call error handler when present', () => {
 			// Arrange
 			const error = new Error('test');
 			const consumerObserver = jasmine.createSpyObj<ConsumerObserver>(
 				'observer',
-				['error', 'finally', 'complete', 'next'],
+				['error', 'finally'],
 			);
-			const abortSpy = jasmine.createSpy<() => void>('abort');
 			const producerObserver = new ProducerObserver(consumerObserver);
-			producerObserver.signal.addEventListener('abort', abortSpy);
+			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
 
 			// Act
 			producerObserver.error(error);
 
 			// Assert
-			expect(abortSpy).toHaveBeenCalledTimes(1);
-			expect(abortSpy).toHaveBeenCalledBefore(consumerObserver.error);
 			expect(consumerObserver.error).toHaveBeenCalledOnceWith(error);
-			expect(consumerObserver.error).toHaveBeenCalledBefore(
-				consumerObserver.finally,
+			expect(queueMicrotaskSpy).not.toHaveBeenCalled();
+		});
+
+		it('should report unhandled error when error handler not present', () => {
+			// Arrange
+			const error = new Error('test');
+			const consumerObserver = jasmine.createSpyObj<ConsumerObserver>(
+				'observer',
+				['finally'],
 			);
-			expect(consumerObserver.finally).toHaveBeenCalledOnceWith();
-			expect(consumerObserver.complete).not.toHaveBeenCalled();
-			expect(consumerObserver.next).not.toHaveBeenCalled();
+			const producerObserver = new ProducerObserver(consumerObserver);
+			const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
+
+			// Act
+			producerObserver.error(error);
+
+			// Assert
+			expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+			const throwFn = queueMicrotaskSpy.calls.argsFor(0)[0];
+			expect(throwFn).toThrow(new UnhandledError({ cause: error }));
 		});
 
 		it('should report unhandled error when error handler throws', () => {
