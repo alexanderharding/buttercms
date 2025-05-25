@@ -91,7 +91,12 @@ export const Subject: SubjectConstructor = class {
 		// Remove the observer from the observers Map when it's at the end of it's lifecycle.
 		observer.signal.addEventListener(
 			'abort',
-			() => this.#observers.delete(key),
+			() => {
+				// Remove the observer from the observers Map since it can no longer receive push notifications.
+				this.#observers.delete(key);
+				// Reset the observers snapshot since it is now stale.
+				this.#observersSnapshot = undefined;
+			},
 			{ once: true },
 		);
 	});
