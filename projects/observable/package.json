@@ -1,6 +1,6 @@
 {
   "name": "@xander/observable",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "dependencies": {
     "tslib": "^2.3.0"
   },

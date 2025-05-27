@@ -8,6 +8,7 @@ export {
 	type Error,
 	type Complete,
 	type Finally,
+	type Notification,
 	type Unsubscribable,
 	type Subscribable,
 	UnhandledError,
