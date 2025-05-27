@@ -1,9 +1,21 @@
-import { Observable, type ConsumerObserver } from '../observable';
+import { Observable, Observer } from '../observable';
 import { observable } from '../interop';
 import { Subject } from './subject';
+import {
+	Subscribable,
+	Next,
+	Error,
+	Complete,
+	Notification,
+} from '../observable';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#behaviorsubject)
+ * A variant of {@linkcode Subject} that requires an initial value and notifies new consumers of its current value upon {@linkcode Subscribable.subscribe|subscription}.
+ * When a new value is {@linkcode Next.next|nexted}, it is stored as the current value and pushed to all existing consumers. Any new consumers that
+ * {@linkcode Subscribable.subscribe|subscribe} after values have been {@linkcode Next.next|nexted} will immediately receive the most recent value, followed by any
+ * subsequent values. If the {@linkcode BehaviorSubject|subject} has terminated with an {@linkcode Error.error|error}, late subscribers will receive the last value
+ * followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}. If the {@linkcode BehaviorSubject|subject} has {@linkcode Complete.complete|completed},
+ * late subscribers will receive the last value followed by the {@linkcode Complete.complete|complete} {@linkcode Notification|notification}.
  * @example
  * ```ts
  * import { BehaviorSubject } from '@xander/observable';
@@ -71,7 +83,7 @@ export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 
 	subscribe(
 		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
+			| Partial<Observer<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void {

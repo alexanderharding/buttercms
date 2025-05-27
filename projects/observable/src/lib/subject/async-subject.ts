@@ -1,9 +1,22 @@
-import { Observable, type ConsumerObserver } from '../observable';
+import { Observable, type Observer } from '../observable';
 import { observable } from '../interop';
 import { Subject } from './subject';
+import type {
+	Complete,
+	Error,
+	Next,
+	Notification,
+	Subscribable,
+} from '../observable';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#asyncsubject)
+ * A variant of {@linkcode Subject} that buffers only the latest value. When the {@linkcode AsyncSubject|subject} {@linkcode Complete.complete|completes},
+ * it pushes the latest value (if any) followed by a {@linkcode Complete.complete|complete} {@linkcode Notification|notification} to all consumers. Any new consumers that
+ * {@linkcode Subscribable.subscribe|subscribe} after {@linkcode Complete.complete|completion} will also receive the latest value followed by the
+ * {@linkcode Complete.complete|complete} {@linkcode Notification|notification}. If no values were {@linkcode Next.next|nexted} before {@linkcode Complete.complete|completion},
+ * neither existing nor late subscribers will receive any values. If the {@linkcode AsyncSubject|subject} terminates with an {@linkcode Error.error|error},
+ * the buffered value is discarded and only the {@linkcode Error.error|error} {@linkcode Notification|notification} is sent to both existing and late subscribers.
+ *
  * @example
  * ```ts
  * import { AsyncSubject } from "@xander/observable";
@@ -88,10 +101,7 @@ export const AsyncSubject: AsyncSubjectConstructor = class {
 	}
 
 	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
 		this.#output.subscribe(observerOrNext);
 	}

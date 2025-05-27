@@ -50,10 +50,6 @@ While not all of the documentation for this library reflects this terminology, i
 
 There are high level entities that are frequently discussed. It's important to define them separately from other lower-level concepts, because they relate to the nature of observable.
 
-### Consumer
-
-The code that is subscribing to the observable. This is whoever is being _notified_ of [nexted](#next) values, [errors](#error) or [completions](#complete), and [finalization](#finally). This manifested as a [consumer observer](#consumerobserver)
-
 ### Producer
 
 Any system or thing that is the source of values that are being pushed out of the observable subscription to the consumer. This can be a wide variety of things, from a `Promise` to a simple iteration over an `Array`. The producer is most often created during the [subscribe](#subscribe) action, and therefor "owned" by a [subscription](#subscription) in a one-to-one way resulting in a [unicast](#unicast), but that is not always the case. A producer may be shared between many subscriptions, if it is created outside of the [subscribe](#subscribe) action, in which case it is one-to-many, resulting in a [multicast](#multicast). This manifested as a [producer observer](#producerobserver)
@@ -61,38 +57,6 @@ Any system or thing that is the source of values that are being pushed out of th
 ### Subscription
 
 A contract where a [consumer](#consumer) is [observing](#observation) values pushed by a [producer](#producer). The subscription, is an ongoing process that amounts to the function of the observable from the Consumer's perspective. Subscription starts the moment a [subscribe](#subscribe) action is initiated, even before the [subscribe](#subscribe) action is finished.
-
-### Observable
-
-At it's highest level, an observable represents a template for connecting an observer, as a [consumer](#consumer), to a [producer](#producer), via a [subscribe](#subscribe) action, resulting in a [subscription](#subscription).
-
-### Subject
-
-A special type of [observable](#observable) that can [multicast](#multicast) [notifications](#notification) to many [consumers](#consumer). Unlike a regular [observable](#observable) which creates a new [producer](#producer) for each [subscription](#subscription), a subject shares a single [producer](#producer) across all [subscriptions](#subscription). The subject itself acts as both a [producer observer](#producerobserver) and an [observable](#observable), allowing values to be pushed through it directly via [next](#next), [error](#error), and [complete](#complete) methods. If the subject has already pushed a terminal [notification](#notification) ([error](#error) or [complete](#complete)), any new [consumers](#consumer) will immediately receive that same terminal [notification](#notification) upon [subscription](#subscription).
-
-### BehaviorSubject
-
-A variant of [subject](#subject) that requires an initial value and notifies new [consumers](#consumer) of its current value upon [subscription](#subscription). When a new value is [nexted](#next), it is stored as the current value and pushed to all existing [consumers](#consumer). Any new [consumers](#consumer) that [subscribe](#subscribe) after values have been [nexted](#next) will immediately receive the most recent value, followed by any subsequent values. If the subject has terminated with an [error](#error), late [subscribers](#subscribe) will receive the last value followed by the [error](#error) [notification](#notification). If the subject has [completed](#complete), late [subscribers](#subscribe) will receive the last value followed by the [complete](#complete) [notification](#notification).
-
-### AsyncSubject
-
-A variant of [subject](#subject) that buffers only the latest value. When the [subject](#subject) [completes](#complete), it pushes the latest value (if any) followed by a [complete](#complete) [notification](#notification) to all [consumers](#consumer). Any new [consumers](#consumer) that [subscribe](#subscribe) after [completion](#complete) will also receive the latest value followed by the [complete](#complete) [notification](#notification). If no values were [nexted](#next) before [completion](#complete), neither existing nor late [subscribers](#subscribe) will receive any values. If the [subject](#subject) terminates with an [error](#error), the buffered value is discarded and only the [error](#error) [notification](#notification) is sent to both existing and late [subscribers](#subscribe).
-
-### ReplaySubject
-
-A variant of [subject](#subject) that buffers a specified number of values (defaulting to all values if unspecified) and replays them to new [consumers](#consumer) upon [subscription](#subscription). When new values are [nexted](#next), they are added to the buffer and older values are removed if the buffer exceeds its size limit. Any new [consumers](#consumer) will immediately receive all buffered values upon [subscription](#subscription), followed by any subsequent values that are [nexted](#next). If the subject has terminated with an [error](#error), late [subscribers](#subscribe) will receive all buffered values followed by the [error](#error) [notification](#notification). If the subject has [completed](#complete), late [subscribers](#subscribe) will receive all buffered values followed by the [complete](#complete) [notification](#notification).
-
-### BroadcastSubject
-
-A variant of [subject](#subject) that [multicasts](#multicast) [notifications](#notification) across different browsing contexts (e.g. browser tabs). When values are [nexted](#next), they are [structured cloned](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone) and sent only to [consumers](#consumer) of other [BroadcastSubject](#broadcastsubject)s with the same name. The [subject](#subject) itself does not receive its own [nexted](#next) values. If a [BroadcastSubject](#broadcastsubject) has been terminated with an [error](#error) or [complete](#complete) [notification](#notification), any new [consumers](#consumer) will immediately receive that same terminal [notification](#notification).
-
-### ConsumerObserver
-
-The manifestation of a [consumer](#observation-chainconsumer). A type that may have some (or all) handlers for each type of [notification](#notification).
-
-### ProducerObserver
-
-The manifestation of a [producer](#producer) enabling the pushing of [notifications](#notification) to one ([unicast](#unicast)) or more ([multicast](#multicast)) [consumers](#consumer).
 
 ## Major Actions
 
@@ -113,26 +77,6 @@ A [consumer](#consumer) reacting to [notifications](#notification). This can onl
 ### Observation Chain
 
 When an [observable](#observable) uses another [observable](#observable) as a [producer](#producer), an "observation chain" is set up. That is a chain of [observation](#observation) such that multiple [observers](#observer) are [notifying](#notification) each other in a unidirectional way toward the final [consumer](#consumer).
-
-### Next
-
-A value has been pushed to the [consumer](#consumer) to be [observed](#observation). Will only happen during [subscription](#subscription), and cannot happen after [error](#error), [complete](#error), or [unsubscription](#unsubscription). Logically, this also means it cannot happen after [finalization](#finally).
-
-### Error
-
-The [producer](#producer) has encountered a problem and is notifying the [consumer](#consumer). This is a notification that the [producer](#producer) will no longer send values and will [finalize](#finally). This cannot occur after [complete](#complete), any other [error](#error), or [unsubscription](#unsubscription). Logically, this also means it cannot happen after [finalization](#finally).
-
-### Complete
-
-The [producer](#producer) is notifying the [consumer](#consumer) that it is done [nexting](#Next) values, without error, will send no more values, and it will [finalize](#finally). [Completion](#complete) cannot occur after an [error](#error), or [unsubscribe](#unsubscription). [Complete](#complete) cannot be called twice. [Complete](#complete), if it occurs, will always happen before [finalization](#finally).
-
-### Finally
-
-The [producer](#producer) is notifying the [consumer](#consumer) that it is done [nexting](#Next) values, for any reason and will send no more values. [Finally](#finally), if it occurs, will always happen as a side-effect after [complete](#complete), [error](#error), or [unsubscribe](#unsubscription).
-
-### Notification
-
-The act of a [producer](#producer) pushing [nexted](#next) values, [errors](#error) or [completions](#complete) and/or [finalizations](#finally) to a [consumer](#consumer) to be [observed](#observation).
 
 ## Major Concepts
 

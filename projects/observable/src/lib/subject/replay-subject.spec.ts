@@ -1,5 +1,5 @@
 import { ReplaySubject } from './replay-subject';
-import { ConsumerObserver, Observable } from '../observable';
+import { Observer, Observable } from '../observable';
 
 describe(ReplaySubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
@@ -9,10 +9,12 @@ describe(ReplaySubject.name, () => {
 			observer.complete();
 		});
 		const subject = new ReplaySubject<number>(3);
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 
 		// Act
 		subject.subscribe(observer);
@@ -27,10 +29,12 @@ describe(ReplaySubject.name, () => {
 
 	it('should be an InteropObservable that can be past to Observable.from', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 		const subject = new ReplaySubject<number>();
 
 		// Act
@@ -54,10 +58,10 @@ describe(ReplaySubject.name, () => {
 		it('should emit buffered values to subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.next('first');
@@ -72,10 +76,10 @@ describe(ReplaySubject.name, () => {
 		it('should emit all values when buffer size is infinite', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.next('first');
@@ -94,10 +98,10 @@ describe(ReplaySubject.name, () => {
 		it('should emit buffered values to late subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.next('first');
@@ -115,10 +119,9 @@ describe(ReplaySubject.name, () => {
 		it('should emit values to subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -132,10 +135,9 @@ describe(ReplaySubject.name, () => {
 		it('should store values for late subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');
@@ -152,10 +154,12 @@ describe(ReplaySubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'complete', 'finally', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'complete',
+				'finally',
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -173,10 +177,10 @@ describe(ReplaySubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');
@@ -193,10 +197,11 @@ describe(ReplaySubject.name, () => {
 		it('should notify subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next', 'finally'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+				'finally',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -212,10 +217,10 @@ describe(ReplaySubject.name, () => {
 		it('should notify late subscribers', () => {
 			// Arrange
 			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');

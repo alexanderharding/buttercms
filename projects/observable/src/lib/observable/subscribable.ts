@@ -1,15 +1,16 @@
-import { ConsumerObserver } from './consumer-observer';
+import type { Observer } from './observer';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#subscribe)
+ * Object interface that implements a `subscribe` method for the purpose of setting up a subscription.
  */
 export interface Subscribable<Value = unknown> {
 	/**
-	 * [Glossary](https://jsr.io/@xander/observable#subscribe)
+	 * The act of a consumer requesting from an {@linkcode Subscribable|subscribable} to
+	 * set up a subscription so that it may observe a producer.
 	 */
 	subscribe(
 		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
+			| Partial<Observer<Value>>
 			| ((value: Value) => unknown)
 			| null,
 	): void;

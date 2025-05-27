@@ -1,9 +1,11 @@
 import { Subject } from './subject';
-import { Observable, type ConsumerObserver } from '../observable';
+import { Observable, type Observer, type Next } from '../observable';
 import { observable } from '../interop';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#broadcastsubject)
+ * A variant of {@linkcode Subject}. When values are {@linkcode Next.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
+ * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same name even if they are in different browsing contexts
+ * (e.g. browser tabs). Consumers of the {@linkcode BroadcastSubject|subject} do not receive its _own_ {@linkcode Next.next|nexted} values.
  * @example
  * ```ts
  * import { BroadcastSubject } from '@xander/observable';
@@ -53,13 +55,8 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 		this.#channel = new BroadcastChannel(`${namePrefix}-${(this.name = name)}`);
 
 		// Message handling
-		this.#channel.onmessage = (event) => this.#delegate.next(event.data);
-		this.#channel.onmessageerror = (event) => this.error(event);
-
-		// Teardown
-		this.signal.addEventListener('abort', () => this.#channel.close(), {
-			signal: this.signal,
-		});
+		this.#channel.onmessage = ({ data: value }) => this.#delegate.next(value);
+		this.#channel.onmessageerror = (error) => this.error(error);
 	}
 
 	get signal(): AbortSignal {
@@ -79,19 +76,18 @@ export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	}
 
 	error(error: unknown): void {
+		this.#channel.close();
 		this.#delegate.error(error);
 	}
 
 	complete(): void {
+		this.#channel.close();
 		this.#delegate.complete();
 	}
 
 	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
-		this.#delegate.subscribe(observerOrNext!);
+		this.#delegate.subscribe(observerOrNext);
 	}
 };

@@ -1,9 +1,11 @@
+import type { Finally } from './finally';
+
 /**
- * [Glossary](https://jsr.io/@xander/observable#unsubscription)
+ * Object interface that implements a `signal` property for the purpose of unsubscribing.
  */
 export interface Unsubscribable {
 	/**
-	 * [Glossary](https://jsr.io/@xander/observable#unsubscription)
+	 * The act of a consumer telling a producer is no longer interested in receiving values. Causes {@linkcode Finally.finally|finalization}.
 	 */
 	readonly signal: AbortSignal;
 }

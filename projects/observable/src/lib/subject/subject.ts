@@ -1,8 +1,22 @@
-import { Observable, ConsumerObserver, ProducerObserver } from '../observable';
+import {
+	Observable,
+	Observer,
+	Next,
+	Error,
+	Complete,
+	Subscribable,
+	Notification,
+} from '../observable';
 import { observable } from '../interop';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#subject)
+ * A special type of {@linkcode Observable|observable} that can multicast {@linkcode Notification|notifications} to many consumers. Unlike a regular {@linkcode Observable|observable} which
+ * creates a new producer for each {@linkcode Subscribable.subscribe|subscription}, a {@linkcode Subject|subject} shares a single producer across all  {@linkcode Subscribable.subscribe|subscriptions}.
+ * The {@linkcode Subject|subject} itself acts as both a producer observer and an {@linkcode Observable|observable}, allowing values to be pushed through it directly via {@linkcode Next.next|next},
+ * {@linkcode Error.error|error}, and {@linkcode Complete.complete|complete} methods. If the {@linkcode Subject|subject} has already pushed a terminal {@linkcode Notification|notification}
+ * ({@linkcode Error.error|error} or {@linkcode Complete.complete|complete}), any new consumers will immediately receive that same terminal {@linkcode Notification|notification} upon
+ * {@linkcode Subscribable.subscribe|subscription}.
+ *
  * @example
  * Basic usage
  * ```ts
@@ -41,7 +55,7 @@ import { observable } from '../interop';
  * ```
  */
 export type Subject<Value = unknown> = Observable<Value> &
-	ProducerObserver<Value>;
+	Omit<Observer<Value>, 'finally'>;
 
 /**
  * Object interface for a {@linkcode Subject} factory.
@@ -66,8 +80,8 @@ export const Subject: SubjectConstructor = class {
 	 * Tracking a known array of observers, so we don't have to clone them while iterating to prevent reentrant
 	 * behaviors. (for example, what if this {@linkcode Subject} is subscribed to when nexting to an observer)
 	 */
-	#observersSnapshot?: ReadonlyArray<ProducerObserver>;
-	readonly #observers = new Map<symbol, ProducerObserver>();
+	#observersSnapshot?: ReadonlyArray<Omit<Observer, 'finally'>>;
+	readonly #observers = new Map<symbol, Omit<Observer, 'finally'>>();
 	readonly #delegate = new Observable((observer) => {
 		// Check if this subject has finalized so we can notify the observer immediately.
 		if (this.#error !== noError) observer.error(this.#error);
@@ -147,19 +161,16 @@ export const Subject: SubjectConstructor = class {
 	}
 
 	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
 		this.#delegate.subscribe(observerOrNext);
 	}
 
-	#ensureObserversSnapshot(): ReadonlyArray<ProducerObserver> {
+	#ensureObserversSnapshot(): ReadonlyArray<Omit<Observer, 'finally'>> {
 		return (this.#observersSnapshot ??= this.#takeObserversSnapshot());
 	}
 
-	#takeObserversSnapshot(): ReadonlyArray<ProducerObserver> {
+	#takeObserversSnapshot(): ReadonlyArray<Omit<Observer, 'finally'>> {
 		return Array.from(this.#observers.values());
 	}
 

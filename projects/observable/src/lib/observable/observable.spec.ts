@@ -1,7 +1,7 @@
 import { InteropObservable, observable } from '../interop';
-import { ConsumerObserver } from './consumer-observer';
+import { Observer } from './observer';
 import { Observable } from './observable';
-import { ProducerObserver } from './producer-observer';
+import { SubscriptionObserver } from './subscription-observer';
 import { Subscribable } from './subscribable';
 
 describe(Observable.name, () => {
@@ -42,7 +42,7 @@ describe(Observable.name, () => {
 			expect(observer.next).toHaveBeenCalledOnceWith(1);
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 			expect(subscribable.subscribe).toHaveBeenCalledOnceWith(
-				jasmine.any(ProducerObserver),
+				jasmine.any(SubscriptionObserver),
 			);
 		});
 
@@ -55,7 +55,7 @@ describe(Observable.name, () => {
 				jasmine.createSpy<
 					(
 						observerOrNext?:
-							| Partial<ConsumerObserver<number>>
+							| Partial<Observer<number>>
 							| ((value: number) => unknown)
 							| null,
 					) => unknown
@@ -146,7 +146,7 @@ describe(Observable.name, () => {
 			// Arrange
 			const next = jasmine.createSpy<(value: number) => unknown>('next');
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+				jasmine.createSpy<(observer: SubscriptionObserver<number>) => void>(
 					'subscribe',
 				);
 			const observable = new Observable(subscribeSpy);
@@ -157,18 +157,19 @@ describe(Observable.name, () => {
 			producerObserver.next(1);
 
 			// Assert
-			expect(producerObserver).toBeInstanceOf(ProducerObserver);
+			expect(producerObserver).toBeInstanceOf(SubscriptionObserver);
 			expect(producerObserver.signal.aborted).toBeFalse();
 			expect(next).toHaveBeenCalledOnceWith(1);
 		});
 
 		it('should create a new producer observer correctly when subscribe is called with a partial consumer observer', () => {
 			// Arrange
-			const consumerObserver = jasmine.createSpyObj<
-				Partial<ConsumerObserver<number>>
-			>('observer', ['next', 'error', 'complete', 'finally']);
+			const consumerObserver = jasmine.createSpyObj<Partial<Observer<number>>>(
+				'observer',
+				['next', 'error', 'complete', 'finally'],
+			);
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+				jasmine.createSpy<(observer: SubscriptionObserver<number>) => void>(
 					'subscribe',
 				);
 			const observable = new Observable(subscribeSpy);
@@ -180,7 +181,7 @@ describe(Observable.name, () => {
 			producerObserver.complete();
 
 			// Assert
-			expect(producerObserver).toBeInstanceOf(ProducerObserver);
+			expect(producerObserver).toBeInstanceOf(SubscriptionObserver);
 			expect(producerObserver.signal.aborted).toBeTrue();
 			expect(consumerObserver.next).toHaveBeenCalledOnceWith(1);
 			expect(consumerObserver.complete).toHaveBeenCalledOnceWith();
@@ -191,13 +192,13 @@ describe(Observable.name, () => {
 		it('should create a new producer observer correctly when subscribe is called with a full consumer observer', () => {
 			// Arrange
 			const controller = new AbortController();
-			const consumerObserver = jasmine.createSpyObj<ConsumerObserver<number>>(
+			const consumerObserver = jasmine.createSpyObj<Observer<number>>(
 				'observer',
 				['next', 'error', 'complete', 'finally'],
 				{ signal: controller.signal },
 			);
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver<number>) => void>(
+				jasmine.createSpy<(observer: SubscriptionObserver<number>) => void>(
 					'subscribe',
 				);
 			const observable = new Observable(subscribeSpy);
@@ -209,7 +210,7 @@ describe(Observable.name, () => {
 			producerObserver.complete();
 
 			// Assert
-			expect(producerObserver).toBeInstanceOf(ProducerObserver);
+			expect(producerObserver).toBeInstanceOf(SubscriptionObserver);
 			expect(producerObserver.signal.aborted).toBeTrue();
 			expect(consumerObserver.signal.aborted).toBeFalse();
 			expect(consumerObserver.next).toHaveBeenCalledOnceWith(1);
@@ -220,9 +221,11 @@ describe(Observable.name, () => {
 
 		it('should not create a new producer observer when subscribe is called with an existing producer observer', () => {
 			// Arrange
-			const observer = new ProducerObserver({});
+			const observer = new SubscriptionObserver({});
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver) => unknown>('subscribe');
+				jasmine.createSpy<(observer: SubscriptionObserver) => unknown>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 
 			// Act
@@ -235,7 +238,9 @@ describe(Observable.name, () => {
 		it('should not throw when internal subscribe throws', () => {
 			// Arrange
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver) => unknown>('subscribe');
+				jasmine.createSpy<(observer: SubscriptionObserver) => unknown>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(new Error('this should be handled'));
 
@@ -247,12 +252,12 @@ describe(Observable.name, () => {
 			// Arrange
 			const error = new Error('this should be handled');
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver) => unknown>('subscribe');
+				jasmine.createSpy<(observer: SubscriptionObserver) => unknown>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 			subscribeSpy.and.throwError(error);
-			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
-				'error',
-			]);
+			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
 
 			// Act
 			observable.subscribe(observer);
@@ -272,9 +277,7 @@ describe(Observable.name, () => {
 		it('should not call error method on consumer observer when internal subscribe is not provided', () => {
 			// Arrange;
 			const observable = new Observable();
-			const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
-				'error',
-			]);
+			const observer = jasmine.createSpyObj<Observer>('observer', ['error']);
 
 			// Act
 			observable.subscribe(observer);
@@ -286,7 +289,9 @@ describe(Observable.name, () => {
 		it('should call internal subscribe again on resubscribe', () => {
 			// Arrange;
 			const subscribeSpy =
-				jasmine.createSpy<(observer: ProducerObserver) => unknown>('subscribe');
+				jasmine.createSpy<(observer: SubscriptionObserver) => unknown>(
+					'subscribe',
+				);
 			const observable = new Observable(subscribeSpy);
 
 			// Act

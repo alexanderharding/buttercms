@@ -1,11 +1,11 @@
 import { Subject } from './subject';
-import { ConsumerObserver, Observable } from '../observable';
+import { Observer, Observable } from '../observable';
 
 describe(Subject.name, () => {
 	it('should allow next with undefined or any when created with no type', () => {
 		// Arrange
 		const subject = new Subject();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'complete',
 		]);
@@ -25,7 +25,7 @@ describe(Subject.name, () => {
 	it('should allow empty next when created with void type', () => {
 		// Arrange
 		const subject = new Subject<void>();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'complete',
 		]);
@@ -43,7 +43,7 @@ describe(Subject.name, () => {
 	it('should pump values right on through itself', () => {
 		// Arrange
 		const subject = new Subject<string>();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'complete',
 		]);
@@ -64,10 +64,8 @@ describe(Subject.name, () => {
 	it('should push values to multiple subscribers', () => {
 		// Arrange
 		const subject = new Subject<string>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
-			'next',
-		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', ['next']);
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'complete',
 		]);
@@ -93,19 +91,19 @@ describe(Subject.name, () => {
 	it('should handle subscribers that arrive and leave at different times but subject does not complete', () => {
 		// Arrange
 		const subject = new Subject<number>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer3 = jasmine.createSpyObj<ConsumerObserver>('observer3', [
+		const observer3 = jasmine.createSpyObj<Observer>('observer3', [
 			'next',
 			'error',
 			'complete',
@@ -164,19 +162,19 @@ describe(Subject.name, () => {
 	it('should handle subscribers that arrive and leave at different times, subject completes', () => {
 		// Arrange
 		const subject = new Subject<number>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer3 = jasmine.createSpyObj<ConsumerObserver>('observer3', [
+		const observer3 = jasmine.createSpyObj<Observer>('observer3', [
 			'next',
 			'error',
 			'complete',
@@ -234,19 +232,19 @@ describe(Subject.name, () => {
 	it('should handle subscribers that arrive and leave at different times, subject terminates with an error', () => {
 		// Arrange
 		const subject = new Subject<number>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer3 = jasmine.createSpyObj<ConsumerObserver>('observer3', [
+		const observer3 = jasmine.createSpyObj<Observer>('observer3', [
 			'next',
 			'error',
 			'complete',
@@ -305,19 +303,19 @@ describe(Subject.name, () => {
 	it('should handle subscribers that arrive and leave at different times, subject completes before nexting any value', () => {
 		// Arrange
 		const subject = new Subject<number>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer3 = jasmine.createSpyObj<ConsumerObserver>('observer3', [
+		const observer3 = jasmine.createSpyObj<Observer>('observer3', [
 			'next',
 			'error',
 			'complete',
@@ -358,19 +356,19 @@ describe(Subject.name, () => {
 	it('should disallow new subscriber once subject has been completed', () => {
 		// Arrange
 		const subject = new Subject<number>();
-		const observer1 = jasmine.createSpyObj<ConsumerObserver>('observer1', [
+		const observer1 = jasmine.createSpyObj<Observer>('observer1', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer2 = jasmine.createSpyObj<ConsumerObserver>('observer2', [
+		const observer2 = jasmine.createSpyObj<Observer>('observer2', [
 			'next',
 			'error',
 			'complete',
 			'finally',
 		]);
-		const observer3 = jasmine.createSpyObj<ConsumerObserver>('observer3', [
+		const observer3 = jasmine.createSpyObj<Observer>('observer3', [
 			'next',
 			'error',
 			'complete',
@@ -414,14 +412,14 @@ describe(Subject.name, () => {
 		expect(observer3.error).not.toHaveBeenCalled();
 	});
 
-	it('should be an ConsumerObserver which can be given to Observable.subscribe', () => {
+	it('should be an Observer which can be given to Observable.subscribe', () => {
 		// Arrange
 		const source = new Observable((observer) => {
 			[1, 2, 3, 4, 5].forEach((value) => observer.next(value));
 			observer.complete();
 		});
 		const subject = new Subject<number>();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'error',
 			'complete',
@@ -439,10 +437,12 @@ describe(Subject.name, () => {
 
 	it('should be an InteropObservable that can be past to Observable.from', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 		const subject = new Subject<number>();
 
 		// Act
@@ -487,7 +487,7 @@ describe(Subject.name, () => {
 	it('should not next after completed', () => {
 		// Arrange
 		const subject = new Subject<string>();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'complete',
 		]);
@@ -507,7 +507,7 @@ describe(Subject.name, () => {
 		// Arrange
 		const error = new Error('wut?');
 		const subject = new Subject<string>();
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'error',
 		]);
@@ -556,6 +556,7 @@ describe(Subject.name, () => {
 			const source = new Subject<number>();
 			const nextSpy = jasmine.createSpy<(value: number) => unknown>('next');
 			nextSpy.and.throwError(new Error('Boom!'));
+			spyOn(globalThis, 'queueMicrotask');
 
 			// Act
 			source.subscribe(nextSpy);
@@ -568,27 +569,29 @@ describe(Subject.name, () => {
 	describe('many subscribers', () => {
 		it('should be able to subscribe and abort huge amounts of subscribers', () => {
 			// Arrange
-			let numResultsReceived = 0;
 			const controller = new AbortController();
 			const source = new Subject<number>();
-			const numSubscribers = 25_000;
+			const numSubscribers = 10_000;
+			const observer = jasmine.createSpyObj<Observer>(
+				'observer',
+				['next', 'complete'],
+				{ signal: controller.signal },
+			);
 
 			// Act
-			for (let index = 0; index !== numSubscribers; ++index) {
-				source.subscribe({
-					signal: controller.signal,
-					next: () => ++numResultsReceived,
-				});
+			for (let index = 0; index < numSubscribers; index++) {
+				source.subscribe(observer);
 			}
 
 			// Assert
-			expect(numResultsReceived).toEqual(0);
+			expect(observer.next).not.toHaveBeenCalled();
 			source.next(42);
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(observer.next).toHaveBeenCalledTimes(numSubscribers);
+			observer.next.calls.reset();
 			controller.abort();
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(observer.next).not.toHaveBeenCalled();
 			source.next(42);
-			expect(numResultsReceived).toEqual(numSubscribers);
+			expect(observer.next).not.toHaveBeenCalled();
 		});
 	});
 

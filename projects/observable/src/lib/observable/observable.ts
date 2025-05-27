@@ -1,10 +1,10 @@
-import { InteropObservable, observable } from '../interop';
-import { ConsumerObserver } from './consumer-observer';
-import { ProducerObserver } from './producer-observer';
-import { Subscribable } from './subscribable';
+import { type InteropObservable, observable } from '../interop';
+import type { Observer } from './observer';
+import type { Subscribable } from './subscribable';
+import { SubscriptionObserver } from './subscription-observer';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#observable)
+ * At it's highest level, an observable represents a template for connecting an observer, as a consumer, to a producer, via a subscribe action, resulting in a subscription.
  * @example
  * Creating an observable with a synchronous producer.
  * ```ts
@@ -92,8 +92,8 @@ export interface ObservableConstructor {
 	new (): Observable<never>;
 	new (subscribe: undefined | null): Observable<never>;
 	/**
-	 * Creates a template for connecting a producer to a consumer via a subscribe action.
-	 * @param subscribe The function called for each subscribe action that sets up the producer. This function receives a ProducerObserver that enables pushing notifications to the observer.
+	 * Creates a template for connecting a producer to a consumer via a {@linkcode Subscribable.subscribe|subscribe} action.
+	 * @param subscribe The function called for each {@linkcode Subscribable.subscribe|subscribe} action that sets up the producer. This function receives a ProducerObserver that enables pushing notifications to the observer.
 	 * @example
 	 * Creating an observable with a synchronous producer.
 	 * ```ts
@@ -189,7 +189,7 @@ export interface ObservableConstructor {
 	 * ```
 	 */
 	new <Value>(
-		subscribe: (observer: ProducerObserver<Value>) => unknown,
+		subscribe: (observer: Omit<Observer<Value>, 'finally'>) => unknown,
 	): Observable<Value>;
 	readonly prototype: Observable;
 	/**
@@ -219,9 +219,13 @@ interface Deferred<Value = unknown> {
 
 export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
-	readonly #subscribe?: ((observer: ProducerObserver) => unknown) | null;
+	readonly #subscribe?:
+		| ((observer: Omit<Observer, 'finally'>) => unknown)
+		| null;
 
-	constructor(subscribe?: ((observer: ProducerObserver) => unknown) | null) {
+	constructor(
+		subscribe?: ((observer: Omit<Observer, 'finally'>) => unknown) | null,
+	) {
 		this.#subscribe = subscribe;
 	}
 
@@ -330,12 +334,11 @@ export const Observable: ObservableConstructor = class {
 	}
 
 	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
-		const observer = ensureProducerObserver(observerOrNext);
+		// Always ensure a proper observer even if this.#subscribe is not defined.
+		// This allows unhandled errors to be reported if they occur.
+		const observer = ensureSubscriptionObserver(observerOrNext);
 		try {
 			this.#subscribe?.(observer);
 		} catch (error) {
@@ -344,13 +347,10 @@ export const Observable: ObservableConstructor = class {
 	}
 };
 
-function ensureProducerObserver(
-	observerOrNext?:
-		| Partial<ConsumerObserver>
-		| ((value: unknown) => unknown)
-		| null,
-): ProducerObserver {
-	return observerOrNext instanceof ProducerObserver
+function ensureSubscriptionObserver(
+	observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
+): SubscriptionObserver {
+	return observerOrNext instanceof SubscriptionObserver
 		? observerOrNext
-		: new ProducerObserver(observerOrNext);
+		: new SubscriptionObserver(observerOrNext);
 }

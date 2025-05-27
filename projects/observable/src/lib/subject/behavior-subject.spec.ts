@@ -1,5 +1,5 @@
 import { BehaviorSubject } from './behavior-subject';
-import { ConsumerObserver, Observable } from '../observable';
+import { Observer, Observable } from '../observable';
 
 describe(BehaviorSubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
@@ -9,10 +9,12 @@ describe(BehaviorSubject.name, () => {
 			observer.complete();
 		});
 		const subject = new BehaviorSubject(0);
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 
 		// Act
 		subject.subscribe(observer);
@@ -34,10 +36,12 @@ describe(BehaviorSubject.name, () => {
 
 	it('should be an InteropObservable that can be past to Observable.from', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 		const subject = new BehaviorSubject(0);
 
 		// Act
@@ -88,10 +92,9 @@ describe(BehaviorSubject.name, () => {
 		it('should emit value to subscribers', () => {
 			// Arrange
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -104,10 +107,9 @@ describe(BehaviorSubject.name, () => {
 		it('should store value for late subscribers', () => {
 			// Arrange
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');
@@ -123,10 +125,12 @@ describe(BehaviorSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'complete', 'finally', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'complete',
+				'finally',
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -143,10 +147,10 @@ describe(BehaviorSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'next',
+			]);
 
 			// Act
 			subject.error(error);
@@ -162,10 +166,11 @@ describe(BehaviorSubject.name, () => {
 		it('should notify subscribers', () => {
 			// Arrange
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next', 'finally'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+				'finally',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -180,10 +185,10 @@ describe(BehaviorSubject.name, () => {
 		it('should notify late subscribers', () => {
 			// Arrange
 			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+			]);
 
 			// Act
 			subject.complete();

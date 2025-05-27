@@ -1,4 +1,4 @@
-import { ConsumerObserver, Observable } from '../observable';
+import { Observer, Observable } from '../observable';
 import { of } from '../operators/creation';
 import { BroadcastSubject } from './broadcast-subject';
 
@@ -39,10 +39,12 @@ describe(BroadcastSubject.name, () => {
 		// Arrange
 		const source = new Observable<number>((observer) => observer.complete());
 		const subject = new BroadcastSubject<number>('test');
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 
 		// Act
 		subject.subscribe(observer);
@@ -57,7 +59,7 @@ describe(BroadcastSubject.name, () => {
 
 	it('should be an InteropObservable that can be past to Observable.from', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver>('observer', [
+		const observer = jasmine.createSpyObj<Observer>('observer', [
 			'next',
 			'complete',
 			'error',
@@ -116,10 +118,12 @@ describe(BroadcastSubject.name, () => {
 		it('should not pass through this subject', () => {
 			// Arrange
 			const subject = new BroadcastSubject<string>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'error', 'complete', 'finally'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'error',
+				'complete',
+				'finally',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -156,10 +160,12 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const source = of(1, 2, 3, 4, 5);
 			const subject = new BroadcastSubject<number>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-				'observer',
-				['complete', 'error', 'finally', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+				'complete',
+				'error',
+				'finally',
+				'next',
+			]);
 
 			// Act
 			subject.subscribe(observer);
@@ -192,10 +198,12 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new BroadcastSubject<string>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'complete', 'finally', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'complete',
+				'finally',
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -209,6 +217,7 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new BroadcastSubject<string>('test');
+			spyOn(globalThis, 'queueMicrotask');
 
 			// Act
 			subject.error(error);
@@ -221,6 +230,7 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new BroadcastSubject<string>('test');
+			spyOn(globalThis, 'queueMicrotask');
 
 			// Act
 			subject.error(error);
@@ -234,10 +244,9 @@ describe(BroadcastSubject.name, () => {
 			const abortHandlerSpy = jasmine.createSpy<(event: Event) => void>();
 			const error = new Error('test error');
 			const subject = new BroadcastSubject<string>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+			]);
 			subject.signal.addEventListener('abort', abortHandlerSpy);
 			subject.subscribe(observer);
 
@@ -255,10 +264,9 @@ describe(BroadcastSubject.name, () => {
 		it('should notify subscribers', () => {
 			// Arrange
 			const subject = new BroadcastSubject<string>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -294,10 +302,9 @@ describe(BroadcastSubject.name, () => {
 			// Arrange
 			const abortHandlerSpy = jasmine.createSpy<(event: Event) => void>();
 			const subject = new BroadcastSubject<string>('test');
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+			]);
 			subject.signal.addEventListener('abort', abortHandlerSpy);
 			subject.subscribe(observer);
 

@@ -1,10 +1,10 @@
-import { ConsumerObserver } from './consumer-observer';
+import { Observer } from './observer';
 import { never } from './never';
 
 describe('never', () => {
 	it('should not emit when subscribed to without a signal', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver<never>>('observer', [
+		const observer = jasmine.createSpyObj<Observer<never>>('observer', [
 			'next',
 			'error',
 			'complete',
@@ -25,7 +25,7 @@ describe('never', () => {
 		// Arrange
 		const controller = new AbortController();
 		controller.abort();
-		const observer = jasmine.createSpyObj<ConsumerObserver<never>>(
+		const observer = jasmine.createSpyObj<Observer<never>>(
 			'observer',
 			['next', 'error', 'complete', 'finally'],
 			{ signal: controller.signal },
@@ -44,7 +44,7 @@ describe('never', () => {
 	it('should not emit when subscribed to with a non-aborted signal', () => {
 		// Arrange
 		const controller = new AbortController();
-		const observer = jasmine.createSpyObj<ConsumerObserver<never>>(
+		const observer = jasmine.createSpyObj<Observer<never>>(
 			'observer',
 			['next', 'error', 'complete', 'finally'],
 			{ signal: controller.signal },

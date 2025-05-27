@@ -1,5 +1,5 @@
 import { AsyncSubject } from './async-subject';
-import { ConsumerObserver, Observable } from '../observable';
+import { Observer, Observable } from '../observable';
 
 describe(AsyncSubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
@@ -9,10 +9,12 @@ describe(AsyncSubject.name, () => {
 			observer.complete();
 		});
 		const subject = new AsyncSubject<number>();
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 
 		// Act
 		subject.subscribe(observer);
@@ -27,10 +29,12 @@ describe(AsyncSubject.name, () => {
 
 	it('should be an InteropObservable that can be past to Observable.from', () => {
 		// Arrange
-		const observer = jasmine.createSpyObj<ConsumerObserver<number>>(
-			'observer',
-			['next', 'complete', 'error', 'finally'],
-		);
+		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
+			'next',
+			'complete',
+			'error',
+			'finally',
+		]);
 		const subject = new AsyncSubject<number>();
 
 		// Act
@@ -54,10 +58,10 @@ describe(AsyncSubject.name, () => {
 		it('should only emit the last value on complete', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.subscribe(observer);
@@ -73,10 +77,10 @@ describe(AsyncSubject.name, () => {
 		it('should not emit if no value is nexted', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.subscribe(observer);
@@ -90,10 +94,10 @@ describe(AsyncSubject.name, () => {
 		it('should emit last value to late subscribers', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.next('foo');
@@ -109,10 +113,10 @@ describe(AsyncSubject.name, () => {
 		it('should not emit to late subscribers if no value was nexted', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next', 'complete'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.complete();
@@ -128,10 +132,9 @@ describe(AsyncSubject.name, () => {
 		it('should not emit values until complete', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -148,10 +151,12 @@ describe(AsyncSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'complete', 'finally', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'complete',
+				'finally',
+				'next',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -169,10 +174,10 @@ describe(AsyncSubject.name, () => {
 			// Arrange
 			const error = new Error('test error');
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['error', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'error',
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');
@@ -189,10 +194,11 @@ describe(AsyncSubject.name, () => {
 		it('should notify subscribers', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next', 'finally'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+				'finally',
+			]);
 			subject.subscribe(observer);
 
 			// Act
@@ -208,10 +214,10 @@ describe(AsyncSubject.name, () => {
 		it('should notify late subscribers', () => {
 			// Arrange
 			const subject = new AsyncSubject<string>();
-			const observer = jasmine.createSpyObj<ConsumerObserver<string>>(
-				'observer',
-				['complete', 'next'],
-			);
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'complete',
+				'next',
+			]);
 
 			// Act
 			subject.next('foo');

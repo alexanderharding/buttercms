@@ -1,9 +1,22 @@
-import { Observable, type ConsumerObserver } from '../observable';
+import {
+	Observable,
+	type Observer,
+	type Next,
+	type Error,
+	type Complete,
+	type Notification,
+	type Subscribable,
+} from '../observable';
 import { observable } from '../interop';
 import { Subject } from './subject';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#replaysubject)
+ * A variant of {@linkcode Subject} that buffers a specified number of values (defaulting to all values if unspecified) and replays them to new consumers upon
+ * {@linkcode Subscribable.subscribe|subscription}. When new values are {@linkcode Next.next|nexted}, they are added to the buffer and older values are removed if the buffer exceeds its size limit.
+ * Any new consumers will immediately receive all buffered values upon {@linkcode Subscribable.subscribe|subscription}, followed by any subsequent values that are {@linkcode Next.next|nexted}.
+ * If the {@linkcode ReplaySubject|subject} has {@linkcode Error.error|errored}, late subscribers will receive all buffered values followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}.
+ * If the {@linkcode ReplaySubject|subject} has {@linkcode Complete.complete|completed}, late subscribers will receive all buffered values followed by the {@linkcode Complete.complete|complete}
+ * {@linkcode Notification|notification}.
  * @example
  * ```ts
  * import { ReplaySubject } from "@xander/observable";
@@ -106,10 +119,7 @@ export const ReplaySubject: ReplaySubjectConstructor = class {
 	}
 
 	subscribe(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	): void {
 		this.#output.subscribe(observerOrNext);
 	}
