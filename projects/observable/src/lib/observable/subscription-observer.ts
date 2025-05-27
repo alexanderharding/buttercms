@@ -1,38 +1,35 @@
 import { UnhandledError } from '../errors';
-import { Completable } from './completable';
-import { ConsumerObserver } from './consumer-observer';
-import { Errorable } from './errorable';
-import { Nextable } from './nextable';
-import { Unsubscribable } from './unsubscribable';
+import type { Notification } from './notification';
+import { Observer } from './observer';
 
 /**
- * [Glossary](https://jsr.io/@xander/observable#producerobserver)
+ * Enables the producer to push {@linkcode Notification|notifications} to one (unicast) or more (multicast) consumers.
  */
-export type ProducerObserver<Value = unknown> = Nextable<Value> &
-	Errorable &
-	Completable &
-	Unsubscribable;
+export type SubscriptionObserver<Value = unknown> = Omit<
+	Observer<Value>,
+	'finally'
+>;
 
-export interface ProducerObserverConstructor {
+/**
+ * Object interface for a {@linkcode SubscriptionObserver} factory.
+ */
+export interface SubscriptionObserverConstructor {
 	new <Value>(
 		observerOrNext?:
-			| Partial<ConsumerObserver<Value>>
+			| Partial<Observer<Value>>
 			| ((value: Value) => unknown)
 			| null,
-	): ProducerObserver<Value>;
-	readonly prototype: ProducerObserver;
+	): SubscriptionObserver<Value>;
+	readonly prototype: SubscriptionObserver;
 }
 
-export const ProducerObserver: ProducerObserverConstructor = class {
-	readonly #consumerObserver?: Partial<ConsumerObserver> | null;
+export const SubscriptionObserver: SubscriptionObserverConstructor = class {
+	readonly #consumerObserver?: Partial<Observer> | null;
 	readonly #controller = new AbortController();
 	readonly signal = this.#controller.signal;
 
 	constructor(
-		observerOrNext?:
-			| Partial<ConsumerObserver>
-			| ((value: unknown) => unknown)
-			| null,
+		observerOrNext?: Partial<Observer> | ((value: unknown) => unknown) | null,
 	) {
 		if (typeof observerOrNext === 'function') {
 			this.#consumerObserver = { next: observerOrNext };

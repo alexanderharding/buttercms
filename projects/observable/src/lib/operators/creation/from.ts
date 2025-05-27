@@ -1,4 +1,4 @@
-import { Observable, ProducerObserver } from '../../observable';
+import { Observable, SubscriptionObserver } from '../../observable';
 import { throwError } from './throw-error';
 import { AnyCatcher } from '../../any-catcher';
 
@@ -12,7 +12,7 @@ export interface InteropObservable<Value = unknown> {
 
 /** @public */
 export interface Subscribable<Value = unknown> {
-	subscribe(observer: ProducerObserver<Value>): void;
+	subscribe(observer: SubscriptionObserver<Value>): void;
 }
 
 export type ObservableInput<Value = unknown> =
