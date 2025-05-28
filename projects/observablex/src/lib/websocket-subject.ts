@@ -1,8 +1,8 @@
-import { Subject } from './subject/subject';
+import { Subject } from '../../../observable/src/lib/subject/subject';
 import { Observable } from './observable/observable';
 import { Pipeline } from './pipe/pipeline';
 import { UnaryFunction } from './pipe';
-import { ConsumerObserver } from './observable';
+import { ConsumerObserver } from '../../../observable/src/lib/observable';
 
 export type WebSocketSubject<Value = unknown> = Omit<Subject<Value>, 'pipe'> &
 	Pipeline<WebSocketSubject<Value>>;
