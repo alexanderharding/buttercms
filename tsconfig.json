@@ -15,7 +15,12 @@
       ],
       "ngx-campaigns": ["./dist/ngx-campaigns"],
       "ngx-buttercms": ["./dist/ngx-buttercms"],
-      "observable": ["./dist/observable"]
+      "observable": [
+        "./dist/observable"
+      ],
+      "observablex": [
+        "./dist/observablex"
+      ]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,
