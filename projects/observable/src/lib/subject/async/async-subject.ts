@@ -1,13 +1,15 @@
-import { Observable, type Observer } from '../observable';
-import { observable } from '../interop';
-import { Subject } from './subject';
-import type {
-	Complete,
-	Error,
-	Next,
-	Notification,
-	Subscribable,
-} from '../observable';
+import { observable } from '../../interop';
+import { Subject } from '../subject';
+import {
+	type Complete,
+	type Error,
+	type Next,
+	type Notification,
+	type Subscribable,
+	Observable,
+	type Observer,
+} from '../../observable';
+import type { AsyncSubjectConstructor } from './async-subject-constructor';
 
 /**
  * A variant of {@linkcode Subject} that buffers only the latest value. When the {@linkcode AsyncSubject|subject} {@linkcode Complete.complete|completes},
@@ -36,15 +38,6 @@ import type {
  * ```
  */
 export type AsyncSubject<Value = unknown> = Subject<Value>;
-
-/**
- * Object interface for an {@linkcode AsyncSubject} factory.
- */
-export interface AsyncSubjectConstructor {
-	new (): AsyncSubject;
-	new <Value>(): AsyncSubject<Value>;
-	readonly prototype: AsyncSubject;
-}
 
 /**
  * Flag indicating that a value is not set.

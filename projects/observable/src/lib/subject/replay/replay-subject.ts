@@ -6,9 +6,10 @@ import {
 	type Complete,
 	type Notification,
 	type Subscribable,
-} from '../observable';
-import { observable } from '../interop';
-import { Subject } from './subject';
+} from '../../observable';
+import { observable } from '../../interop';
+import { Subject } from '../subject';
+import type { ReplaySubjectConstructor } from './replay-subject-constructor';
 
 /**
  * A variant of {@linkcode Subject} that buffers a specified number of values (defaulting to all values if unspecified) and replays them to new consumers upon
@@ -51,15 +52,6 @@ import { Subject } from './subject';
  * ```
  */
 export type ReplaySubject<Value = unknown> = Subject<Value>;
-
-/**
- * Object interface for a {@linkcode ReplaySubject} factory.
- */
-export interface ReplaySubjectConstructor {
-	new (bufferSize?: number): ReplaySubject;
-	new <Value>(bufferSize?: number): ReplaySubject<Value>;
-	readonly prototype: ReplaySubject;
-}
 
 /**
  * @class

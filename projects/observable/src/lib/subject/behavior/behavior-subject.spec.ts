@@ -1,14 +1,14 @@
-import { ReplaySubject } from './replay-subject';
-import { Observer, Observable } from '../observable';
+import { BehaviorSubject } from './behavior-subject';
+import { Observer, Observable } from '../../observable';
 
-describe(ReplaySubject.name, () => {
+describe(BehaviorSubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
 		// Arrange
 		const source = new Observable<number>((observer) => {
 			[1, 2, 3, 4, 5].forEach((value) => observer.next(value));
 			observer.complete();
 		});
-		const subject = new ReplaySubject<number>(3);
+		const subject = new BehaviorSubject(0);
 		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
 			'next',
 			'complete',
@@ -21,7 +21,14 @@ describe(ReplaySubject.name, () => {
 		source.subscribe(subject);
 
 		// Assert
-		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3], [4], [5]]);
+		expect(observer.next.calls.allArgs()).toEqual([
+			[0],
+			[1],
+			[2],
+			[3],
+			[4],
+			[5],
+		]);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.error).not.toHaveBeenCalled();
 		expect(observer.finally).toHaveBeenCalledOnceWith();
@@ -35,90 +42,56 @@ describe(ReplaySubject.name, () => {
 			'error',
 			'finally',
 		]);
-		const subject = new ReplaySubject<number>();
+		const subject = new BehaviorSubject(0);
 
 		// Act
 		const observable = Observable.from(subject);
+		observable.subscribe(observer);
 		subject.next(1);
 		subject.next(2);
 		subject.next(3);
 		subject.complete();
-		observable.subscribe(observer);
 
 		// Assert
 		expect(observable).toBeInstanceOf(Observable);
-		expect(observable).not.toBeInstanceOf(ReplaySubject);
-		expect(observer.error).not.toHaveBeenCalled();
-		expect(observer.next.calls.allArgs()).toEqual([[1], [2], [3]]);
+		expect(observable).not.toBeInstanceOf(BehaviorSubject);
+		expect(observer.next.calls.allArgs()).toEqual([[0], [1], [2], [3]]);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.finally).toHaveBeenCalledOnceWith();
+		expect(observer.error).not.toHaveBeenCalled();
 	});
 
 	describe('subscribe', () => {
-		it('should emit buffered values to subscribers', () => {
+		it('should emit latest value to subscribers', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
-				'next',
-				'complete',
-			]);
+			const subject = new BehaviorSubject('initial');
+			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
+			subject.next('second');
 
 			// Act
-			subject.next('first');
-			subject.next('second');
-			subject.next('third');
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([['second'], ['third']]);
+			expect(observer.next).toHaveBeenCalledOnceWith('second');
 		});
-
-		it('should emit all values when buffer size is infinite', () => {
+		it('should emit latest value to late subscribers the complete', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>();
-			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
-				'next',
-				'complete',
-			]);
+			const subject = new BehaviorSubject('initial');
+			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
+			subject.next('second');
 
 			// Act
-			subject.next('first');
-			subject.next('second');
-			subject.next('third');
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([
-				['first'],
-				['second'],
-				['third'],
-			]);
-		});
-
-		it('should emit buffered values to late subscribers', () => {
-			// Arrange
-			const subject = new ReplaySubject<string>(2);
-			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
-				'next',
-				'complete',
-			]);
-
-			// Act
-			subject.next('first');
-			subject.next('second');
-			subject.complete();
-			subject.subscribe(observer);
-
-			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([['first'], ['second']]);
-			expect(observer.complete).toHaveBeenCalledOnceWith();
+			expect(observer.next).toHaveBeenCalledOnceWith('second');
 		});
 	});
 
 	describe('next', () => {
-		it('should emit values to subscribers', () => {
+		it('should emit value to subscribers', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'next',
 			]);
@@ -126,26 +99,24 @@ describe(ReplaySubject.name, () => {
 
 			// Act
 			subject.next('foo');
-			subject.next('bar');
 
 			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([['foo'], ['bar']]);
+			expect(observer.next.calls.allArgs()).toEqual([['initial'], ['foo']]);
 		});
 
-		it('should store values for late subscribers', () => {
+		it('should store value for late subscribers', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'next',
 			]);
 
 			// Act
 			subject.next('foo');
-			subject.next('bar');
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([['foo'], ['bar']]);
+			expect(observer.next).toHaveBeenCalledOnceWith('foo');
 		});
 	});
 
@@ -153,7 +124,7 @@ describe(ReplaySubject.name, () => {
 		it('should pass through this subject', () => {
 			// Arrange
 			const error = new Error('test error');
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'error',
 				'complete',
@@ -163,11 +134,10 @@ describe(ReplaySubject.name, () => {
 			subject.subscribe(observer);
 
 			// Act
-			subject.next('foo');
 			subject.error(error);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('foo');
+			expect(observer.next).toHaveBeenCalledOnceWith('initial');
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 			expect(observer.complete).not.toHaveBeenCalled();
 			expect(observer.finally).toHaveBeenCalledOnceWith();
@@ -176,19 +146,18 @@ describe(ReplaySubject.name, () => {
 		it('should notify late subscribers', () => {
 			// Arrange
 			const error = new Error('test error');
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'error',
 				'next',
 			]);
 
 			// Act
-			subject.next('foo');
 			subject.error(error);
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('foo');
+			expect(observer.next).toHaveBeenCalledOnceWith('initial');
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 		});
 	});
@@ -196,7 +165,7 @@ describe(ReplaySubject.name, () => {
 	describe('complete', () => {
 		it('should notify subscribers', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'complete',
 				'next',
@@ -205,30 +174,28 @@ describe(ReplaySubject.name, () => {
 			subject.subscribe(observer);
 
 			// Act
-			subject.next('foo');
 			subject.complete();
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('foo');
+			expect(observer.next).toHaveBeenCalledOnceWith('initial');
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 			expect(observer.finally).toHaveBeenCalledOnceWith();
 		});
 
 		it('should notify late subscribers', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>(2);
+			const subject = new BehaviorSubject('initial');
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'complete',
 				'next',
 			]);
 
 			// Act
-			subject.next('foo');
 			subject.complete();
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('foo');
+			expect(observer.next).toHaveBeenCalledOnceWith('initial');
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 		});
 	});
@@ -236,7 +203,7 @@ describe(ReplaySubject.name, () => {
 	describe('Observable.from', () => {
 		it('should not create a new observable multiple times for the same subject', () => {
 			// Arrange
-			const subject = new ReplaySubject<string>();
+			const subject = new BehaviorSubject('test');
 
 			// Act
 			const observable1 = Observable.from(subject);
@@ -248,8 +215,8 @@ describe(ReplaySubject.name, () => {
 
 		it('should create a new observable multiple times for different subjects', () => {
 			// Arrange
-			const subject1 = new ReplaySubject<string>();
-			const subject2 = new ReplaySubject<string>();
+			const subject1 = new BehaviorSubject('test1');
+			const subject2 = new BehaviorSubject('test2');
 
 			// Act
 			const observable1 = Observable.from(subject1);
@@ -257,6 +224,22 @@ describe(ReplaySubject.name, () => {
 
 			// Assert
 			expect(observable1).not.toBe(observable2);
+		});
+	});
+
+	describe('value', () => {
+		it('should return current value', () => {
+			// Arrange
+			const subject = new BehaviorSubject('initial');
+
+			// Act
+			const value1 = subject.value;
+			subject.next('second');
+			const value2 = subject.value;
+
+			// Assert
+			expect(value1).toBe('initial');
+			expect(value2).toBe('second');
 		});
 	});
 });

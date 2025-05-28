@@ -1,13 +1,15 @@
-import { Observable, Observer } from '../observable';
-import { observable } from '../interop';
-import { Subject } from './subject';
+import { observable } from '../../interop';
+import { Subject } from '../subject';
 import {
-	Subscribable,
-	Next,
-	Error,
-	Complete,
-	Notification,
-} from '../observable';
+	type Subscribable,
+	type Next,
+	type Error,
+	type Complete,
+	type Notification,
+	Observable,
+	type Observer,
+} from '../../observable';
+import type { BehaviorSubjectConstructor } from './behavior-subject-constructor';
 
 /**
  * A variant of {@linkcode Subject} that requires an initial value and notifies new consumers of its current value upon {@linkcode Subscribable.subscribe|subscription}.
@@ -35,14 +37,6 @@ import {
  */
 export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
 	readonly value: Value;
-}
-
-/**
- * Object interface for a {@linkcode BehaviorSubject} factory.
- */
-export interface BehaviorSubjectConstructor {
-	new <Value>(initialValue: Value): BehaviorSubject<Value>;
-	readonly prototype: BehaviorSubject;
 }
 
 /**

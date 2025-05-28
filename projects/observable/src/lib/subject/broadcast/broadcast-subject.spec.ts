@@ -1,5 +1,5 @@
-import { Observer, Observable } from '../observable';
-import { of } from '../operators/creation';
+import { Observer, Observable } from '../../observable';
+import { of } from '../../operators/creation';
 import { BroadcastSubject } from './broadcast-subject';
 
 describe(BroadcastSubject.name, () => {

@@ -1,14 +1,14 @@
-import { BehaviorSubject } from './behavior-subject';
-import { Observer, Observable } from '../observable';
+import { AsyncSubject } from './async-subject';
+import { Observable, type Observer } from '../../observable';
 
-describe(BehaviorSubject.name, () => {
+describe(AsyncSubject.name, () => {
 	it('should be an Observer which can be given to Observable.subscribe', () => {
 		// Arrange
 		const source = new Observable<number>((observer) => {
 			[1, 2, 3, 4, 5].forEach((value) => observer.next(value));
 			observer.complete();
 		});
-		const subject = new BehaviorSubject(0);
+		const subject = new AsyncSubject<number>();
 		const observer = jasmine.createSpyObj<Observer<number>>('observer', [
 			'next',
 			'complete',
@@ -21,14 +21,7 @@ describe(BehaviorSubject.name, () => {
 		source.subscribe(subject);
 
 		// Assert
-		expect(observer.next.calls.allArgs()).toEqual([
-			[0],
-			[1],
-			[2],
-			[3],
-			[4],
-			[5],
-		]);
+		expect(observer.next).toHaveBeenCalledOnceWith(5);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.error).not.toHaveBeenCalled();
 		expect(observer.finally).toHaveBeenCalledOnceWith();
@@ -42,7 +35,7 @@ describe(BehaviorSubject.name, () => {
 			'error',
 			'finally',
 		]);
-		const subject = new BehaviorSubject(0);
+		const subject = new AsyncSubject<number>();
 
 		// Act
 		const observable = Observable.from(subject);
@@ -54,44 +47,91 @@ describe(BehaviorSubject.name, () => {
 
 		// Assert
 		expect(observable).toBeInstanceOf(Observable);
-		expect(observable).not.toBeInstanceOf(BehaviorSubject);
-		expect(observer.next.calls.allArgs()).toEqual([[0], [1], [2], [3]]);
+		expect(observable).not.toBeInstanceOf(AsyncSubject);
+		expect(observer.error).not.toHaveBeenCalled();
+		expect(observer.next).toHaveBeenCalledOnceWith(3);
 		expect(observer.complete).toHaveBeenCalledOnceWith();
 		expect(observer.finally).toHaveBeenCalledOnceWith();
-		expect(observer.error).not.toHaveBeenCalled();
 	});
 
 	describe('subscribe', () => {
-		it('should emit latest value to subscribers', () => {
+		it('should only emit the last value on complete', () => {
 			// Arrange
-			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
-			subject.next('second');
+			const subject = new AsyncSubject<string>();
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.subscribe(observer);
+			subject.next('foo');
+			subject.next('bar');
+			subject.complete();
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('second');
+			expect(observer.next).toHaveBeenCalledOnceWith('bar');
+			expect(observer.complete).toHaveBeenCalledOnceWith();
 		});
-		it('should emit latest value to late subscribers the complete', () => {
+
+		it('should not emit if no value is nexted', () => {
 			// Arrange
-			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj('observer', ['next', 'complete']);
-			subject.next('second');
+			const subject = new AsyncSubject<string>();
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
 
 			// Act
 			subject.subscribe(observer);
+			subject.complete();
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('second');
+			expect(observer.next).not.toHaveBeenCalled();
+			expect(observer.complete).toHaveBeenCalledOnceWith();
+		});
+
+		it('should emit last value to late subscribers', () => {
+			// Arrange
+			const subject = new AsyncSubject<string>();
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
+
+			// Act
+			subject.next('foo');
+			subject.next('bar');
+			subject.complete();
+			subject.subscribe(observer);
+
+			// Assert
+			expect(observer.next).toHaveBeenCalledOnceWith('bar');
+			expect(observer.complete).toHaveBeenCalledOnceWith();
+		});
+
+		it('should not emit to late subscribers if no value was nexted', () => {
+			// Arrange
+			const subject = new AsyncSubject<string>();
+			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
+				'next',
+				'complete',
+			]);
+
+			// Act
+			subject.complete();
+			subject.subscribe(observer);
+
+			// Assert
+			expect(observer.next).not.toHaveBeenCalled();
+			expect(observer.complete).toHaveBeenCalledOnceWith();
 		});
 	});
 
 	describe('next', () => {
-		it('should emit value to subscribers', () => {
+		it('should not emit values until complete', () => {
 			// Arrange
-			const subject = new BehaviorSubject('initial');
+			const subject = new AsyncSubject<string>();
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'next',
 			]);
@@ -99,24 +139,10 @@ describe(BehaviorSubject.name, () => {
 
 			// Act
 			subject.next('foo');
+			subject.next('bar');
 
 			// Assert
-			expect(observer.next.calls.allArgs()).toEqual([['initial'], ['foo']]);
-		});
-
-		it('should store value for late subscribers', () => {
-			// Arrange
-			const subject = new BehaviorSubject('initial');
-			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
-				'next',
-			]);
-
-			// Act
-			subject.next('foo');
-			subject.subscribe(observer);
-
-			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('foo');
+			expect(observer.next).not.toHaveBeenCalled();
 		});
 	});
 
@@ -124,7 +150,7 @@ describe(BehaviorSubject.name, () => {
 		it('should pass through this subject', () => {
 			// Arrange
 			const error = new Error('test error');
-			const subject = new BehaviorSubject('initial');
+			const subject = new AsyncSubject<string>();
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'error',
 				'complete',
@@ -134,10 +160,11 @@ describe(BehaviorSubject.name, () => {
 			subject.subscribe(observer);
 
 			// Act
+			subject.next('foo');
 			subject.error(error);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('initial');
+			expect(observer.next).not.toHaveBeenCalled();
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 			expect(observer.complete).not.toHaveBeenCalled();
 			expect(observer.finally).toHaveBeenCalledOnceWith();
@@ -146,18 +173,19 @@ describe(BehaviorSubject.name, () => {
 		it('should notify late subscribers', () => {
 			// Arrange
 			const error = new Error('test error');
-			const subject = new BehaviorSubject('initial');
+			const subject = new AsyncSubject<string>();
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'error',
 				'next',
 			]);
 
 			// Act
+			subject.next('foo');
 			subject.error(error);
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('initial');
+			expect(observer.next).not.toHaveBeenCalled();
 			expect(observer.error).toHaveBeenCalledOnceWith(error);
 		});
 	});
@@ -165,7 +193,7 @@ describe(BehaviorSubject.name, () => {
 	describe('complete', () => {
 		it('should notify subscribers', () => {
 			// Arrange
-			const subject = new BehaviorSubject('initial');
+			const subject = new AsyncSubject<string>();
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'complete',
 				'next',
@@ -174,28 +202,30 @@ describe(BehaviorSubject.name, () => {
 			subject.subscribe(observer);
 
 			// Act
+			subject.next('foo');
 			subject.complete();
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('initial');
+			expect(observer.next).toHaveBeenCalledOnceWith('foo');
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 			expect(observer.finally).toHaveBeenCalledOnceWith();
 		});
 
 		it('should notify late subscribers', () => {
 			// Arrange
-			const subject = new BehaviorSubject('initial');
+			const subject = new AsyncSubject<string>();
 			const observer = jasmine.createSpyObj<Observer<string>>('observer', [
 				'complete',
 				'next',
 			]);
 
 			// Act
+			subject.next('foo');
 			subject.complete();
 			subject.subscribe(observer);
 
 			// Assert
-			expect(observer.next).toHaveBeenCalledOnceWith('initial');
+			expect(observer.next).toHaveBeenCalledOnceWith('foo');
 			expect(observer.complete).toHaveBeenCalledOnceWith();
 		});
 	});
@@ -203,7 +233,7 @@ describe(BehaviorSubject.name, () => {
 	describe('Observable.from', () => {
 		it('should not create a new observable multiple times for the same subject', () => {
 			// Arrange
-			const subject = new BehaviorSubject('test');
+			const subject = new AsyncSubject<string>();
 
 			// Act
 			const observable1 = Observable.from(subject);
@@ -215,8 +245,8 @@ describe(BehaviorSubject.name, () => {
 
 		it('should create a new observable multiple times for different subjects', () => {
 			// Arrange
-			const subject1 = new BehaviorSubject('test1');
-			const subject2 = new BehaviorSubject('test2');
+			const subject1 = new AsyncSubject<string>();
+			const subject2 = new AsyncSubject<string>();
 
 			// Act
 			const observable1 = Observable.from(subject1);
@@ -224,22 +254,6 @@ describe(BehaviorSubject.name, () => {
 
 			// Assert
 			expect(observable1).not.toBe(observable2);
-		});
-	});
-
-	describe('value', () => {
-		it('should return current value', () => {
-			// Arrange
-			const subject = new BehaviorSubject('initial');
-
-			// Act
-			const value1 = subject.value;
-			subject.next('second');
-			const value2 = subject.value;
-
-			// Assert
-			expect(value1).toBe('initial');
-			expect(value2).toBe('second');
 		});
 	});
 });

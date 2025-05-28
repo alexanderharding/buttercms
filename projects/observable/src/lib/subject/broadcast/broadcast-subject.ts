@@ -1,6 +1,7 @@
-import { Subject } from './subject';
-import { Observable, type Observer, type Next } from '../observable';
-import { observable } from '../interop';
+import { Subject } from '../subject';
+import { Observable, type Observer, type Next } from '../../observable';
+import { observable } from '../../interop';
+import type { BroadcastSubjectConstructor } from './broadcast-subject-constructor';
 
 /**
  * A variant of {@linkcode Subject}. When values are {@linkcode Next.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
@@ -27,15 +28,6 @@ import { observable } from '../interop';
  */
 export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
 	readonly name: string;
-}
-
-/**
- * Object interface for a {@linkcode BroadcastSubject} factory.
- */
-export interface BroadcastSubjectConstructor {
-	new (name: string): BroadcastSubject;
-	new <Value>(name: string): BroadcastSubject<Value>;
-	readonly prototype: BroadcastSubject;
 }
 
 /**
