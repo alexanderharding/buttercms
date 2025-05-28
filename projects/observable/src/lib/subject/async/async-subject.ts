@@ -1,4 +1,3 @@
-import { observable } from '../../interop';
 import { Subject } from '../subject';
 import {
 	type Complete,
@@ -8,6 +7,7 @@ import {
 	type Subscribable,
 	Observable,
 	type Observer,
+	observable,
 } from '../../observable';
 import type { AsyncSubjectConstructor } from './async-subject-constructor';
 
@@ -18,7 +18,15 @@ import type { AsyncSubjectConstructor } from './async-subject-constructor';
  * {@linkcode Complete.complete|complete} {@linkcode Notification|notification}. If no values were {@linkcode Next.next|nexted} before {@linkcode Complete.complete|completion},
  * neither existing nor late subscribers will receive any values. If the {@linkcode AsyncSubject|subject} terminates with an {@linkcode Error.error|error},
  * the buffered value is discarded and only the {@linkcode Error.error|error} {@linkcode Notification|notification} is sent to both existing and late subscribers.
- *
+ */
+export type AsyncSubject<Value = unknown> = Subject<Value>;
+
+/**
+ * Flag indicating that a value is not set.
+ */
+const noValue = Symbol('Flag indicating that a value is not set.');
+
+/**
  * @example
  * ```ts
  * import { AsyncSubject } from "@xander/observable";
@@ -36,16 +44,6 @@ import type { AsyncSubjectConstructor } from './async-subject-constructor';
  *
  * subject.subscribe((value) => console.log(value)); // Console output: 3
  * ```
- */
-export type AsyncSubject<Value = unknown> = Subject<Value>;
-
-/**
- * Flag indicating that a value is not set.
- */
-const noValue = Symbol('Flag indicating that a value is not set.');
-
-/**
- * @class
  */
 export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'AsyncSubject';

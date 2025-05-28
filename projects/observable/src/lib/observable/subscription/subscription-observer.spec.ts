@@ -1,6 +1,6 @@
-import { UnhandledError } from '../errors';
-import { Observer } from './observer';
+import { Observer } from '../observer';
 import { SubscriptionObserver } from './subscription-observer';
+import { UnhandledError } from './unhandled-error';
 
 describe(SubscriptionObserver.name, () => {
 	describe('constructor', () => {

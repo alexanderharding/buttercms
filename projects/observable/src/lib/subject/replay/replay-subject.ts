@@ -6,8 +6,8 @@ import {
 	type Complete,
 	type Notification,
 	type Subscribable,
+	observable,
 } from '../../observable';
-import { observable } from '../../interop';
 import { Subject } from '../subject';
 import type { ReplaySubjectConstructor } from './replay-subject-constructor';
 
@@ -18,6 +18,10 @@ import type { ReplaySubjectConstructor } from './replay-subject-constructor';
  * If the {@linkcode ReplaySubject|subject} has {@linkcode Error.error|errored}, late subscribers will receive all buffered values followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}.
  * If the {@linkcode ReplaySubject|subject} has {@linkcode Complete.complete|completed}, late subscribers will receive all buffered values followed by the {@linkcode Complete.complete|complete}
  * {@linkcode Notification|notification}.
+ */
+export type ReplaySubject<Value = unknown> = Subject<Value>;
+
+/**
  * @example
  * ```ts
  * import { ReplaySubject } from "@xander/observable";
@@ -50,11 +54,6 @@ import type { ReplaySubjectConstructor } from './replay-subject-constructor';
  * // 4
  * // 5
  * ```
- */
-export type ReplaySubject<Value = unknown> = Subject<Value>;
-
-/**
- * @class
  */
 export const ReplaySubject: ReplaySubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'ReplaySubject';

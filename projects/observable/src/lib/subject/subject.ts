@@ -1,13 +1,18 @@
 import {
 	Observable,
-	Observer,
-	Next,
-	Error,
-	Complete,
-	Subscribable,
-	Notification,
+	type Observer,
+	type Next,
+	type Error,
+	type Complete,
+	type Subscribable,
+	type Notification,
+	observable,
 } from '../observable';
-import { observable } from '../interop';
+import type { ReplaySubject } from './replay';
+import type { AsyncSubject } from './async';
+import type { BehaviorSubject } from './behavior';
+import type { BroadcastSubject } from './broadcast';
+import { SubjectConstructor } from './subject-constructor';
 
 /**
  * A special type of {@linkcode Observable|observable} that can multicast {@linkcode Notification|notifications} to many consumers. Unlike a regular {@linkcode Observable|observable} which
@@ -16,6 +21,20 @@ import { observable } from '../interop';
  * {@linkcode Error.error|error}, and {@linkcode Complete.complete|complete} methods. If the {@linkcode Subject|subject} has already pushed a terminal {@linkcode Notification|notification}
  * ({@linkcode Error.error|error} or {@linkcode Complete.complete|complete}), any new consumers will immediately receive that same terminal {@linkcode Notification|notification} upon
  * {@linkcode Subscribable.subscribe|subscription}.
+ * @see {@linkcode ReplaySubject}
+ * @see {@linkcode AsyncSubject}
+ * @see {@linkcode BehaviorSubject}
+ * @see {@linkcode BroadcastSubject}
+ */
+export type Subject<Value = unknown> = Observable<Value> &
+	Omit<Observer<Value>, 'finally'>;
+
+/**
+ * Flag indicating that an error is not set.
+ */
+const noError = Symbol('Flag indicating that an error is not set.');
+
+/**
  *
  * @example
  * Basic usage
@@ -53,26 +72,6 @@ import { observable } from '../interop';
  *   }
  * }
  * ```
- */
-export type Subject<Value = unknown> = Observable<Value> &
-	Omit<Observer<Value>, 'finally'>;
-
-/**
- * Object interface for a {@linkcode Subject} factory.
- */
-export interface SubjectConstructor {
-	new (): Subject;
-	new <Value>(): Subject<Value>;
-	readonly prototype: Subject;
-}
-
-/**
- * Flag indicating that an error is not set.
- */
-const noError = Symbol('Flag indicating that an error is not set.');
-
-/**
- * @class
  */
 export const Subject: SubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'Subject';

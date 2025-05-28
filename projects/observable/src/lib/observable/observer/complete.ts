@@ -2,7 +2,7 @@ import type { Next } from './next';
 import type { Notification } from './notification';
 import type { Finally } from './finally';
 import type { Error } from './error';
-import type { Unsubscribable } from './unsubscribable';
+import type { Unsubscribable } from '../subscription';
 
 /**
  * Object interface that implements the `complete` {@linkcode Notification|notification}.

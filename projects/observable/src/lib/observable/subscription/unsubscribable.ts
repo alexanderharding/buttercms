@@ -1,4 +1,4 @@
-import type { Finally } from './finally';
+import type { Finally } from '../observer';
 
 /**
  * Object interface that implements a `signal` property for the purpose of unsubscribing.

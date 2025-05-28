@@ -1,6 +1,6 @@
-import { UnhandledError } from '../errors';
-import type { Notification } from './notification';
-import { Observer } from './observer';
+import type { Notification, Observer } from '../observer';
+import type { SubscriptionObserverConstructor } from './subscription-observer-constructor';
+import { UnhandledError } from './unhandled-error';
 
 /**
  * Enables the producer to push {@linkcode Notification|notifications} to one (unicast) or more (multicast) consumers.
@@ -10,22 +10,6 @@ export type SubscriptionObserver<Value = unknown> = Omit<
 	'finally'
 >;
 
-/**
- * Object interface for a {@linkcode SubscriptionObserver} factory.
- */
-export interface SubscriptionObserverConstructor {
-	new <Value>(
-		observerOrNext?:
-			| Partial<Observer<Value>>
-			| ((value: Value) => unknown)
-			| null,
-	): SubscriptionObserver<Value>;
-	readonly prototype: SubscriptionObserver;
-}
-
-/**
- * @class
- */
 export const SubscriptionObserver: SubscriptionObserverConstructor = class {
 	readonly #consumerObserver?: Partial<Observer> | null;
 	readonly #controller = new AbortController();

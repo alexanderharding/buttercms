@@ -1,4 +1,3 @@
-import { observable } from '../../interop';
 import { Subject } from '../subject';
 import {
 	type Subscribable,
@@ -8,6 +7,7 @@ import {
 	type Notification,
 	Observable,
 	type Observer,
+	observable,
 } from '../../observable';
 import type { BehaviorSubjectConstructor } from './behavior-subject-constructor';
 
@@ -18,6 +18,12 @@ import type { BehaviorSubjectConstructor } from './behavior-subject-constructor'
  * subsequent values. If the {@linkcode BehaviorSubject|subject} has terminated with an {@linkcode Error.error|error}, late subscribers will receive the last value
  * followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}. If the {@linkcode BehaviorSubject|subject} has {@linkcode Complete.complete|completed},
  * late subscribers will receive the last value followed by the {@linkcode Complete.complete|complete} {@linkcode Notification|notification}.
+ */
+export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
+	readonly value: Value;
+}
+
+/**
  * @example
  * ```ts
  * import { BehaviorSubject } from '@xander/observable';
@@ -34,13 +40,6 @@ import type { BehaviorSubjectConstructor } from './behavior-subject-constructor'
  * // console output:
  * // 1
  * ```
- */
-export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
-	readonly value: Value;
-}
-
-/**
- * @class
  */
 export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';

@@ -1,8 +1,5 @@
 import { Observable } from './observable';
-import { Complete } from './complete';
-import { Finally } from './finally';
-import { Observer } from './observer';
-import { Notification } from './notification';
+import type { Complete, Finally, Observer, Notification } from './observer';
 
 /**
  * An {@linkcode Observable} that completes immediately on {@linkcode Observable.subscribe|subscribe}.

@@ -1,5 +1,5 @@
-import { InteropObservable } from '../interop';
-import { Subscribable } from './subscribable';
+import { InteropObservable } from './interop';
+import { Subscribable } from './subscription/subscribable';
 
 /**
  * A type that can be converted to an {@linkcode Observable}.

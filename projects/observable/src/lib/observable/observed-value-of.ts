@@ -1,6 +1,6 @@
-import { InteropObservable } from '../interop';
+import { InteropObservable } from './interop';
 import { ObservableInput } from './observable-input';
-import { Subscribable } from './subscribable';
+import { Subscribable } from './subscription/subscribable';
 
 /**
  * The value type of an {@linkcode ObservableInput}.

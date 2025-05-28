@@ -1,4 +1,4 @@
-import { Observer } from './observer';
+import { Observer } from './observer/observer';
 import { empty } from './empty';
 
 describe('empty', () => {

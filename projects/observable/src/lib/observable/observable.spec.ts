@@ -1,8 +1,8 @@
-import { InteropObservable, observable } from '../interop';
+import { InteropObservable, observable } from './interop';
 import { Observer } from './observer';
 import { Observable } from './observable';
-import { SubscriptionObserver } from './subscription-observer';
-import { Subscribable } from './subscribable';
+import { SubscriptionObserver } from './subscription';
+import { Subscribable } from './subscription';
 
 describe(Observable.name, () => {
 	it('should be an InteropObservable that can be past to Observable.from', () => {

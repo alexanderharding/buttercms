@@ -1,6 +1,6 @@
 import type { Complete } from './complete';
 import type { Error } from './error';
-import type { Unsubscribable } from './unsubscribable';
+import type { Unsubscribable } from '../subscription';
 import type { Next } from './next';
 import type { Notification } from './notification';
 

@@ -1,6 +1,6 @@
-import { Subscribable } from '../observable';
 import { observable } from './observable';
 import { Observable } from '../observable';
+import { type Subscribable } from '../subscription';
 
 /**
  * Object interface that implements the {@linkcode observable} method.

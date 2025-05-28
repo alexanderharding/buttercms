@@ -15,8 +15,6 @@ export {
 	type UnhandledErrorConstructor,
 	type ObservableInput,
 	type ObservedValueOf,
-
-	// Interop
 	observable,
 	type InteropObservable,
 

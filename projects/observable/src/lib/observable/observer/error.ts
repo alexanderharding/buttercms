@@ -1,6 +1,6 @@
 import type { Complete } from './complete';
 import type { Finally } from './finally';
-import type { Unsubscribable } from './unsubscribable';
+import type { Unsubscribable } from '../subscription/unsubscribable';
 
 /**
  * Object interface that implements the `error` {@linkcode Notification|notification}.

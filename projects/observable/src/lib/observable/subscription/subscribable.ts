@@ -1,4 +1,4 @@
-import type { Observer } from './observer';
+import type { Observer } from '../observer';
 
 /**
  * Object interface that implements a `subscribe` method for the purpose of setting up a subscription.
