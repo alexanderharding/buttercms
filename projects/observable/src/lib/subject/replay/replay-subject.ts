@@ -1,14 +1,14 @@
-import {
-	Observable,
-	type Observer,
-	type Next,
-	type Error,
-	type Complete,
-	type Notification,
-	type Subscribable,
-	observable,
-} from '../../observable';
-import { Subject } from '../subject';
+import type {
+	Observer,
+	Next,
+	Error,
+	Complete,
+	Notification,
+} from '../../observer';
+import { observable } from '../../interop';
+import { Observable } from '../../observable';
+import { Subject } from '../../subject';
+import type { Subscribable } from '../../subscription';
 import type { ReplaySubjectConstructor } from './replay-subject-constructor';
 
 /**

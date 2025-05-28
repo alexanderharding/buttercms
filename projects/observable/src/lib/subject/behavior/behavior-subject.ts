@@ -1,14 +1,14 @@
-import { Subject } from '../subject';
-import {
-	type Subscribable,
-	type Next,
-	type Error,
-	type Complete,
-	type Notification,
-	Observable,
-	type Observer,
-	observable,
-} from '../../observable';
+import type {
+	Observer,
+	Next,
+	Error,
+	Complete,
+	Notification,
+} from '../../observer';
+import { observable } from '../../interop';
+import { Observable } from '../../observable';
+import { Subject } from '../../subject';
+import type { Subscribable } from '../../subscription';
 import type { BehaviorSubjectConstructor } from './behavior-subject-constructor';
 
 /**

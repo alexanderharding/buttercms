@@ -1,18 +1,18 @@
-import {
-	Observable,
-	type Observer,
-	type Next,
-	type Error,
-	type Complete,
-	type Subscribable,
-	type Notification,
-	observable,
-} from '../observable';
+import type {
+	Observer,
+	Next,
+	Error,
+	Complete,
+	Notification,
+} from '../observer';
+import { observable } from '../interop';
+import { Observable } from '../observable';
+import type { Subscribable } from '../subscription';
 import type { ReplaySubject } from './replay';
 import type { AsyncSubject } from './async';
 import type { BehaviorSubject } from './behavior';
 import type { BroadcastSubject } from './broadcast';
-import { SubjectConstructor } from './subject-constructor';
+import type { SubjectConstructor } from './subject-constructor';
 
 /**
  * A special type of {@linkcode Observable|observable} that can multicast {@linkcode Notification|notifications} to many consumers. Unlike a regular {@linkcode Observable|observable} which

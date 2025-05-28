@@ -1,10 +1,7 @@
-import { Subject } from '../subject';
-import {
-	Observable,
-	type Observer,
-	type Next,
-	observable,
-} from '../../observable';
+import type { Observer, Next } from '../../observer';
+import { observable } from '../../interop';
+import { Observable } from '../../observable';
+import { Subject } from '../../subject';
 import type { BroadcastSubjectConstructor } from './broadcast-subject-constructor';
 
 /**

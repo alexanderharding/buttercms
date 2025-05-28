@@ -1,14 +1,14 @@
-import { Subject } from '../subject';
-import {
-	type Complete,
-	type Error,
-	type Next,
-	type Notification,
-	type Subscribable,
-	Observable,
-	type Observer,
-	observable,
-} from '../../observable';
+import type {
+	Observer,
+	Next,
+	Error,
+	Complete,
+	Notification,
+} from '../../observer';
+import { observable } from '../../interop';
+import { Observable } from '../../observable';
+import { Subject } from '../../subject';
+import type { Subscribable } from '../../subscription';
 import type { AsyncSubjectConstructor } from './async-subject-constructor';
 
 /**
