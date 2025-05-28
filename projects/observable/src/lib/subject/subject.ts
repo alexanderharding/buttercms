@@ -40,7 +40,7 @@ import { observable } from '../interop';
  * // 2
  * ```
  * @example
- * Create custom `producer`-side logic of the `Subject` and conceal it from code that uses the `Observable`.
+ * Create custom producer-side logic of the `Subject` and conceal it from code that uses the `Observable`.
  * ```ts
  * import { Subject, Observable } from '@xander/observable';
  *
@@ -71,6 +71,9 @@ export interface SubjectConstructor {
  */
 const noError = Symbol('Flag indicating that an error is not set.');
 
+/**
+ * @class
+ */
 export const Subject: SubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'Subject';
 	readonly #controller = new AbortController();

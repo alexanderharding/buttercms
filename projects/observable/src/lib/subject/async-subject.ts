@@ -51,6 +51,9 @@ export interface AsyncSubjectConstructor {
  */
 const noValue = Symbol('Flag indicating that a value is not set.');
 
+/**
+ * @class
+ */
 export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'AsyncSubject';
 	readonly #delegate = new Subject<unknown>();

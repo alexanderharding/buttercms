@@ -1,10 +1,13 @@
 import { type InteropObservable, observable } from '../interop';
+import { ObservableInput } from './observable-input';
+import { ObservedValueOf } from './observed-value-of';
 import type { Observer } from './observer';
 import type { Subscribable } from './subscribable';
 import { SubscriptionObserver } from './subscription-observer';
 
 /**
- * At it's highest level, an observable represents a template for connecting an observer, as a consumer, to a producer, via a subscribe action, resulting in a subscription.
+ * At it's highest level, an observable represents a template for connecting an observer, as a consumer, to a producer, via a
+ * {@linkcode Subscribable.subscribe|subscribe} action, resulting in a subscription.
  * @example
  * Creating an observable with a synchronous producer.
  * ```ts
@@ -93,7 +96,7 @@ export interface ObservableConstructor {
 	new (subscribe: undefined | null): Observable<never>;
 	/**
 	 * Creates a template for connecting a producer to a consumer via a {@linkcode Subscribable.subscribe|subscribe} action.
-	 * @param subscribe The function called for each {@linkcode Subscribable.subscribe|subscribe} action that sets up the producer. This function receives a ProducerObserver that enables pushing notifications to the observer.
+	 * @param subscribe The function called for each {@linkcode Subscribable.subscribe|subscribe} action.
 	 * @example
 	 * Creating an observable with a synchronous producer.
 	 * ```ts
@@ -194,29 +197,21 @@ export interface ObservableConstructor {
 	readonly prototype: Observable;
 	/**
 	 * Converting custom observables, probably exported by libraries, to proper observables.
-	 * @returns If input is an interop observable, it's `[observable]()` method is called to obtain the subscribable. Otherwise, input is assumed to be a subscribable. If the input is already instanceof Observable (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new Observable object is created that wraps the original input.
+	 * @returns If {@linkcode input} is an {@linkcode InteropObservable|interop observable}, it's `[observable]()` method is called to obtain the {@linkcode Subscribable|subscribable}. Otherwise, {@linkcode input} is assumed to be a {@linkcode Subscribable|subscribable}. If the {@linkcode input} is already instanceof {@linkcode Observable} (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new {@linkcode Observable} object is created that wraps the original {@linkcode input}.
 	 */
 	from<Input extends ObservableInput>(
 		input: Input,
 	): Observable<ObservedValueOf<Input>>;
 }
 
-export type ObservableInput<Value = unknown> =
-	| InteropObservable<Value>
-	| Subscribable<Value>;
-
-export type ObservedValueOf<Input extends ObservableInput> =
-	Input extends InteropObservable<infer Value>
-		? Value
-		: Input extends Subscribable<infer Value>
-			? Value
-			: never;
-
 interface Deferred<Value = unknown> {
 	resolve(value: IteratorResult<Value>): void;
 	reject(reason: unknown): void;
 }
 
+/**
+ * @class
+ */
 export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';
 	readonly #subscribe?:

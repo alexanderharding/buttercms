@@ -11,7 +11,7 @@ import type { Notification } from './notification';
  */
 export interface Next<Value = unknown> {
 	/**
-	 * A {@linkcode value} has been pushed to the `consumer` to be {@linkcode Observer|observed}. Will only happen during {@linkcode Subscribable.subscribe|subscription},
+	 * A {@linkcode value} has been pushed to the consumer to be {@linkcode Observer|observed}. Will only happen during {@linkcode Subscribable.subscribe|subscription},
 	 * and cannot happen after {@linkcode Error.error|error}, {@linkcode Complete.complete|complete}, or {@linkcode Unsubscribable.signal|unsubscription}.
 	 * Logically, this also means it cannot happen after {@linkcode Finally.finally|finalization}.
 	 */

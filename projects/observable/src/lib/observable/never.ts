@@ -3,7 +3,7 @@ import { Observable } from './observable';
 /**
  * An {@linkcode Observable} that does no work.
  * @example
- * Without ConsumerObserver signal
+ * Without Observer signal
  * ```ts
  * import { never } from '@xander/observable';
  *
@@ -16,7 +16,7 @@ import { Observable } from './observable';
  * });
  * ```
  * @example
- * With ConsumerObserver signal
+ * With Observer signal
  * ```ts
  * import { never } from '@xander/observable';
  *

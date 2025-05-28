@@ -23,6 +23,9 @@ export interface SubscriptionObserverConstructor {
 	readonly prototype: SubscriptionObserver;
 }
 
+/**
+ * @class
+ */
 export const SubscriptionObserver: SubscriptionObserverConstructor = class {
 	readonly #consumerObserver?: Partial<Observer> | null;
 	readonly #controller = new AbortController();

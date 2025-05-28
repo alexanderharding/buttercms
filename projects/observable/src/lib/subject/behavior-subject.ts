@@ -45,6 +45,9 @@ export interface BehaviorSubjectConstructor {
 	readonly prototype: BehaviorSubject;
 }
 
+/**
+ * @class
+ */
 export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';
 	#value: Value;

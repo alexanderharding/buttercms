@@ -11,3 +11,5 @@ export * from './finally';
 export * from './observer';
 export * from './notification';
 export * from './notifications';
+export * from './observable-input';
+export * from './observed-value-of';

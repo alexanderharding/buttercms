@@ -44,6 +44,9 @@ export interface BroadcastSubjectConstructor {
  */
 const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
 
+/**
+ * @class
+ */
 export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	readonly name: string;
 	readonly [Symbol.toStringTag] = 'BroadcastSubject';

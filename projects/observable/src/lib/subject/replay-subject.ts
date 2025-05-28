@@ -61,6 +61,9 @@ export interface ReplaySubjectConstructor {
 	readonly prototype: ReplaySubject;
 }
 
+/**
+ * @class
+ */
 export const ReplaySubject: ReplaySubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'ReplaySubject';
 	readonly #bufferSize: number;
