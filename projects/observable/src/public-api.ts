@@ -11,6 +11,7 @@ export {
 	type Notification,
 	type Unsubscribable,
 	type Subscribable,
+	type Observer,
 	UnhandledError,
 	type UnhandledErrorConstructor,
 	type ObservableInput,
