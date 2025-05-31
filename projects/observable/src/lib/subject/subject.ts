@@ -1,30 +1,17 @@
-import type {
-	Observer,
-	Next,
-	Error,
-	Complete,
-	Notification,
-} from '../observer';
+import type { Observer } from '../observer';
 import { observable } from '../interop';
 import { Observable } from '../observable';
-import type { Subscribable } from '../subscription';
-import type { ReplaySubject } from './replay';
-import type { AsyncSubject } from './async';
-import type { BehaviorSubject } from './behavior';
-import type { BroadcastSubject } from './broadcast';
 import type { SubjectConstructor } from './subject-constructor';
 
 /**
- * A special type of {@linkcode Observable|observable} that can multicast {@linkcode Notification|notifications} to many consumers. Unlike a regular {@linkcode Observable|observable} which
- * creates a new producer for each {@linkcode Subscribable.subscribe|subscription}, a {@linkcode Subject|subject} shares a single producer across all  {@linkcode Subscribable.subscribe|subscriptions}.
- * The {@linkcode Subject|subject} itself acts as both a producer observer and an {@linkcode Observable|observable}, allowing values to be pushed through it directly via {@linkcode Next.next|next},
- * {@linkcode Error.error|error}, and {@linkcode Complete.complete|complete} methods. If the {@linkcode Subject|subject} has already pushed a terminal {@linkcode Notification|notification}
- * ({@linkcode Error.error|error} or {@linkcode Complete.complete|complete}), any new consumers will immediately receive that same terminal {@linkcode Notification|notification} upon
- * {@linkcode Subscribable.subscribe|subscription}.
- * @see {@linkcode ReplaySubject}
- * @see {@linkcode AsyncSubject}
- * @see {@linkcode BehaviorSubject}
- * @see {@linkcode BroadcastSubject}
+ * A special type of {@linkcode Observable|observable} that can multicast notifications
+ * ({@linkcode Subject.next|next}, {@linkcode Subject.error|error}, and {@linkcode Subject.complete|complete}) to many consumers. Unlike a
+ * regular {@linkcode Observable|observable} which creates a new producer for each {@linkcode Subject.subscribe|subscription}, a
+ * {@linkcode Subject|subject} shares a single producer across all {@linkcode Subject.subscribe|subscriptions}.
+ * The {@linkcode Subject|subject} itself acts as both an {@linkcode Observer|observer} (from the producer's perspective) and an {@linkcode Observable|observable},
+ * allowing values to be pushed through it directly via {@linkcode Subject.next|next}, {@linkcode Subject.error|error}, and {@linkcode Subject.complete|complete} methods.
+ * If the {@linkcode Subject|subject} has already pushed a terminal notification ({@linkcode Subject.error|error} or {@linkcode Subject.complete|complete}),
+ * any new consumers will immediately receive that same terminal notification upon {@linkcode Subject.subscribe|subscription}.
  */
 export type Subject<Value = unknown> = Observable<Value> &
 	Omit<Observer<Value>, 'finally'>;
