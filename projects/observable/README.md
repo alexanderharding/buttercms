@@ -50,33 +50,29 @@ While not all of the documentation for this library reflects this terminology, i
 
 There are high level entities that are frequently discussed. It's important to define them separately from other lower-level concepts, because they relate to the nature of observable.
 
+### Consumer
+
+The code that is subscribing to the [observable](https://jsr.io/@xander/observable/doc/~/Observable). This is whoever is being notified of [producer](#producer) notifications.
+
 ### Producer
 
-Any system or thing that is the source of values that are being pushed out of the observable subscription to the consumer. This can be a wide variety of things, from a `Promise` to a simple iteration over an `Array`. The producer is most often created during the [subscribe](#subscribe) action, and therefor "owned" by a [subscription](#subscription) in a one-to-one way resulting in a [unicast](#unicast), but that is not always the case. A producer may be shared between many subscriptions, if it is created outside of the [subscribe](#subscribe) action, in which case it is one-to-many, resulting in a [multicast](#multicast). This manifested as a [producer observer](#producerobserver)
+Any system or thing that is the source of values that are being pushed out of the observable subscription to the [consumer](#consumer). This can be a wide variety of things, from a `Promise` to a simple iteration over an `Array`. The producer is most often created during the [subscribe](#subscribe) action, and therefor "owned" by a [subscription](#subscription) in a one-to-one way resulting in a [unicast](#unicast), but that is not always the case. A producer may be shared between many subscriptions, if it is created outside of the [subscribe](#subscribe) action, in which case it is one-to-many, resulting in a [multicast](#multicast). This manifested as a [producer observer](#producerobserver)
 
 ### Subscription
 
-A contract where a [consumer](#consumer) is [observing](#observation) values pushed by a [producer](#producer). The subscription, is an ongoing process that amounts to the function of the observable from the Consumer's perspective. Subscription starts the moment a [subscribe](#subscribe) action is initiated, even before the [subscribe](#subscribe) action is finished.
+A contract where a [consumer](#consumer) is [observing](#observation) values pushed by a [producer](#producer). The subscription, is an ongoing process that amounts to the function of the observable from the [consumer](#consumer)'s perspective. Subscription starts the moment a [subscribe](#subscribe) action is initiated, even before the [subscribe](#subscribe) action is finished.
 
 ## Major Actions
 
 There are specific actions and events that occur between major entities in the library that need to be defined. These major actions are the highest level events that occur within various parts of the library.
 
-### Subscribe
-
-The act of a [consumer](#consumer) requesting from an [Observable](#observable) to set up a [subscription](#subscription) so that it may [observe](#observation) a [producer](#producer). A subscribe action can occur with an observable via many different mechanisms. The primary mechanism is the `subscribe` method on observable-like classes.
-
-### Unsubscription
-
-The act of a [consumer](#consumer) telling a [producer](#producer) is no longer interested in receiving values. Causes [finalization](#finally).
-
 ### Observation
 
-A [consumer](#consumer) reacting to [notifications](#notification). This can only happen _during_ [subscription](#subscription).
+A [consumer](#consumer) reacting to [producer](#producer) notifications. This can only happen _during_ [subscription](#subscription).
 
 ### Observation Chain
 
-When an [observable](#observable) uses another [observable](#observable) as a [producer](#producer), an "observation chain" is set up. That is a chain of [observation](#observation) such that multiple [observers](#observer) are [notifying](#notification) each other in a unidirectional way toward the final [consumer](#consumer).
+When an [observable](https://jsr.io/@xander/observable/doc/~/Observable) uses another [observable](https://jsr.io/@xander/observable/doc/~/Observable) as a [producer](#producer), an "observation chain" is set up. That is a chain of [observation](#observation) such that multiple [observers](#observer) are notifying each other in a unidirectional way toward the final [consumer](#consumer).
 
 ## Major Concepts
 
@@ -100,7 +96,7 @@ An observable is "hot", when its [producer](#producer) was created outside of th
 
 ### Push
 
-[Observables](#observable) are a push-based type. That means rather than having the [consumer](#consumer) call a function or perform some other action to get a value, the [consumer](#consumer) receives values as soon as the [producer](#producer) has produced them, via a registered [next](#next) handler.
+[Observables](https://jsr.io/@xander/observable/doc/~/Observable) are a push-based type. That means rather than having the [consumer](#consumer) call a function or perform some other action to get a value, the [consumer](#consumer) receives values as soon as the [producer](#producer) has produced them, via a registered [next](#next) handler.
 
 ### Pull
 
@@ -110,11 +106,11 @@ Pull-based systems are the opposite of [push](#push)-based. In a pull-based type
 
 ### Source
 
-An [observable](#observable) that will supply values to another [observable](#observable). This [source](#source), will be the [producer](#producer) for the resulting [observable](#observable) and all of its [subscriptions](#subscriptions). Sources may generally be any type of observable.
+An [observable](https://jsr.io/@xander/observable/doc/~/Observable) that will supply values to another [observable](https://jsr.io/@xander/observable/doc/~/Observable). This [source](#source), will be the [producer](#producer) for the resulting [observable](https://jsr.io/@xander/observable/doc/~/Observable) and all of its [subscriptions](#subscriptions). Sources may generally be any type of observable.
 
 ### Notifier
 
-An [observable](#observable) that is being used to notify another [observable](#observable) that it needs to perform some action. The action should only occur on a [next](#next) and never on [error](#error), [complete](#complete), or [finally](#finally).
+An [observable](https://jsr.io/@xander/observable/doc/~/Observable) that is being used to notify another [observable](https://jsr.io/@xander/observable/doc/~/Observable) that it needs to perform some action. The action should only occur on a [next](#next) and never on [error](#error), [complete](#complete), or [finally](#finally).
 
 ## Other Concepts
 
@@ -124,4 +120,4 @@ An "unhandled error" is any [error](#error) that is not handled by a [consumer](
 
 ### Producer Interference
 
-[Producer](#producer) interference happens when an error is allowed to unwind the library's callstack during [notification](#notification). When this happens, the error could break things like for-loops in [upstream](#upstream-and-downstream) [sources](#source) that are [notifying](#notification) [consumers](#consumer) during a [multicast](#multicast). That would cause the other [consumers](#consumer) in that [multicast](#multicast) to suddenly stop receiving values without logical explanation. The library goes out of its way to prevent producer interference by ensuring that all unhandled errors are thrown on a separate callstack.
+[Producer](#producer) interference happens when an error is allowed to unwind the library's callstack during notification. When this happens, the error could break things like for-loops in [upstream](#upstream-and-downstream) [sources](#source) that are notifying [consumers](#consumer) during a [multicast](#multicast). That would cause the other [consumers](#consumer) in that [multicast](#multicast) to suddenly stop receiving values without logical explanation. The library goes out of its way to prevent producer interference by ensuring that all unhandled errors are thrown on a separate callstack.
