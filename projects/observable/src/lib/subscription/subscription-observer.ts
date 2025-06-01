@@ -1,9 +1,10 @@
-import type { Notification, Observer } from '../observer';
+import type { Observer } from '../observer';
 import type { SubscriptionObserverConstructor } from './subscription-observer-constructor';
 import { UnhandledError } from './unhandled-error';
 
 /**
- * Enables the producer to push {@linkcode Notification|notifications} to one (unicast) or more (multicast) consumers.
+ * Enables the producer to push notifications ({@linkcode SubscriptionObserver.next|next}, {@linkcode SubscriptionObserver.error|error}, and
+ * {@linkcode SubscriptionObserver.complete|complete}) to one (unicast) or more (multicast) consumers.
  */
 export type SubscriptionObserver<Value = unknown> = Omit<
 	Observer<Value>,

@@ -1,13 +1,13 @@
-import type { Observer, Next } from '../../observer';
+import type { Observer } from '../../observer';
 import { observable } from '../../interop';
 import { Observable } from '../../observable';
 import { Subject } from '../../subject';
 import type { BroadcastSubjectConstructor } from './broadcast-subject-constructor';
 
 /**
- * A variant of {@linkcode Subject}. When values are {@linkcode Next.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
- * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same name even if they are in different browsing contexts
- * (e.g. browser tabs). Consumers of the {@linkcode BroadcastSubject|subject} do not receive its _own_ {@linkcode Next.next|nexted} values.
+ * A variant of {@linkcode Subject}. When values are {@linkcode BroadcastSubject.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
+ * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same {@linkcode BroadcastSubject.name|name} even if they are in different browsing contexts
+ * (e.g. browser tabs). Logically, consumers of the {@linkcode BroadcastSubject|subject} do not receive it's _own_ {@linkcode BroadcastSubject.next|nexted} values.
  */
 export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
 	readonly name: string;

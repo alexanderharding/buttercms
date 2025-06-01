@@ -1,18 +1,17 @@
 import { Observable } from './observable';
-import type { Complete, Finally, Observer, Notification } from './observer';
 
 /**
  * An {@linkcode Observable} that completes immediately on {@linkcode Observable.subscribe|subscribe}.
  *
- * You can prevent the {@linkcode Complete.complete|complete} {@linkcode Notification|notification} from being pushed if you
- * provide an already aborted {@linkcode AbortSignal|signal} to the {@linkcode Observer|observer}.
+ * You can prevent the `complete` notification from being pushed if you
+ * provide an already aborted {@linkcode AbortSignal|signal} to the observer.
  * For most use-cases this is not useful, but good to know. This is unnecessary to
  * prevent memory leaks, since the {@linkcode Observable} _never_ does any work.
- * Regardless of the state of the {@linkcode AbortSignal|signal}, the {@linkcode Finally.finally|finally}
- * {@linkcode Notification|notification} will still be pushed.
+ * Regardless of the state of the {@linkcode AbortSignal|signal}, the `finally`
+ * notification will still be pushed.
  *
  * @example
- * Without ConsumerObserver signal
+ * Without Observer signal
  * ```ts
  * import { empty } from '@xander/observable';
  *
@@ -25,7 +24,7 @@ import type { Complete, Finally, Observer, Notification } from './observer';
  * });
  * ```
  * @example
- * With ConsumerObserver signal
+ * With Observer signal
  * ```ts
  * import { empty } from '@xander/observable';
  *

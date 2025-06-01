@@ -1,13 +1,12 @@
 import { observable } from './observable';
-import { Observable } from '../observable';
-import { type Subscribable } from '../subscription';
+import type { Subscribable } from '../subscription';
 
 /**
  * Object interface that implements the {@linkcode observable} method.
  */
 export interface InteropObservable<Value = unknown> {
 	/**
-	 * @returns The default {@linkcode Subscribable|subscribable} for an object. Called by the semantics of the {@linkcode Observable.from} method.
+	 * @returns The default `Subscribable` for an object. Called by the semantics of the `Observable.from` method.
 	 */
 	[observable](): Subscribable<Value>;
 }

@@ -1,23 +1,16 @@
-import type {
-	Observer,
-	Next,
-	Error,
-	Complete,
-	Notification,
-} from '../../observer';
+import type { Observer } from '../../observer';
 import { observable } from '../../interop';
 import { Observable } from '../../observable';
 import { Subject } from '../../subject';
-import type { Subscribable } from '../../subscription';
 import type { AsyncSubjectConstructor } from './async-subject-constructor';
 
 /**
- * A variant of {@linkcode Subject} that buffers only the latest value. When the {@linkcode AsyncSubject|subject} {@linkcode Complete.complete|completes},
- * it pushes the latest value (if any) followed by a {@linkcode Complete.complete|complete} {@linkcode Notification|notification} to all consumers. Any new consumers that
- * {@linkcode Subscribable.subscribe|subscribe} after {@linkcode Complete.complete|completion} will also receive the latest value followed by the
- * {@linkcode Complete.complete|complete} {@linkcode Notification|notification}. If no values were {@linkcode Next.next|nexted} before {@linkcode Complete.complete|completion},
- * neither existing nor late subscribers will receive any values. If the {@linkcode AsyncSubject|subject} terminates with an {@linkcode Error.error|error},
- * the buffered value is discarded and only the {@linkcode Error.error|error} {@linkcode Notification|notification} is sent to both existing and late subscribers.
+ * A variant of {@linkcode Subject} that buffers only the latest value. When the {@linkcode AsyncSubject|subject} {@linkcode AsyncSubject.complete|completes},
+ * it pushes the latest value (if any) followed by a {@linkcode AsyncSubject.complete|complete} notification to all consumers. Any new consumers that
+ * {@linkcode AsyncSubject.subscribe|subscribe} after {@linkcode AsyncSubject.complete|completion} will also receive the latest value followed by the
+ * {@linkcode AsyncSubject.complete|complete} notification. If no values were {@linkcode AsyncSubject.next|nexted} before {@linkcode AsyncSubject.complete|completion},
+ * neither existing nor late subscribers will receive any values. If the {@linkcode AsyncSubject|subject} terminates with an {@linkcode AsyncSubject.error|error},
+ * the buffered value is discarded and only the {@linkcode AsyncSubject.error|error} notification is sent to both existing and late subscribers.
  */
 export type AsyncSubject<Value = unknown> = Subject<Value>;
 

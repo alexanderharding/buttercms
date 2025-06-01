@@ -1,23 +1,16 @@
-import type {
-	Observer,
-	Next,
-	Error,
-	Complete,
-	Notification,
-} from '../../observer';
+import type { Observer } from '../../observer';
 import { observable } from '../../interop';
 import { Observable } from '../../observable';
 import { Subject } from '../../subject';
-import type { Subscribable } from '../../subscription';
 import type { ReplaySubjectConstructor } from './replay-subject-constructor';
 
 /**
  * A variant of {@linkcode Subject} that buffers a specified number of values (defaulting to all values if unspecified) and replays them to new consumers upon
- * {@linkcode Subscribable.subscribe|subscription}. When new values are {@linkcode Next.next|nexted}, they are added to the buffer and older values are removed if the buffer exceeds its size limit.
- * Any new consumers will immediately receive all buffered values upon {@linkcode Subscribable.subscribe|subscription}, followed by any subsequent values that are {@linkcode Next.next|nexted}.
- * If the {@linkcode ReplaySubject|subject} has {@linkcode Error.error|errored}, late subscribers will receive all buffered values followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}.
- * If the {@linkcode ReplaySubject|subject} has {@linkcode Complete.complete|completed}, late subscribers will receive all buffered values followed by the {@linkcode Complete.complete|complete}
- * {@linkcode Notification|notification}.
+ * {@linkcode ReplaySubject.subscribe|subscription}. When new values are {@linkcode ReplaySubject.next|nexted}, they are added to the buffer and older values are removed if the buffer exceeds its size limit.
+ * Any new consumers will immediately receive all buffered values upon {@linkcode ReplaySubject.subscribe|subscription}, followed by any subsequent values that are {@linkcode ReplaySubject.next|nexted}.
+ * If the {@linkcode ReplaySubject|subject} has {@linkcode ReplaySubject.error|errored}, late subscribers will receive all buffered values followed by the {@linkcode ReplaySubject.error|error} notification.
+ * If the {@linkcode ReplaySubject|subject} has {@linkcode ReplaySubject.complete|completed}, late subscribers will receive all buffered values followed by the {@linkcode ReplaySubject.complete|complete}
+ * notification.
  */
 export type ReplaySubject<Value = unknown> = Subject<Value>;
 

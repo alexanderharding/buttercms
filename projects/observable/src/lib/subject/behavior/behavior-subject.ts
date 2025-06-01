@@ -1,23 +1,16 @@
-import type {
-	Observer,
-	Next,
-	Error,
-	Complete,
-	Notification,
-} from '../../observer';
+import type { Observer } from '../../observer';
 import { observable } from '../../interop';
 import { Observable } from '../../observable';
 import { Subject } from '../../subject';
-import type { Subscribable } from '../../subscription';
 import type { BehaviorSubjectConstructor } from './behavior-subject-constructor';
 
 /**
- * A variant of {@linkcode Subject} that requires an initial value and notifies new consumers of its current value upon {@linkcode Subscribable.subscribe|subscription}.
- * When a new value is {@linkcode Next.next|nexted}, it is stored as the current value and pushed to all existing consumers. Any new consumers that
- * {@linkcode Subscribable.subscribe|subscribe} after values have been {@linkcode Next.next|nexted} will immediately receive the most recent value, followed by any
- * subsequent values. If the {@linkcode BehaviorSubject|subject} has terminated with an {@linkcode Error.error|error}, late subscribers will receive the last value
- * followed by the {@linkcode Error.error|error} {@linkcode Notification|notification}. If the {@linkcode BehaviorSubject|subject} has {@linkcode Complete.complete|completed},
- * late subscribers will receive the last value followed by the {@linkcode Complete.complete|complete} {@linkcode Notification|notification}.
+ * A variant of {@linkcode Subject} that requires an initial value and notifies new consumers of its current value upon {@linkcode BehaviorSubject.subscribe|subscription}.
+ * When a new value is {@linkcode BehaviorSubject.next|nexted}, it is stored as the current value and pushed to all existing consumers. Any new consumers that
+ * {@linkcode BehaviorSubject.subscribe|subscribe} after values have been {@linkcode BehaviorSubject.next|nexted} will immediately receive the most recent value, followed by any
+ * subsequent values. If the {@linkcode BehaviorSubject|subject} has terminated with an {@linkcode BehaviorSubject.error|error}, late subscribers will receive the last value
+ * followed by the {@linkcode BehaviorSubject.error|error} notification. If the {@linkcode BehaviorSubject|subject} has {@linkcode BehaviorSubject.complete|completed},
+ * late subscribers will receive the last value followed by the {@linkcode BehaviorSubject.complete|complete} notification.
  */
 export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
 	readonly value: Value;

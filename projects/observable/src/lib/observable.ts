@@ -6,8 +6,8 @@ import type { Observer } from './observer';
 import { type Subscribable, SubscriptionObserver } from './subscription';
 
 /**
- * At it's highest level, an observable represents a template for connecting an observer, as a consumer, to a producer, via a
- * {@linkcode Subscribable.subscribe|subscribe} action, resulting in a subscription.
+ * At it's highest level, an {@linkcode Observable|observable} represents a template for connecting an {@linkcode Observer|observer}, as a consumer, to a producer, via a
+ * {@linkcode Observable.subscribe|subscribe} action, resulting in a subscription.
  */
 export type Observable<Value = unknown> = Subscribable<Value> &
 	InteropObservable<Value>;

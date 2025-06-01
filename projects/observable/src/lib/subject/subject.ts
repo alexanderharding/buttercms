@@ -6,12 +6,12 @@ import type { SubjectConstructor } from './subject-constructor';
 /**
  * A special type of {@linkcode Observable|observable} that can multicast notifications
  * ({@linkcode Subject.next|next}, {@linkcode Subject.error|error}, and {@linkcode Subject.complete|complete}) to many consumers. Unlike a
- * regular {@linkcode Observable|observable} which creates a new producer for each {@linkcode Observable.subscribe|subscription}, a
- * {@linkcode Subject|subject} shares a single producer across all {@linkcode Observable.subscribe|subscriptions}.
+ * regular {@linkcode Observable|observable} which creates a new producer for each {@linkcode Subject.subscribe|subscription}, a
+ * {@linkcode Subject|subject} shares a single producer across all {@linkcode Subject.subscribe|subscriptions}.
  * The {@linkcode Subject|subject} itself acts as both an {@linkcode Observer|observer} (from the producer's perspective) and an {@linkcode Observable|observable},
  * allowing values to be pushed through it directly via {@linkcode Subject.next|next}, {@linkcode Subject.error|error}, and {@linkcode Subject.complete|complete} methods.
  * If the {@linkcode Subject|subject} has already pushed a terminal notification ({@linkcode Subject.error|error} or {@linkcode Subject.complete|complete}),
- * any new consumers will immediately receive that same terminal notification upon {@linkcode Observable.subscribe|subscription}.
+ * any new consumers will immediately receive that same terminal notification upon {@linkcode Subject.subscribe|subscription}.
  */
 export type Subject<Value = unknown> = Observable<Value> &
 	Omit<Observer<Value>, 'finally'>;

@@ -1,9 +1,7 @@
 import { Observable } from './observable';
-import { type InteropObservable } from './interop';
 import { ObservableInput } from './observable-input';
 import { ObservedValueOf } from './observed-value-of';
 import type { Observer } from './observer';
-import type { Subscribable } from './subscription';
 
 /**
  * Object interface for an {@linkcode Observable} factory.
@@ -12,8 +10,8 @@ export interface ObservableConstructor {
 	new (): Observable<never>;
 	new (subscribe: undefined | null): Observable<never>;
 	/**
-	 * Creates a template for connecting a producer to a consumer via a {@linkcode Subscribable.subscribe|subscribe} action.
-	 * @param subscribe The function called for each {@linkcode Subscribable.subscribe|subscribe} action.
+	 * Creates a template for connecting a producer to a consumer via a {@linkcode Observable.subscribe|subscribe} action.
+	 * @param subscribe The function called for each {@linkcode Observable.subscribe|subscribe} action.
 	 * @example
 	 * Creating an observable with a synchronous producer.
 	 * ```ts
@@ -114,7 +112,7 @@ export interface ObservableConstructor {
 	readonly prototype: Observable;
 	/**
 	 * Converting custom observables, probably exported by libraries, to proper observables.
-	 * @returns If {@linkcode input} is an {@linkcode InteropObservable|interop observable}, it's `[observable]()` method is called to obtain the {@linkcode Subscribable|subscribable}. Otherwise, {@linkcode input} is assumed to be a {@linkcode Subscribable|subscribable}. If the {@linkcode input} is already instanceof {@linkcode Observable} (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new {@linkcode Observable} object is created that wraps the original {@linkcode input}.
+	 * @returns If {@linkcode input} is an `InteropObservable`, it's `[observable]()` method is called to obtain the `Subscribable`. Otherwise, {@linkcode input} is assumed to be a `Subscribable`. If the {@linkcode input} is already instanceof {@linkcode Observable} (which means it has Observable.prototype in it's prototype chain), it is returned directly. Otherwise, a new {@linkcode Observable} object is created that wraps the original {@linkcode input}.
 	 */
 	from<Input extends ObservableInput>(
 		input: Input,
