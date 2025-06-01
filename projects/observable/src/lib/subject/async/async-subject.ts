@@ -11,15 +11,7 @@ import type { AsyncSubjectConstructor } from './async-subject-constructor';
  * {@linkcode AsyncSubject.complete|complete} notification. If no values were {@linkcode AsyncSubject.next|nexted} before {@linkcode AsyncSubject.complete|completion},
  * neither existing nor late subscribers will receive any values. If the {@linkcode AsyncSubject|subject} terminates with an {@linkcode AsyncSubject.error|error},
  * the buffered value is discarded and only the {@linkcode AsyncSubject.error|error} notification is sent to both existing and late subscribers.
- */
-export type AsyncSubject<Value = unknown> = Subject<Value>;
-
-/**
- * Flag indicating that a value is not set.
- */
-const noValue = Symbol('Flag indicating that a value is not set.');
-
-/**
+ *
  * @example
  * ```ts
  * import { AsyncSubject } from "@xander/observable";
@@ -37,6 +29,18 @@ const noValue = Symbol('Flag indicating that a value is not set.');
  *
  * subject.subscribe((value) => console.log(value)); // Console output: 3
  * ```
+ */
+export type AsyncSubject<Value = unknown> = Subject<Value>;
+
+/**
+ * Flag indicating that a value is not set.
+ */
+const noValue = Symbol('Flag indicating that a value is not set.');
+
+// Note: the main reason this JSDoc exists, is to satisfy the JSR score. In reality,
+// the JSDoc on the above type is enough for the DX on both symbols.
+/**
+ * @class
  */
 export const AsyncSubject: AsyncSubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'AsyncSubject';

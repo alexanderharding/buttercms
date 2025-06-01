@@ -12,16 +12,6 @@ import type { SubjectConstructor } from './subject-constructor';
  * allowing values to be pushed through it directly via {@linkcode Subject.next|next}, {@linkcode Subject.error|error}, and {@linkcode Subject.complete|complete} methods.
  * If the {@linkcode Subject|subject} has already pushed a terminal notification ({@linkcode Subject.error|error} or {@linkcode Subject.complete|complete}),
  * any new consumers will immediately receive that same terminal notification upon {@linkcode Subject.subscribe|subscription}.
- */
-export type Subject<Value = unknown> = Observable<Value> &
-	Omit<Observer<Value>, 'finally'>;
-
-/**
- * Flag indicating that an error is not set.
- */
-const noError = Symbol('Flag indicating that an error is not set.');
-
-/**
  *
  * @example
  * Basic usage
@@ -59,6 +49,19 @@ const noError = Symbol('Flag indicating that an error is not set.');
  *   }
  * }
  * ```
+ */
+export type Subject<Value = unknown> = Observable<Value> &
+	Omit<Observer<Value>, 'finally'>;
+
+/**
+ * Flag indicating that an error is not set.
+ */
+const noError = Symbol('Flag indicating that an error is not set.');
+
+// Note: the main reason this JSDoc exists, is to satisfy the JSR score. In reality,
+// the JSDoc on the above type is enough for the DX on both symbols.
+/**
+ * @class
  */
 export const Subject: SubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'Subject';

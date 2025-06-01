@@ -8,11 +8,7 @@ import { type Subscribable, SubscriptionObserver } from './subscription';
 /**
  * At it's highest level, an {@linkcode Observable|observable} represents a template for connecting an {@linkcode Observer}, as a consumer, to a producer, via a
  * {@linkcode Observable.subscribe|subscribe} action, resulting in a subscription.
- */
-export type Observable<Value = unknown> = Subscribable<Value> &
-	InteropObservable<Value>;
-
-/**
+ *
  * @example
  * Creating an observable with a synchronous producer.
  * ```ts
@@ -89,6 +85,14 @@ export type Observable<Value = unknown> = Subscribable<Value> &
  * // complete
  * // finally
  * ```
+ */
+export type Observable<Value = unknown> = Subscribable<Value> &
+	InteropObservable<Value>;
+
+// Note: the main reason this JSDoc exists, is to satisfy the JSR score. In reality,
+// the JSDoc on the above type is enough for the DX on both symbols.
+/**
+ * @class
  */
 export const Observable: ObservableConstructor = class {
 	readonly [Symbol.toStringTag] = 'Observable';

@@ -11,10 +11,7 @@ import type { ReplaySubjectConstructor } from './replay-subject-constructor';
  * If the {@linkcode ReplaySubject|subject} has {@linkcode ReplaySubject.error|errored}, late subscribers will receive all buffered values followed by the {@linkcode ReplaySubject.error|error} notification.
  * If the {@linkcode ReplaySubject|subject} has {@linkcode ReplaySubject.complete|completed}, late subscribers will receive all buffered values followed by the {@linkcode ReplaySubject.complete|complete}
  * notification.
- */
-export type ReplaySubject<Value = unknown> = Subject<Value>;
-
-/**
+ *
  * @example
  * ```ts
  * import { ReplaySubject } from "@xander/observable";
@@ -47,6 +44,13 @@ export type ReplaySubject<Value = unknown> = Subject<Value>;
  * // 4
  * // 5
  * ```
+ */
+export type ReplaySubject<Value = unknown> = Subject<Value>;
+
+// Note: the main reason this JSDoc exists, is to satisfy the JSR score. In reality,
+// the JSDoc on the above type is enough for the DX on both symbols.
+/**
+ * @class
  */
 export const ReplaySubject: ReplaySubjectConstructor = class {
 	readonly [Symbol.toStringTag] = 'ReplaySubject';

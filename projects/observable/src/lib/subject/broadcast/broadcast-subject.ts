@@ -8,21 +8,7 @@ import type { BroadcastSubjectConstructor } from './broadcast-subject-constructo
  * A variant of {@linkcode Subject}. When values are {@linkcode BroadcastSubject.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
  * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same `name` even if they are in different browsing contexts
  * (e.g. browser tabs). Logically, consumers of the {@linkcode BroadcastSubject|subject} do not receive it's _own_ {@linkcode BroadcastSubject.next|nexted} values.
- */
-export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
-	/**
-	 * The name of this {@linkcode BroadcastSubject|subject}.
-	 */
-	readonly name: string;
-}
-
-/**
- * A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our
- * {@linkcode BroadcastSubject}'s only communicate with other {@linkcode BroadcastSubject}'s from this library.
- */
-const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
-
-/**
+ *
  * @example
  * ```ts
  * import { BroadcastSubject } from '@xander/observable';
@@ -41,6 +27,24 @@ const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
  * subject2.complete(); // subject1 received 2 from subject2
  * subject1.next(3); // No console output since subject2 is already completed
  * ```
+ */
+export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
+	/**
+	 * The name of this {@linkcode BroadcastSubject|subject}.
+	 */
+	readonly name: string;
+}
+
+/**
+ * A fixed UUID that is used to prefix the name of the underlying {@linkcode BroadcastChannel}. This ensures that our
+ * {@linkcode BroadcastSubject}'s only communicate with other {@linkcode BroadcastSubject}'s from this library.
+ */
+const namePrefix = '652ff2f3-bed7-4700-8c2e-ed53efbbcf30';
+
+// Note: the main reason this JSDoc exists, is to satisfy the JSR score. In reality,
+// the JSDoc on the above type is enough for the DX on both symbols.
+/**
+ * @class
  */
 export const BroadcastSubject: BroadcastSubjectConstructor = class {
 	readonly name: string;

@@ -1,6 +1,6 @@
 {
   "name": "@xander/observable",
-  "version": "0.32.0",
+  "version": "0.33.0",
   "license": "MIT",
   "exports": "./src/public-api.ts"
 }

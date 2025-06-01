@@ -11,12 +11,7 @@ import type { BehaviorSubjectConstructor } from './behavior-subject-constructor'
  * subsequent values. If the {@linkcode BehaviorSubject|subject} has terminated with an {@linkcode BehaviorSubject.error|error}, late subscribers will receive the last value
  * followed by the {@linkcode BehaviorSubject.error|error} notification. If the {@linkcode BehaviorSubject|subject} has {@linkcode BehaviorSubject.complete|completed},
  * late subscribers will receive the last value followed by the {@linkcode BehaviorSubject.complete|complete} notification.
- */
-export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
-	readonly value: Value;
-}
-
-/**
+ *
  * @example
  * ```ts
  * import { BehaviorSubject } from '@xander/observable';
@@ -33,6 +28,13 @@ export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
  * // console output:
  * // 1
  * ```
+ */
+export interface BehaviorSubject<Value = unknown> extends Subject<Value> {
+	readonly value: Value;
+}
+
+/**
+ * @class
  */
 export const BehaviorSubject: BehaviorSubjectConstructor = class<Value> {
 	readonly [Symbol.toStringTag] = 'BehaviorSubject';
