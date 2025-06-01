@@ -3,7 +3,7 @@ import { ObservableInput } from './observable-input';
 import { Subscribable } from './subscription/subscribable';
 
 /**
- * The value type of an {@linkcode ObservableInput}.
+ * Extracts the value type of an {@linkcode ObservableInput}.
  */
 export type ObservedValueOf<Input extends ObservableInput> =
 	Input extends InteropObservable<infer Value>

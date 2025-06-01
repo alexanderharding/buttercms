@@ -8,3 +8,4 @@ export type { ObservedValueOf } from './observed-value-of';
 export type { ObservableConstructor } from './observable-constructor';
 export * from './interop';
 export * from './subject';
+export type { ObservedValuesOf } from './observed-values-of';

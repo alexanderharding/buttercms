@@ -10,6 +10,7 @@ export {
 	type UnhandledErrorConstructor,
 	type ObservableInput,
 	type ObservedValueOf,
+	type ObservedValuesOf,
 	observable,
 	type InteropObservable,
 
