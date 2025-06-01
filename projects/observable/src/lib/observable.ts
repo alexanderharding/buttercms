@@ -6,16 +6,11 @@ import type { Observer } from './observer';
 import { type Subscribable, SubscriptionObserver } from './subscription';
 
 /**
- * At it's highest level, an {@linkcode Observable|observable} represents a template for connecting an {@linkcode Observer|observer}, as a consumer, to a producer, via a
+ * At it's highest level, an {@linkcode Observable|observable} represents a template for connecting an {@linkcode Observer}, as a consumer, to a producer, via a
  * {@linkcode Observable.subscribe|subscribe} action, resulting in a subscription.
  */
 export type Observable<Value = unknown> = Subscribable<Value> &
 	InteropObservable<Value>;
-
-interface Deferred<Value = unknown> {
-	resolve(value: IteratorResult<Value>): void;
-	reject(reason: unknown): void;
-}
 
 /**
  * @example
@@ -132,83 +127,6 @@ export const Observable: ObservableConstructor = class {
 
 	[observable](): this {
 		return this;
-	}
-
-	[Symbol.asyncIterator](): AsyncIterableIterator<never, void, void> {
-		let controller: AbortController | null;
-		const noError = Symbol('noError');
-		let thrownError: unknown = noError;
-		const values: Array<never> = [];
-		const deferreds: Array<Deferred<never>> = [];
-
-		return {
-			next: () => {
-				if (!controller) {
-					// We only want to start the subscription when the user starts iterating.
-					this.subscribe({
-						signal: (controller = new AbortController()).signal,
-						next,
-						error,
-						complete,
-					});
-				}
-
-				// If we already have some values in our buffer, we'll return the next one.
-				if (values.length) {
-					return Promise.resolve({ value: values.shift()!, done: false });
-				}
-
-				// There was an error, so we're going to return an error result.
-				if (thrownError !== noError) return Promise.reject(thrownError);
-
-				// This was already aborted, so we're just going to return a done result.
-				if (controller?.signal.aborted) {
-					return Promise.resolve({ value: undefined, done: true });
-				}
-
-				// Otherwise, we need to make them wait for a value.
-				return new Promise((resolve, reject) =>
-					deferreds.push({ resolve, reject }),
-				);
-			},
-			throw(error) {
-				controller?.abort();
-				error(error);
-				return Promise.reject(error);
-			},
-			return() {
-				controller?.abort();
-				complete();
-				return Promise.resolve({ value: undefined, done: true });
-			},
-			[Symbol.asyncIterator]() {
-				return this;
-			},
-		};
-
-		function next(value: never): void {
-			if (deferreds.length) {
-				const { resolve } = deferreds.shift()!;
-				resolve({ value, done: false });
-			} else {
-				values.push(value);
-			}
-		}
-
-		function error(error: unknown): void {
-			thrownError = error;
-			while (deferreds.length) {
-				const { reject } = deferreds.shift()!;
-				reject(error);
-			}
-		}
-
-		function complete(): void {
-			while (deferreds.length) {
-				const { resolve } = deferreds.shift()!;
-				resolve({ value: undefined, done: true });
-			}
-		}
 	}
 
 	subscribe(

@@ -6,10 +6,13 @@ import type { BroadcastSubjectConstructor } from './broadcast-subject-constructo
 
 /**
  * A variant of {@linkcode Subject}. When values are {@linkcode BroadcastSubject.next|nexted}, they are {@linkcode structuredClone|structured cloned} and sent only
- * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same {@linkcode BroadcastSubject.name|name} even if they are in different browsing contexts
+ * to consumers of _other_ {@linkcode BroadcastSubject|subject} instances with the same `name` even if they are in different browsing contexts
  * (e.g. browser tabs). Logically, consumers of the {@linkcode BroadcastSubject|subject} do not receive it's _own_ {@linkcode BroadcastSubject.next|nexted} values.
  */
 export interface BroadcastSubject<Value = unknown> extends Subject<Value> {
+	/**
+	 * The name of this {@linkcode BroadcastSubject|subject}.
+	 */
 	readonly name: string;
 }
 
